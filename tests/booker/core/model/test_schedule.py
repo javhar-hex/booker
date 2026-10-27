@@ -1,11 +1,11 @@
 import pytest
+from javhar_util.immutables import ZSet
 
 from booker.core.model.invariants import NUM_PARTICIPANTS
 from booker.core.model.pairing import Pairing
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_set import ZSet
 
 
 def test_empty_schedule_has_no_pairings() -> None:

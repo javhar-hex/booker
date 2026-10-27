@@ -1,12 +1,11 @@
 import pytest
+from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.invariants import ELIMINATION_LOSSES, NUM_PARTICIPANTS
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 A, B, C = (Team(index=i) for i in range(3))
 ONE_ONE = Record(wins=1, losses=1)

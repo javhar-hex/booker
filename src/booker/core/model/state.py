@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import dataclasses as dc
 
+from javhar_util.immutables import ZSet, ZVec
+
 from booker.core.model.invariants import ELIMINATION_LOSSES, NUM_PARTICIPANTS
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 
 @dc.dataclass(frozen=True, slots=True)

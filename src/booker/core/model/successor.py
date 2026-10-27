@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from collections import Counter
 
+from javhar_util.immutables import ZSet, ZVec
+
 from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 
 def successor(state: State, outcome: Outcome) -> State:

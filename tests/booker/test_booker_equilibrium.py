@@ -15,11 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from javhar_util.immutables import ZMap, ZVec
 
 from booker.equilibrium import LayerSummary, build, summary
 from booker.storage import connect, init
-from util.dtypes.immutables.z_map import ZMap
-from util.dtypes.immutables.z_vec import ZVec
 
 R, X, Y, Z, W, V = 1, 2, 3, 4, 5, 6
 VALUES = ZMap({R: 1, X: 1, Y: 0, Z: 1, W: 2, V: 1})

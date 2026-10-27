@@ -1,4 +1,5 @@
 import pytest
+from javhar_util.immutables import ZMap, ZSet, ZVec
 
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
@@ -6,9 +7,6 @@ from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.relabelling import Relabelling
-from util.dtypes.immutables.z_map import ZMap
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 A, B, C = (Team(index=i) for i in range(3))
 ROTATION = Relabelling.of([1, 2, 0])

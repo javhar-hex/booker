@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import dataclasses as dc
 
+from javhar_util.immutables import ZSet
+
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
-from util.dtypes.immutables.z_set import ZSet
 
 
 @dc.dataclass(frozen=True, slots=True)

@@ -1,10 +1,9 @@
 import pytest
+from javhar_util.immutables import ZMap, ZSet
 
 from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_map import ZMap
-from util.dtypes.immutables.z_set import ZSet
 
 A, B, C, D = (Team(index=i) for i in range(4))
 AB, CD = Pairing.of(A, B), Pairing.of(C, D)

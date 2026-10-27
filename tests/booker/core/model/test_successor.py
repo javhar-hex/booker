@@ -1,4 +1,5 @@
 import pytest
+from javhar_util.immutables import ZMap, ZSet, ZVec
 
 from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
@@ -6,9 +7,6 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_map import ZMap
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 A, B, C, D = (Team(index=i) for i in range(4))
 

@@ -7,6 +7,7 @@ misses.
 import random
 
 import pytest
+from javhar_util.immutables import ZMap, ZSet, ZVec
 
 from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
@@ -17,9 +18,6 @@ from booker.core.model.successor import successor
 from booker.core.model.team import Team
 from booker.core.symmetry.canonical import CanonicalSchedule
 from booker.core.symmetry.relabelling import Relabelling
-from util.dtypes.immutables.z_map import ZMap
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 SAMPLES = 200
 MAX_MATCHES = 24

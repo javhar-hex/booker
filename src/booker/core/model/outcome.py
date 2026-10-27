@@ -4,10 +4,10 @@ import dataclasses as dc
 import itertools
 from collections.abc import Iterator
 
+from javhar_util.immutables import ZMap, ZSet
+
 from booker.core.model.pairing import Pairing
 from booker.core.model.team import Team
-from util.dtypes.immutables.z_map import ZMap
-from util.dtypes.immutables.z_set import ZSet
 
 
 @dc.dataclass(frozen=True, slots=True)

@@ -4,13 +4,13 @@ import dataclasses as dc
 from functools import cached_property
 
 import igraph as ig
+from javhar_util.immutables import ZVec
 
 from booker.core.model.invariants import CHAMPION_WINS, ELIMINATION_LOSSES
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.schedule import Schedule
 from booker.core.symmetry.relabelling import Relabelling
-from util.dtypes.immutables.z_vec import ZVec
 
 BLISS_PROVIDER = f"igraph {ig.__version__}"
 SCHEDULED_COLOUR = (CHAMPION_WINS + 1) * ELIMINATION_LOSSES

@@ -3,6 +3,7 @@
 import dataclasses as dc
 
 import pytest
+from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
@@ -11,8 +12,6 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.relabelling import Relabelling
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 
 def _pairing(a: int, b: int) -> Pairing:

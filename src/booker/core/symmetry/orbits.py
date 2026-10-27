@@ -3,12 +3,12 @@ from __future__ import annotations
 import dataclasses as dc
 from collections.abc import Iterator
 
+from javhar_util.immutables import ZSet, ZVec
+
 from booker.core.model.pairing import Pairing
 from booker.core.model.schedule import Schedule
 from booker.core.symmetry.coloured_graph import ColouredGraph
 from booker.core.symmetry.relabelling import Relabelling
-from util.dtypes.immutables.z_set import ZSet
-from util.dtypes.immutables.z_vec import ZVec
 
 
 @dc.dataclass(frozen=True, slots=True)

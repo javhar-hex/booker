@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from javhar_util.immutables import ZVec
 
 from booker.generate import generate, solve
 from booker.verify import audit
-from util.dtypes.immutables.z_vec import ZVec
 
 FIRST_ROUND_MATCHES = 8
 SHALLOW_DEPTH = 6

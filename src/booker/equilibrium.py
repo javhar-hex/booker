@@ -16,7 +16,7 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
-from util.dtypes.immutables.z_vec import ZVec
+from javhar_util.immutables import ZVec
 
 SCHEMA = """
 CREATE TABLE scheduler_flags (
