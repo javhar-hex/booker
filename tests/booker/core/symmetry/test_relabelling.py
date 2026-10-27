@@ -1,0 +1,57 @@
+import pytest
+
+from booker.core.model.pairing import Pairing
+from booker.core.model.record import Record
+from booker.core.model.schedule import Schedule
+from booker.core.model.state import State
+from booker.core.model.team import Team
+from booker.core.symmetry.relabelling import Relabelling
+from util.dtypes.immutables.z_map import ZMap
+from util.dtypes.immutables.z_set import ZSet
+from util.dtypes.immutables.z_vec import ZVec
+
+A, B, C = (Team(index=i) for i in range(3))
+ROTATION = Relabelling.of([1, 2, 0])
+UNBEATEN = Record(wins=2, losses=0)
+ONE_LOSS = Record(wins=1, losses=1)
+STATE = State(records=ZVec([UNBEATEN, ONE_LOSS, ONE_LOSS]), met=ZSet([Pairing.of(A, B)]))
+
+
+def test_rejects_two_teams_with_one_image() -> None:
+    with pytest.raises(ValueError, match="not a permutation"):
+        Relabelling.of([0, 0, 2])
+
+
+def test_rejects_teams_beyond_the_state() -> None:
+    with pytest.raises(ValueError, match="not a permutation"):
+        Relabelling(images=ZMap({A: B, B: Team(index=5), Team(index=5): A}))
+
+
+def test_maps_teams_and_pairings() -> None:
+    assert ROTATION.team(A) == B
+    assert ROTATION.pairing(Pairing.of(B, C)) == Pairing.of(A, C)
+
+
+def test_moves_each_record_with_its_team() -> None:
+    relabelled = ROTATION.state(STATE)
+
+    assert relabelled.record(B) == UNBEATEN
+    assert relabelled.met == ZSet([Pairing.of(B, C)])
+
+
+def test_relabels_a_schedule_consistently() -> None:
+    schedule = Schedule(state=STATE, pairings=ZSet([Pairing.of(B, C)]))
+
+    relabelled = ROTATION.schedule(schedule)
+
+    assert relabelled.pairings == ZSet([Pairing.of(A, C)])
+    assert relabelled.state == ROTATION.state(STATE)
+
+
+def test_identity_changes_nothing() -> None:
+    assert Relabelling.of([0, 1, 2]).state(STATE) == STATE
+
+
+def test_rejects_a_state_of_another_size() -> None:
+    with pytest.raises(ValueError, match="relabels 2 teams"):
+        Relabelling.of([1, 0]).state(STATE)
