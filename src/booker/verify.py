@@ -14,10 +14,18 @@ import itertools
 import json
 import os
 import sqlite3
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
+from typing import Any
+
+Pair = tuple[int, int]
+Players = tuple[Pair, ...]
+Edges = set[Pair]
+Position = tuple[Players, Edges]
+ActionRow = tuple[int, int, int, int, int, int, int]
 
 
-def parse(blob):
+def parse(blob: bytes) -> Position:
     n = blob[0]
     assert 1 <= n <= 16
     nbits = n * (n - 1) // 2
@@ -28,7 +36,7 @@ def parse(blob):
     assert all(w <= 6 and loss <= 1 for w, loss in players)
     adjacency = int.from_bytes(blob[1 + n :], "little")
     assert adjacency >> nbits == 0
-    edges = set()
+    edges: Edges = set()
     for i, (a, b) in enumerate(itertools.combinations(range(n), 2)):
         if adjacency & (1 << i):
             edges.add((a, b))
@@ -37,11 +45,11 @@ def parse(blob):
 
 # Independently implement the two admissibility rules from the paper.
 # This module deliberately imports none of the generator-side code.
-def legal(players):
+def legal(players: Players) -> set[Pair]:
     if len(players) == 1:
         return set()
     undefeated = sum(loss == 0 for _, loss in players)
-    pairs = set()
+    pairs: set[Pair] = set()
     for i, j in itertools.combinations(range(len(players)), 2):
         x, y = players[i], players[j]
         if x == y:
@@ -54,8 +62,10 @@ def legal(players):
     return pairs
 
 
-def outcome(players, edges, winner, loser):
-    pair = tuple(sorted((winner, loser)))
+def outcome(
+    players: Players, edges: Edges, winner: int, loser: int
+) -> tuple[Players, Edges, int]:
+    pair = (min(winner, loser), max(winner, loser))
     cost = int(pair in edges)
     p = list(players)
     p[winner] = (p[winner][0] + 1, p[winner][1])
@@ -70,7 +80,9 @@ def outcome(players, edges, winner, loser):
     return tuple(p[i] for i in survivor), child_edges, cost
 
 
-def coloured_isomorphic(c1, e1, c2, e2, mode):
+def coloured_isomorphic(
+    c1: Sequence[int], e1: Edges, c2: Sequence[int], e2: Edges, mode: str
+) -> bool:
     if len(c1) != len(c2) or sorted(c1) != sorted(c2) or len(e1) != len(e2):
         return False
     if mode == "igraph":
@@ -87,28 +99,32 @@ def coloured_isomorphic(c1, e1, c2, e2, mode):
     h.add_nodes_from((i, {"c": c}) for i, c in enumerate(c2))
     g.add_edges_from(e1)
     h.add_edges_from(e2)
-    return nx.vf2pp_is_isomorphic(g, h, node_label="c")
+    return bool(nx.vf2pp_is_isomorphic(g, h, node_label="c"))
 
 
-def isomorphic(x, y, mode):
+def isomorphic(x: Position, y: Position, mode: str) -> bool:
     (p1, e1), (p2, e2) = x, y
     return coloured_isomorphic(
         [2 * w + l for w, l in p1], e1, [2 * w + l for w, l in p2], e2, mode
     )
 
 
-def equivalent_pairs(players, edges, x, y, mode):
+def equivalent_pairs(
+    players: Players, edges: Edges, x: Pair, y: Pair, mode: str
+) -> bool:
     """Is there an automorphism of (players,edges) mapping pair x onto pair y?"""
     if (x in edges) != (y in edges):
         return False
 
-    def marked(pair):
+    def marked(pair: Pair) -> list[int]:
         return [2 * (2 * w + l) + (i in pair) for i, (w, l) in enumerate(players)]
 
     return coloured_isomorphic(marked(x), edges, marked(y), edges, mode)
 
 
-def check_orbits(players, edges, rows, mode):
+def check_orbits(
+    players: Players, edges: Edges, rows: list[ActionRow], mode: str
+) -> None:
     """Each legal pairing is equivalent to exactly one stored pairing, whose class_size
     is the number of legal pairings equivalent to it."""
     reps = {(a, b): size for a, b, _, _, _, size, _ in rows}
@@ -125,12 +141,14 @@ def check_orbits(players, edges, rows, mode):
 CHECKPOINT_EVERY = 1000
 
 
-def load_checkpoint(checkpoint, scope):
+def load_checkpoint(
+    checkpoint: str | None, scope: Mapping[str, object]
+) -> dict[str, Any] | None:
     """Progress saved by an earlier run of the same scope, or None to start afresh."""
     if checkpoint is None or not os.path.exists(checkpoint):
         return None
     with open(checkpoint) as f:
-        progress = json.load(f)
+        progress: dict[str, Any] = json.load(f)
     assert progress["scope"] == scope, (
         "checkpoint is for another run",
         progress["scope"],
@@ -139,7 +157,7 @@ def load_checkpoint(checkpoint, scope):
     return progress
 
 
-def save_checkpoint(checkpoint, progress):
+def save_checkpoint(checkpoint: str, progress: dict[str, Any]) -> None:
     tmp = checkpoint + ".tmp"
     with open(tmp, "w") as f:
         json.dump(progress, f)
@@ -189,7 +207,7 @@ def audit(
     root = int(metadata["root_id"])
 
     @lru_cache(maxsize=65536)
-    def fetch(sid):
+    def fetch(sid: int) -> tuple[Position, tuple[int, int, int | None, int]]:
         row = con.execute(
             "SELECT key,depth,active,value,expanded FROM states WHERE id=?", (sid,)
         ).fetchone()
@@ -293,6 +311,7 @@ def audit(
             if solved:
                 va = fetch(ca)[1][2]
                 vb = fetch(cb)[1][2]
+                assert va is not None and vb is not None, (ca, cb)
                 assert cv == max(va, vb), ("Collider value", sid, a, b, cv, va, vb)
                 opts.append(cost + cv)
             n_actions += 1
@@ -327,7 +346,7 @@ def audit(
     con.close()
 
 
-def main():
+def main() -> None:
     p = argparse.ArgumentParser(
         description="Independent position/transition/minimax verifier"
     )

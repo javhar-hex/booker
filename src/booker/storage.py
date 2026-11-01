@@ -50,7 +50,7 @@ def connect(path: str | Path) -> sqlite3.Connection:
     return con
 
 
-def init(con: sqlite3.Connection):
+def init(con: sqlite3.Connection) -> None:
     row = con.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'"
     ).fetchone()
@@ -79,7 +79,8 @@ def add_state(con: sqlite3.Connection, s: State) -> int:
         "INSERT OR IGNORE INTO states(key,depth,active) VALUES (?,?,?)",
         (key, s.depth, len(s.players)),
     )
-    return con.execute("SELECT id FROM states WHERE key=?", (key,)).fetchone()[0]
+    sid: int = con.execute("SELECT id FROM states WHERE key=?", (key,)).fetchone()[0]
+    return sid
 
 
 def state_by_id(con: sqlite3.Connection, sid: int) -> State:

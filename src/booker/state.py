@@ -90,17 +90,17 @@ def advance(state: State, winner: int, loser: int) -> tuple[State, int]:
     p[loser] = (w, l + 1)
     assert p[winner][0] <= 6
     assert p[loser][1] <= 2
-    pair = tuple(sorted((winner, loser)))
+    pair = (min(winner, loser), max(winner, loser))
     repeat = int(pair in state.edges)
     # Drop eliminated teams AND all edges incident to them.
     alive = [i for i, (_, losses) in enumerate(p) if losses < 2]
     remap = {old: new for new, old in enumerate(alive)}
-    edges = set(state.edges)
-    edges.add(pair)
+    met = set(state.edges)
+    met.add(pair)
     edges = tuple(
         sorted(
-            tuple(sorted((remap[a], remap[b])))
-            for a, b in edges
+            (min(remap[a], remap[b]), max(remap[a], remap[b]))
+            for a, b in met
             if a in remap and b in remap
         )
     )

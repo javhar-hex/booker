@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import sqlite3
 from collections import defaultdict
+from collections.abc import Callable
 
-from .state import advance, canonical, pairing_classes, start, unpack
+import networkx as nx
+
+from .state import State, advance, canonical, pairing_classes, start, unpack
 from .storage import add_state, connect, init
+
+Signature = tuple[tuple[tuple[int, int], ...], tuple[tuple[tuple[int, int], int], ...]]
 
 
 class VF2PrefixCanonicalizer:
@@ -15,16 +21,13 @@ class VF2PrefixCanonicalizer:
     Representatives are first-discovered labeled states; never use on full atlas.
     """
 
-    def __init__(self, con):
-        import networkx as nx
-
-        self.nx = nx
-        self.reps = defaultdict(list)
+    def __init__(self, con: sqlite3.Connection) -> None:
+        self.reps: defaultdict[Signature, list[State]] = defaultdict(list)
         for (blob,) in con.execute("SELECT key FROM states"):
             s = unpack(blob)
             self.reps[self.signature(s)].append(s)
 
-    def signature(self, s):
+    def signature(self, s: State) -> Signature:
         deg = [0] * len(s.players)
         for a, b in s.edges:
             deg[a] += 1
@@ -34,11 +37,9 @@ class VF2PrefixCanonicalizer:
             tuple(sorted((p, deg[i]) for i, p in enumerate(s.players))),
         )
 
-    def __call__(self, s):
-        nx = self.nx
-
-        def graph(t):
-            g = nx.Graph()
+    def __call__(self, s: State) -> State:
+        def graph(t: State) -> nx.Graph[int]:
+            g: nx.Graph[int] = nx.Graph()
             g.add_nodes_from((i, {"wl": p}) for i, p in enumerate(t.players))
             g.add_edges_from(t.edges)
             return g
@@ -75,7 +76,9 @@ def generate(path: str, max_depth: int = 31, backend: str = "bliss") -> None:
         con.execute(
             "INSERT OR IGNORE INTO meta(key,value) VALUES ('backend',?)", (backend,)
         )
-    canon = canonical if backend == "bliss" else VF2PrefixCanonicalizer(con)
+    canon: Callable[[State], State] = (
+        canonical if backend == "bliss" else VF2PrefixCanonicalizer(con)
+    )
     with con:
         root = add_state(con, canon(start()))
         con.execute(
@@ -167,7 +170,7 @@ def solve(path: str) -> None:
     con.close()
 
 
-def stats(path: str):
+def stats(path: str) -> None:
     con = connect(path)
     print("depth  states  collider  pairings  min-value  max-value")
     for k, n, c, m, mi, ma in con.execute("""
@@ -180,7 +183,7 @@ def stats(path: str):
     con.close()
 
 
-def main():
+def main() -> None:
     p = argparse.ArgumentParser(
         description="Unrestricted (16,2,6) Scheduler-Collider atlas"
     )

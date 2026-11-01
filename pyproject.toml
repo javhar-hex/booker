@@ -40,3 +40,8 @@ extend-select = ["I"]
 strict = true
 mypy_path = ["src"]
 explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+# igraph ships neither stubs nor a py.typed marker.
+module = "igraph"
+ignore_missing_imports = true
