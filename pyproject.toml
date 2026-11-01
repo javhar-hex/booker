@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "booker"
+version = "0.1.0"
+description = "Game-agnostic tournament model and solver for the Scheduler/Collider game."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Jack Javhar" }]
+requires-python = ">=3.11"
+dependencies = [
+  "igraph>=0.11",
+  "javhar-util @ git+https://github.com/javhar-hex/util",
+  "networkx>=3.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5", "types-networkx"]
+
+[project.urls]
+Repository = "https://github.com/javhar-hex/booker"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --maxfail=1"
+
+[tool.ruff]
+line-length = 89
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.mypy]
+strict = true
+mypy_path = ["src"]
+explicit_package_bases = true
