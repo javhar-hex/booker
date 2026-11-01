@@ -4,12 +4,12 @@ Only live teams appear. Their names are local vertex indices; isomorphic colored
 simple graphs are identified with BLISS. Past repeats are NOT part of the state: each action has a local repeat cost,
 and the minimax value counts only future repeats.
 """
+
 from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
 from itertools import combinations
-
 
 PLAYERS = 16
 
@@ -45,8 +45,7 @@ def moves(state: State) -> list[tuple[int, int]]:
         # The two exact rules in the paper. No viability oracle is needed.
         same_record = x == y and (x != (4, 1) or undefeated == 0)
         cross_bracket = undefeated == 1 and (
-            (x[1] == 0 and y == (4, 1)) or
-            (y[1] == 0 and x == (4, 1))
+            (x[1] == 0 and y == (4, 1)) or (y[1] == 0 and x == (4, 1))
         )
         if same_record or cross_bracket:
             allowed.append((a, b))
@@ -60,6 +59,7 @@ def pairing_classes(state: State) -> list[tuple[tuple[int, int], int]]:
     lead to the same Collider-to-move state, so only one per orbit is expanded.
     """
     import igraph as ig
+
     legal = moves(state)
     g = ig.Graph(n=len(state.players), edges=list(state.edges), directed=False)
     root = {pair: pair for pair in legal}
@@ -97,8 +97,13 @@ def advance(state: State, winner: int, loser: int) -> tuple[State, int]:
     remap = {old: new for new, old in enumerate(alive)}
     edges = set(state.edges)
     edges.add(pair)
-    edges = tuple(sorted(tuple(sorted((remap[a], remap[b])))
-                         for a, b in edges if a in remap and b in remap))
+    edges = tuple(
+        sorted(
+            tuple(sorted((remap[a], remap[b])))
+            for a, b in edges
+            if a in remap and b in remap
+        )
+    )
     child = State(tuple(p[i] for i in alive), edges)
     assert child.depth == state.depth + 1
     if child.terminal:
@@ -117,7 +122,7 @@ def pack(state: State) -> bytes:
     """
     n = len(state.players)
     assert 1 <= n <= PLAYERS
-    codes = [2*w + l for w, l in state.players]
+    codes = [2 * w + l for w, l in state.players]
     assert all(0 <= c <= 13 for c in codes)
     pair_set = set(state.edges)
     assert len(pair_set) == len(state.edges)
@@ -127,21 +132,23 @@ def pack(state: State) -> bytes:
     for k, (a, b) in enumerate(combinations(range(n), 2)):
         if (a, b) in pair_set:
             mask |= 1 << k
-    return (bytes((n,)) + bytes(codes)
-            + mask.to_bytes((n*(n-1)//2 + 7)//8, "little"))
+    return (
+        bytes((n,)) + bytes(codes) + mask.to_bytes((n * (n - 1) // 2 + 7) // 8, "little")
+    )
 
 
 def unpack(data: bytes) -> State:
     n = data[0]
     assert 1 <= n <= PLAYERS
-    count = n*(n-1)//2
-    assert len(data) == 1 + n + (count + 7)//8
-    codes = data[1:1+n]
-    p = tuple((c//2, c%2) for c in codes)
-    mask = int.from_bytes(data[1+n:], "little")
+    count = n * (n - 1) // 2
+    assert len(data) == 1 + n + (count + 7) // 8
+    codes = data[1 : 1 + n]
+    p = tuple((c // 2, c % 2) for c in codes)
+    mask = int.from_bytes(data[1 + n :], "little")
     assert mask >> count == 0
-    edges = tuple(pair for k, pair in enumerate(combinations(range(n), 2))
-                  if (mask >> k) & 1)
+    edges = tuple(
+        pair for k, pair in enumerate(combinations(range(n), 2)) if (mask >> k) & 1
+    )
     return State(p, edges)
 
 
@@ -152,15 +159,16 @@ def canonical(state: State) -> State:
     relying on whether the permutation is old->new or new->old is error prone.
     """
     import igraph as ig
+
     n = len(state.players)
     g = ig.Graph(n=n, edges=list(state.edges), directed=False)
     g.vs["wl"] = _colours(state)
     permutation = g.canonical_permutation(color=g.vs["wl"])
     cg = g.permute_vertices(permutation)
-    players = tuple((code//2, code%2) for code in cg.vs["wl"])
+    players = tuple((code // 2, code % 2) for code in cg.vs["wl"])
     edges = tuple(sorted(tuple(sorted(edge)) for edge in cg.get_edgelist()))
     return State(players, edges)
 
 
 def _colours(state: State) -> list[int]:
-    return [2*w + l for w, l in state.players]
+    return [2 * w + l for w, l in state.players]

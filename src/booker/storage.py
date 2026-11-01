@@ -6,9 +6,12 @@ Scheduler pays repeat_cost on choosing the pairing, so a Collider state's value 
 max of its two children's values, and a Scheduler state's value is the min over its
 Collider children of repeat_cost + value.
 """
+
 from __future__ import annotations
+
 import sqlite3
 from pathlib import Path
+
 from .state import State, pack, unpack
 
 DDL = """
@@ -48,27 +51,38 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 
 def init(con: sqlite3.Connection):
-    row = con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'").fetchone()
+    row = con.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'"
+    ).fetchone()
     if row:
-        previous = con.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
-        if previous and previous[0] != '5':
-            raise ValueError(f"Database schema v{previous[0]} cannot be resumed with schema v5; regenerate")
+        previous = con.execute(
+            "SELECT value FROM meta WHERE key='schema_version'"
+        ).fetchone()
+        if previous and previous[0] != "5":
+            raise ValueError(
+                f"Database schema v{previous[0]} cannot be resumed with schema v5; regenerate"
+            )
     con.executescript(DDL)
-    values = {"schema_version":"5", "game":"unrestricted-16-2-6",
-              "value_convention":"minimum guaranteed additional repeats"}
-    for k,v in values.items():
-        con.execute("INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)",(k,v))
+    values = {
+        "schema_version": "5",
+        "game": "unrestricted-16-2-6",
+        "value_convention": "minimum guaranteed additional repeats",
+    }
+    for k, v in values.items():
+        con.execute("INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)", (k, v))
     con.commit()
 
 
 def add_state(con: sqlite3.Connection, s: State) -> int:
     key = pack(s)
-    con.execute("INSERT OR IGNORE INTO states(key,depth,active) VALUES (?,?,?)",
-                (key,s.depth,len(s.players)))
-    return con.execute("SELECT id FROM states WHERE key=?",(key,)).fetchone()[0]
+    con.execute(
+        "INSERT OR IGNORE INTO states(key,depth,active) VALUES (?,?,?)",
+        (key, s.depth, len(s.players)),
+    )
+    return con.execute("SELECT id FROM states WHERE key=?", (key,)).fetchone()[0]
 
 
 def state_by_id(con: sqlite3.Connection, sid: int) -> State:
-    row = con.execute("SELECT key FROM states WHERE id=?",(sid,)).fetchone()
+    row = con.execute("SELECT key FROM states WHERE id=?", (sid,)).fetchone()
     assert row is not None
     return unpack(row[0])
