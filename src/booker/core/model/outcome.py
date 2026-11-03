@@ -22,6 +22,10 @@ class Outcome:
                 raise ValueError(f"{winner} cannot win {pairing}, not being in it")
 
     @classmethod
+    def single(cls, pairing: Pairing, winner: Team) -> Outcome:
+        return cls(winners=ZMap({pairing: winner}))
+
+    @classmethod
     def every(cls, pairings: ZSet[Pairing]) -> Iterator[Outcome]:
         "All 2^k outcomes of k pairings."
         ordered = sorted(pairings)

@@ -23,6 +23,13 @@ def test_rejects_a_winner_outside_the_pairing() -> None:
         Outcome(winners=ZMap({AB: C}))
 
 
+def test_a_single_match_has_one_winner() -> None:
+    outcome = Outcome.single(AB, B)
+
+    assert outcome.pairings == ZSet([AB])
+    assert (outcome.winner(AB), outcome.loser(AB)) == (B, A)
+
+
 def test_every_outcome_of_k_pairings_is_one_of_2_to_the_k() -> None:
     outcomes = set(Outcome.every(TWO_MATCHES))
 
