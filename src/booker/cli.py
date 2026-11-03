@@ -23,9 +23,10 @@ from booker.verify.symmetry_sample import compare_symmetries
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
     if args.command == "generate":
-        generate(args.db, args.max_depth, Backend(args.backend))
+        _generate(args, parser)
     elif args.command == "solve":
         solve(args.db)
     elif args.command == "verify":
@@ -38,6 +39,17 @@ def main(argv: Sequence[str] | None = None) -> None:
         _print_stats(args.db)
 
 
+def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    backend = Backend(args.backend)
+    if args.max_depth is None and backend is not BLISS:
+        parser.error(
+            f"--backend {backend.value} gets slower with every state it meets; "
+            "say how far to go with --max-depth"
+        )
+    max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
+    generate(args.db, max_depth, backend)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Unrestricted (16,2,6) Scheduler-Collider atlas"
@@ -45,7 +57,11 @@ def _parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     generating = sub.add_parser("generate")
     generating.add_argument("db")
-    generating.add_argument("--max-depth", type=int, default=MAX_MATCHES)
+    generating.add_argument(
+        "--max-depth",
+        type=int,
+        help=f"matches to expand to (default {MAX_MATCHES}, the whole game, for bliss)",
+    )
     generating.add_argument(
         "--backend", choices=[b.value for b in Backend], default=BLISS.value
     )

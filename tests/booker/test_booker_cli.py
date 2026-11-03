@@ -42,6 +42,16 @@ def test_refuses_to_solve_a_truncated_atlas(path: str) -> None:
         main(["solve", path])
 
 
+def test_the_vf2_backend_must_be_told_how_far_to_go(
+    path: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit):
+        main(["generate", path, "--backend", "vf2"])
+
+    assert "--max-depth" in capsys.readouterr().err
+    assert not Path(path).exists()
+
+
 def test_rejects_an_unknown_backend(path: str) -> None:
     with pytest.raises(SystemExit):
         main(["generate", path, "--backend", "bogus"])
