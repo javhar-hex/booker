@@ -1,12 +1,16 @@
-"""Command line: `python -m booker.cli generate|solve|stats|verify <atlas.db>`."""
+"""
+Command line: `python -m booker.cli generate|solve|stats|verify|equilibrium ...`.
+"""
 
 from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
+from pathlib import Path
 
 from booker.atlas.storage import Atlas
 from booker.core.model.invariants import MAX_MATCHES
+from booker.equilibrium.flags import build, summary
 from booker.generate.backend import BLISS, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
@@ -23,6 +27,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         solve(args.db)
     elif args.command == "verify":
         _verify(args)
+    elif args.command == "equilibrium":
+        _equilibrium(args)
     else:
         _print_stats(args.db)
 
@@ -41,6 +47,12 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("solve").add_argument("db")
     sub.add_parser("stats").add_argument("db")
     _add_verify(sub)
+    equilibrium = sub.add_parser(
+        "equilibrium", help="flag the positions reachable under optimal play"
+    )
+    equilibrium.add_argument("atlas", type=Path)
+    equilibrium.add_argument("flags", type=Path)
+    equilibrium.add_argument("--summary-only", action="store_true")
     return parser
 
 
@@ -82,6 +94,18 @@ def _verify(args: argparse.Namespace) -> None:
         checkpoint=args.checkpoint,
     )
     print(audit(plan, lambda message: print(message, flush=True)))
+
+
+def _equilibrium(args: argparse.Namespace) -> None:
+    if not args.summary_only:
+        build(args.atlas, args.flags)
+    print("depth  scheduler  sched-eq  balanced-off  collider  coll-eq  critical")
+    for layer in summary(args.atlas, args.flags):
+        print(
+            f"{layer.depth:>5} {layer.scheduler:>10,} {layer.scheduler_equilibrium:>9,} "
+            f"{layer.scheduler_balanced_off_equilibrium:>13,} {layer.collider:>9,} "
+            f"{layer.collider_equilibrium:>8,} {layer.collider_critical:>9,}"
+        )
 
 
 def _print_stats(path: str) -> None:

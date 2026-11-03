@@ -10,6 +10,7 @@ V is balanced off the equilibrium path: the Scheduler's C3 and the Collider's V 
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,7 +19,9 @@ import pytest
 from javhar_util.immutables import ZMap, ZVec
 
 from booker.atlas.schema import open_connection
-from booker.equilibrium import LayerSummary, build, summary
+from booker.cli import main
+from booker.equilibrium.flags import build, summary
+from booker.equilibrium.layers import LayerSummary
 
 R, X, Y, Z, W, V = 1, 2, 3, 4, 5, 6
 VALUES = ZMap({R: 1, X: 1, Y: 0, Z: 1, W: 2, V: 1})
@@ -54,6 +57,7 @@ def _tiny_atlas(path: Path) -> Path:
     con = open_connection(path)
     with con:
         con.execute("INSERT INTO meta VALUES ('root_id', ?)", (str(R),))
+        con.execute("INSERT INTO meta VALUES ('solved', 'true')")
         for sid, value in VALUES.items():
             depth = 0 if sid == R else 1
             con.execute(
@@ -141,12 +145,49 @@ def test_summary(flagged: Path) -> None:
     )
 
 
-def test_refuses_an_unsolved_atlas(tmp_path: Path) -> None:
-    atlas = _tiny_atlas(tmp_path / "atlas.db")
+def _edit(atlas: Path, sql: str) -> Path:
     con = sqlite3.connect(atlas)
     with con:
-        con.execute("UPDATE states SET value = NULL WHERE id = ?", (V,))
+        con.execute(sql)
     con.close()
+    return atlas
+
+
+def _only(directory: Path) -> list[str]:
+    "The files in `directory`, but for the sidecars SQLite keeps beside a WAL database."
+    return sorted(
+        path.name
+        for path in directory.iterdir()
+        if not path.name.endswith(("-wal", "-shm"))
+    )
+
+
+@pytest.mark.parametrize(
+    ("sql", "complaint"),
+    [
+        (f"UPDATE states SET value = NULL WHERE id = {V}", "positions without a value"),
+        ("DELETE FROM meta WHERE key = 'solved'", "not been through"),
+        ("UPDATE meta SET value = '4' WHERE key = 'schema_version'", "schema v4"),
+        ("DELETE FROM meta WHERE key = 'schema_version'", "schema None"),
+    ],
+)
+def test_refuses_an_atlas_it_cannot_read(
+    tmp_path: Path, sql: str, complaint: str
+) -> None:
+    atlas = _edit(_tiny_atlas(tmp_path / "atlas.db"), sql)
+
+    with pytest.raises(ValueError, match=complaint):
+        build(atlas, tmp_path / "flags.db")
+
+    assert _only(tmp_path) == ["atlas.db"]
+
+
+def test_an_unsolved_atlas_is_not_solved(tmp_path: Path) -> None:
+    atlas = _edit(
+        _tiny_atlas(tmp_path / "atlas.db"),
+        f"UPDATE states SET value = NULL WHERE id = {V}",
+    )
+
     with pytest.raises(ValueError, match="not solved"):
         build(atlas, tmp_path / "flags.db")
 
@@ -154,3 +195,73 @@ def test_refuses_an_unsolved_atlas(tmp_path: Path) -> None:
 def test_refuses_to_overwrite(flagged: Path) -> None:
     with pytest.raises(FileExistsError):
         build(flagged / "atlas.db", flagged / "flags.db")
+
+
+def test_a_failed_build_leaves_nothing_to_refuse_the_next(tmp_path: Path) -> None:
+    atlas = _edit(
+        _tiny_atlas(tmp_path / "atlas.db"),
+        "INSERT INTO states (id, key, depth, active, expanded, value)"
+        " VALUES (99, X'63', 1, 2, 1, 0)",
+    )
+
+    with pytest.raises(RuntimeError, match="never reached"):
+        build(atlas, tmp_path / "flags.db")
+
+    assert _only(tmp_path) == ["atlas.db"]
+
+
+def test_a_stale_partial_build_is_replaced(tmp_path: Path) -> None:
+    atlas = _tiny_atlas(tmp_path / "atlas.db")
+    (tmp_path / "flags.db.partial").write_text("left by a crash")
+
+    build(atlas, tmp_path / "flags.db")
+
+    assert _only(tmp_path) == ["atlas.db", "flags.db"]
+
+
+def test_the_atlas_is_left_as_it_was(tmp_path: Path) -> None:
+    atlas = _tiny_atlas(tmp_path / "atlas.db")
+    before = hashlib.sha256(atlas.read_bytes()).hexdigest()
+
+    build(atlas, tmp_path / "flags.db")
+
+    assert hashlib.sha256(atlas.read_bytes()).hexdigest() == before
+
+
+def test_summarizing_flags_that_do_not_exist_is_an_error(tmp_path: Path) -> None:
+    atlas = _tiny_atlas(tmp_path / "atlas.db")
+
+    with pytest.raises(FileNotFoundError):
+        summary(atlas, tmp_path / "flags.db")
+
+    assert _only(tmp_path) == ["atlas.db"]
+
+
+def test_the_command_builds_the_flags_and_prints_each_depth(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    atlas = _tiny_atlas(tmp_path / "atlas.db")
+
+    main(["equilibrium", str(atlas), str(tmp_path / "flags.db")])
+
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].split()[0] == "depth"
+    assert [line.split() for line in lines[1:]] == [
+        ["0", "1", "1", "0", "4", "2", "1"],
+        ["1", "5", "2", "1", "0", "0", "0"],
+    ]
+
+
+def test_the_command_can_summarize_flags_it_built_before(
+    flagged: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(
+        [
+            "equilibrium",
+            str(flagged / "atlas.db"),
+            str(flagged / "flags.db"),
+            "--summary-only",
+        ]
+    )
+
+    assert len(capsys.readouterr().out.splitlines()) == 3
