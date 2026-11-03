@@ -6,7 +6,7 @@ import pytest
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.generate.rules import legal_pairings
+from booker.game.rules import legal_pairings
 
 
 def _play_game(rng: random.Random) -> Iterator[State]:

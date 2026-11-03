@@ -15,7 +15,7 @@ from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.orbits import PairingOrbits
-from booker.generate.rules import legal_pairings
+from booker.game.rules import legal_pairings
 
 FRESH = Record(wins=0, losses=0)
 ONE_ONE = Record(wins=1, losses=1)

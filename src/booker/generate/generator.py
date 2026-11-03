@@ -10,8 +10,8 @@ from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.orbits import PairingOrbits
+from booker.game.rules import legal_pairings
 from booker.generate.backend import Backend, Canonicalizer
-from booker.generate.rules import legal_pairings
 
 
 def generate(path: str, max_depth: int, backend: Backend) -> None:
@@ -25,14 +25,23 @@ def generate(path: str, max_depth: int, backend: Backend) -> None:
         with atlas.transaction() as tx:
             tx.use_backend(backend.value)
         canon = backend.canonicalizer(atlas.states())
-        with atlas.transaction() as tx:
-            tx.record_root(tx.add_state(canon(State.start())))
-        for depth in range(max_depth):
-            _expand_depth(atlas, canon, depth)
-        # A decided state is never expanded, even when every depth is.
-        with atlas.transaction() as tx:
-            tx.mark_decided_expanded()
+        expand(atlas, canon, State.start(), max_depth)
         print("states:", atlas.num_states(), "actions:", atlas.num_actions())
+
+
+def expand(atlas: Atlas, canon: Canonicalizer, root: State, max_depth: int) -> None:
+    """
+    Expands `atlas` from `root` down to `max_depth` matches. The root is the start of the
+    tournament for the whole atlas; any state that can arise in play gives the atlas of
+    what remains of that game.
+    """
+    with atlas.transaction() as tx:
+        tx.record_root(tx.add_state(canon(root)))
+    for depth in range(max_depth):
+        _expand_depth(atlas, canon, depth)
+    # A decided state is never expanded, even when every depth is.
+    with atlas.transaction() as tx:
+        tx.mark_decided_expanded()
 
 
 def _expand_depth(atlas: Atlas, canon: Canonicalizer, depth: int) -> None:

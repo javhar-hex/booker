@@ -10,7 +10,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.generate.rules import LOWER_BRACKET_SURVIVOR, legal_pairings
+from booker.game.rules import LOWER_BRACKET_SURVIVOR, legal_pairings
 
 A, B, C = (Team(index=i) for i in range(3))
 UNBEATEN = Record(wins=2, losses=0)

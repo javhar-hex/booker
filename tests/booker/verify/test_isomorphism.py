@@ -1,6 +1,10 @@
 import pytest
 from javhar_util.immutables import ZSet, ZVec
 
+from booker.core.model.pairing import Pairing
+from booker.core.model.record import Record
+from booker.core.model.state import State
+from booker.core.model.team import Team
 from booker.verify.isomorphism import (
     IGRAPH,
     NETWORKX,
@@ -8,15 +12,18 @@ from booker.verify.isomorphism import (
     Mode,
     are_isomorphic,
 )
-from booker.verify.position import Pair, Position, Standing
 
-ONE_ONE = Standing(wins=1, losses=1)
-ZERO_ONE = Standing(wins=0, losses=1)
+ONE_ONE = Record(wins=1, losses=1)
+ZERO_ONE = Record(wins=0, losses=1)
+
+
+def _pairing(a: int, b: int) -> Pairing:
+    return Pairing.of(Team(index=a), Team(index=b))
 
 
 def _graph(colours: list[int], *edges: tuple[int, int]) -> ColouredGraph:
     return ColouredGraph(
-        colours=ZVec(colours), edges=ZSet(Pair(low=a, high=b) for a, b in edges)
+        colours=ZVec(colours), edges=ZSet(_pairing(a, b) for a, b in edges)
     )
 
 
@@ -59,24 +66,18 @@ def test_graphs_of_different_sizes_are_not_isomorphic(mode: Mode) -> None:
     assert not are_isomorphic(_graph([0, 0], (0, 1)), _graph([0, 0]), mode)
 
 
-def test_a_position_is_coloured_by_its_standings() -> None:
-    position = Position(
-        standings=ZVec([ONE_ONE, ZERO_ONE]), meetings=ZSet([Pair(low=0, high=1)])
-    )
+def test_a_state_is_coloured_by_its_records() -> None:
+    state = State(records=ZVec([ONE_ONE, ZERO_ONE]), met=ZSet([_pairing(0, 1)]))
 
-    graph = ColouredGraph.of(position)
+    graph = ColouredGraph.of(state)
 
-    assert list(graph.colours) == [ONE_ONE.colour, ZERO_ONE.colour]
-    assert graph.edges == position.meetings
+    assert list(graph.colours) == [3, 1]
+    assert graph.edges == state.met
 
 
-def test_marking_a_pair_sets_its_teams_apart() -> None:
-    position = Position(standings=ZVec([ONE_ONE] * 3), meetings=ZSet([]))
+def test_marking_a_pairing_sets_its_teams_apart() -> None:
+    state = State(records=ZVec([ONE_ONE] * 3), met=ZSet([]))
 
-    marked = ColouredGraph.marked(position, Pair(low=0, high=2))
+    marked = ColouredGraph.marked(state, _pairing(0, 2))
 
-    assert list(marked.colours) == [
-        2 * ONE_ONE.colour + 1,
-        2 * ONE_ONE.colour,
-        2 * ONE_ONE.colour + 1,
-    ]
+    assert list(marked.colours) == [7, 6, 7]

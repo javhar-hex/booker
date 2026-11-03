@@ -17,8 +17,9 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.generate.backend import BLISS
-from booker.generate.generator import generate
+from booker.generate.backend import BLISS, BlissCanonicalizer
+from booker.generate.generator import expand, generate
+from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.failure import AuditFailure
 from booker.verify.isomorphism import NETWORKX
@@ -127,7 +128,11 @@ def test_accepts_a_rematch_that_costs_one(tmp_path: Path) -> None:
         ("UPDATE states SET value=1 WHERE id=2", IdRange(start=CHILD), "worth 0"),
         ("UPDATE states SET depth=29 WHERE id=2", IdRange(start=CHILD), "depth 29"),
         ("UPDATE states SET active=3 WHERE id=1", EVERY_STATE, "team count"),
-        ("UPDATE states SET key=X'FF' WHERE id=2", IdRange(start=CHILD), "claims 255"),
+        (
+            "UPDATE states SET key=X'FF' WHERE id=2",
+            IdRange(start=CHILD),
+            "invalid position",
+        ),
         ("UPDATE meta SET value='4' WHERE key='schema_version'", EVERY_STATE, "schema"),
         ("UPDATE meta SET value='chess' WHERE key='game'", EVERY_STATE, "game"),
         ("DELETE FROM meta WHERE key='root_id'", EVERY_STATE, "does not say"),
@@ -143,7 +148,7 @@ def test_rejects_a_solved_atlas_broken_in_one_way(
 @pytest.mark.parametrize(
     ("key", "depth", "complaint"),
     [
-        ("020000 01", 28, "unbeaten teams have met"),
+        ("020000 01", 28, "unbeaten teams cannot have met"),
         ("020D0200", 29, "a champion, with teams still playing"),
     ],
 )
@@ -259,3 +264,64 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
     assert first == []
     assert second == ["resuming at id 4 after 3 states"]
     assert resumed == _audit(generated, ids=IdRange())
+
+
+ENDGAME = State(
+    records=ZVec([Record(wins=4, losses=0)] + [Record(wins=3, losses=1)] * 4),
+    met=ZSet(Pairing.of(Team(index=a), Team(index=4)) for a in (0, 1, 2)),
+)
+ENDGAME_STATES = 29
+ROOT = 1
+
+
+@pytest.fixture(scope="module")
+def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """
+    The rest of a real game from five teams on, fully generated and solved: unlike the
+    hand-built atlases, its Scheduler has actions worth different amounts, and its
+    Collider positions have children worth different amounts, so that a value taken as
+    a minimum where it should be a maximum, or the reverse, shows.
+    """
+    path = tmp_path_factory.mktemp("endgame") / "atlas.db"
+    with Atlas.open(path) as atlas:
+        expand(atlas, BlissCanonicalizer(), ENDGAME, MAX_MATCHES)
+    solve(str(path))
+    return path
+
+
+UNEQUAL_CHILDREN = (
+    "SELECT a.rowid FROM actions a JOIN states x ON x.id = a.a_wins "
+    "JOIN states y ON y.id = a.b_wins WHERE x.value != y.value LIMIT 1"
+)
+COLLIDER_AS_MIN = (
+    "UPDATE actions SET value = (SELECT MIN(x.value, y.value) FROM states x, states y "
+    f"WHERE x.id = actions.a_wins AND y.id = actions.b_wins) WHERE rowid = ({UNEQUAL_CHILDREN})"
+)
+ROOT_AS_MAX = (
+    "UPDATE states SET value = (SELECT MAX(repeat_cost + value) FROM actions "
+    f"WHERE parent = states.id) WHERE id = {ROOT}"
+)
+
+
+def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
+    report = _audit(endgame)
+
+    assert report.states == ENDGAME_STATES
+    assert report.is_solved
+    assert report.unexpanded == 0
+
+
+@pytest.mark.parametrize(
+    ("sql", "complaint"),
+    [
+        (COLLIDER_AS_MIN, "Collider value"),
+        (ROOT_AS_MAX, "best action is worth"),
+        (f"UPDATE states SET value = value + 1 WHERE id = {ROOT}", "best action"),
+        ("UPDATE actions SET value = value + 1 WHERE rowid = 1", "Collider value"),
+    ],
+)
+def test_rejects_the_rest_of_a_real_game_valued_wrongly(
+    endgame: Path, sql: str, complaint: str
+) -> None:
+    with pytest.raises(AuditFailure, match=complaint):
+        _audit(_tamper(endgame, sql))

@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
+from booker.atlas.schema import META, SCHEMA_VERSION
+from booker.core.model.invariants import (
+    CHAMPION_WINS,
+    ELIMINATION_LOSSES,
+    MAX_MATCHES,
+    NUM_PARTICIPANTS,
+)
+from booker.core.model.record import Record
+from booker.core.model.state import State
 from booker.verify.database import Database, StateId
 from booker.verify.failure import AuditFailure
 from booker.verify.plan import AuditPlan
-from booker.verify.position import Position, Standing
-from booker.verify.spec import (
-    CHAMPION_WINS,
-    ELIMINATION_LOSSES,
-    GAME,
-    MAX_MATCHES,
-    NUM_TEAMS,
-    SCHEMA_VERSION,
-)
 
 
 def check_metadata(db: Database) -> StateId:
@@ -23,8 +23,8 @@ def check_metadata(db: Database) -> StateId:
         raise AuditFailure(
             f"schema version {metadata.get('schema_version')}, not {SCHEMA_VERSION}"
         )
-    if metadata.get("game") != GAME:
-        raise AuditFailure(f"game {metadata.get('game')}, not {GAME}")
+    if metadata.get("game") != META["game"]:
+        raise AuditFailure(f"game {metadata.get('game')}, not {META['game']}")
     root = metadata.get("root_id")
     if root is None:
         raise AuditFailure("the atlas does not say which position is its root")
@@ -56,24 +56,24 @@ def _check_complete(db: Database) -> None:
     if db.max_depth() != MAX_MATCHES:
         raise AuditFailure(f"last match is missing: depth {db.max_depth()}")
     decided = {
-        (stored.position.standings[0], stored.depth)
+        (stored.state.records[0], stored.depth)
         for stored in (db.stored(state_id) for state_id in db.decided_ids())
     }
     if len(db.decided_ids()) != 2 or decided != _both_endings():
-        raise AuditFailure(f"incorrect decided states: {sorted(decided)}")
+        raise AuditFailure(f"incorrect decided states: {sorted(map(str, decided))}")
 
 
-def _both_endings() -> set[tuple[Standing, int]]:
+def _both_endings() -> set[tuple[Record, int]]:
     "The champion wins CHAMPION_WINS matches, and loses none or all but one life."
-    first_ending = ELIMINATION_LOSSES * (NUM_TEAMS - 1)
+    first_ending = ELIMINATION_LOSSES * (NUM_PARTICIPANTS - 1)
     return {
-        (Standing(wins=CHAMPION_WINS, losses=losses), first_ending + losses)
+        (Record(wins=CHAMPION_WINS, losses=losses), first_ending + losses)
         for losses in (0, ELIMINATION_LOSSES - 1)
     }
 
 
 def _check_opening(db: Database, root: StateId) -> None:
-    if db.stored(root).position != Position.opening():
+    if db.stored(root).state != State.start():
         raise AuditFailure("wrong initial position")
     if db.num_at_depth(0) != 1:
         raise AuditFailure(f"{db.num_at_depth(0)} positions at depth 0, expected 1")

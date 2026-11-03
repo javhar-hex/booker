@@ -1,4 +1,7 @@
-"""A read-only view of an atlas database, as the verifier reads it, row by row."""
+"""
+A read-only view of an atlas database, read row by row with SQL of its own rather than
+through the `Atlas` that wrote it.
+"""
 
 from __future__ import annotations
 
@@ -11,8 +14,11 @@ from typing import Self
 
 from javhar_util.immutables import ZMap, ZVec
 
+from booker.atlas.codec import PackedState
+from booker.core.model.pairing import Pairing
+from booker.core.model.state import State
+from booker.core.model.team import Team
 from booker.verify.failure import AuditFailure
-from booker.verify.position import Pair, Position
 
 POSITION_CACHE_SIZE = 65536
 
@@ -25,8 +31,8 @@ class StateId:
 
 
 @dc.dataclass(frozen=True, slots=True)
-class StoredPosition:
-    position: Position
+class StoredState:
+    state: State
     depth: int
     num_teams: int
     value: int | None
@@ -37,7 +43,7 @@ class StoredPosition:
 class ActionRow:
     "The Scheduler's pairing from a position, and where each winner leads."
 
-    pair: Pair
+    pairing: Pairing
     repeat_cost: int
     low_wins: StateId
     high_wins: StateId
@@ -70,7 +76,7 @@ class Database:
     def metadata(self) -> ZMap[str, str]:
         return ZMap(dict(self._con.execute("SELECT key,value FROM meta")))
 
-    def stored(self, state_id: StateId) -> StoredPosition:
+    def stored(self, state_id: StateId) -> StoredState:
         return self._load(state_id)
 
     def actions(self, parent: StateId) -> ZVec[ActionRow]:
@@ -81,7 +87,7 @@ class Database:
         )
         return ZVec(
             ActionRow(
-                pair=Pair(low=a, high=b),
+                pairing=Pairing.of(Team(index=a), Team(index=b)),
                 repeat_cost=cost,
                 low_wins=StateId(value=low_wins),
                 high_wins=StateId(value=high_wins),
@@ -136,7 +142,7 @@ class Database:
         ).fetchone()
         return None if row is None else StateId(value=row[0])
 
-    def _read(self, state_id: StateId) -> StoredPosition:
+    def _read(self, state_id: StateId) -> StoredState:
         row = self._con.execute(
             "SELECT key,depth,active,value,expanded FROM states WHERE id=?",
             (state_id.value,),
@@ -144,8 +150,14 @@ class Database:
         if row is None:
             raise AuditFailure(f"state {state_id.value} does not exist")
         key, depth, num_teams, value, expanded = row
-        return StoredPosition(
-            position=Position.parse(key),
+        try:
+            state = PackedState(data=key).state
+        except ValueError as error:
+            raise AuditFailure(
+                f"state {state_id.value}: invalid position: {error}"
+            ) from error
+        return StoredState(
+            state=state,
             depth=depth,
             num_teams=num_teams,
             value=value,
