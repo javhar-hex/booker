@@ -1,8 +1,4 @@
-"""
-A slow graph-matching canonicalizer for a small executable sample, independent of
-BLISS. Representatives are the first-discovered labelled states, so never use it on the
-full atlas.
-"""
+"""A canonicalizer of states that does not use BLISS, for cross-checking it."""
 
 from __future__ import annotations
 
@@ -17,15 +13,16 @@ from booker.core.symmetry.vf2 import Vf2Symmetry
 
 Signature = ZVec[TeamSignature]
 
-MAX_DEPTH = 6
-"The deepest layer, counted in matches played, that is still small enough to use."
 
-
-class VF2PrefixCanonicalizer:
+class StateCanonicalizer:
     """
-    Maps a state to the first state seen that is isomorphic to it, or to itself if it is
-    the first of its kind. Remembering what it has seen is the point, not a shortcut:
-    the representatives are whichever labelled states happened to come first.
+    Maps a state to a representative of its isomorphism class: isomorphic states get the
+    same one. Which state represents a class depends on what the canonicalizer has been
+    shown, starting with `known`, so a generation that resumes must hand it the states
+    that are already stored. That memory is deliberate, and it is mutable: each state
+    that is the first of its class is remembered as it is met. The cost of a state grows
+    with the number of classes already met, so it suits a prefix of the atlas better than
+    all of it.
     """
 
     def __init__(self, known: Iterable[State]) -> None:

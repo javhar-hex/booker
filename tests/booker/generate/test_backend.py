@@ -1,13 +1,11 @@
 from javhar_util.immutables import ZSet, ZVec
 
-from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.relabelling import Relabelling
 from booker.generate.backend import BLISS, VF2, Backend, BlissCanonicalizer
-from booker.generate.vf2 import MAX_DEPTH as VF2_MAX_DEPTH
 
 ONE_ONE = Record(wins=1, losses=1)
 PATH = State(
@@ -21,11 +19,6 @@ SHUFFLED_PATH = Relabelling.of([2, 0, 3, 1]).state(PATH)
 
 def test_backends_are_named_as_an_atlas_records_them() -> None:
     assert (Backend("bliss"), Backend("vf2")) == (BLISS, VF2)
-
-
-def test_bliss_generates_the_whole_game_and_vf2_a_prefix() -> None:
-    assert BLISS.max_depth == MAX_MATCHES
-    assert VF2.max_depth == VF2_MAX_DEPTH < MAX_MATCHES
 
 
 def test_bliss_maps_isomorphic_states_to_one_state() -> None:

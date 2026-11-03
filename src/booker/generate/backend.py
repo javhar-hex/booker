@@ -6,12 +6,10 @@ import enum
 from collections.abc import Iterable
 from typing import Protocol
 
-from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.symmetry.canonical import CanonicalSchedule
-from booker.generate.vf2 import MAX_DEPTH as VF2_MAX_DEPTH
-from booker.generate.vf2 import VF2PrefixCanonicalizer
+from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
 class Canonicalizer(Protocol):
@@ -29,18 +27,10 @@ class Backend(enum.Enum):
     BLISS = "bliss"
     VF2 = "vf2"
 
-    @property
-    def max_depth(self) -> int:
-        "The deepest layer, in matches played, that this backend can generate."
-        if self is Backend.VF2:
-            return VF2_MAX_DEPTH
-        else:
-            return MAX_MATCHES
-
     def canonicalizer(self, known: Iterable[State]) -> Canonicalizer:
         "One that stays consistent with `known`, the states already in an atlas."
         if self is Backend.VF2:
-            return VF2PrefixCanonicalizer(known)
+            return StateCanonicalizer(known)
         else:
             return BlissCanonicalizer()
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from booker.atlas.storage import Atlas
 from booker.atlas.stored import StoredState
 from booker.atlas.transaction import AtlasTransaction
+from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
@@ -16,11 +17,8 @@ from booker.generate.backend import Backend, Canonicalizer
 
 def generate(path: str, max_depth: int, backend: Backend) -> None:
     "Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches."
-    if not 0 <= max_depth <= backend.max_depth:
-        raise ValueError(
-            f"{backend.value} generates to depth {backend.max_depth} at most, "
-            f"not {max_depth}"
-        )
+    if not 0 <= max_depth <= MAX_MATCHES:
+        raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
         with atlas.transaction() as tx:
             tx.use_backend(backend.value)

@@ -34,13 +34,8 @@ def _contents(path: Path) -> list[tuple[object, ...]]:
 
 @pytest.mark.parametrize("depth", [-1, MAX_MATCHES + 1])
 def test_rejects_a_depth_outside_the_game(path: Path, depth: int) -> None:
-    with pytest.raises(ValueError, match="at most"):
+    with pytest.raises(ValueError, match="between 0 and"):
         generate(str(path), depth, BLISS)
-
-
-def test_rejects_a_depth_the_vf2_backend_cannot_manage(path: Path) -> None:
-    with pytest.raises(ValueError, match="vf2 generates to depth"):
-        generate(str(path), VF2.max_depth + 1, VF2)
 
 
 def test_resumed_generation_matches_generation_in_one_go(
