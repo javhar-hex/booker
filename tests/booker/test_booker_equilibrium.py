@@ -17,8 +17,8 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZMap, ZVec
 
+from booker.atlas.schema import open_connection
 from booker.equilibrium import LayerSummary, build, summary
-from booker.storage import connect, init
 
 R, X, Y, Z, W, V = 1, 2, 3, 4, 5, 6
 VALUES = ZMap({R: 1, X: 1, Y: 0, Z: 1, W: 2, V: 1})
@@ -51,8 +51,7 @@ class Flags:
 
 
 def _tiny_atlas(path: Path) -> Path:
-    con = connect(path)
-    init(con)
+    con = open_connection(path)
     with con:
         con.execute("INSERT INTO meta VALUES ('root_id', ?)", (str(R),))
         for sid, value in VALUES.items():

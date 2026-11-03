@@ -12,7 +12,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from .state import State, pack, unpack
+SCHEMA_VERSION = "5"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -42,48 +42,38 @@ CREATE INDEX IF NOT EXISTS ix_actions_a ON actions(a_wins);
 CREATE INDEX IF NOT EXISTS ix_actions_b ON actions(b_wins);
 """
 
+META = {
+    "schema_version": SCHEMA_VERSION,
+    "game": "unrestricted-16-2-6",
+    "value_convention": "minimum guaranteed additional repeats",
+}
 
-def connect(path: str | Path) -> sqlite3.Connection:
+
+def open_connection(path: str | Path) -> sqlite3.Connection:
+    "A connection to the database at `path`, which has this schema, created if new."
     con = sqlite3.connect(str(path))
     con.execute("PRAGMA foreign_keys=ON")
     con.execute("PRAGMA busy_timeout=5000")
+    con.execute("PRAGMA journal_mode=WAL")
+    _require_compatible(con)
+    con.executescript(DDL)
+    for key, value in META.items():
+        con.execute("INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)", (key, value))
+    con.commit()
     return con
 
 
-def init(con: sqlite3.Connection) -> None:
-    row = con.execute(
+def _require_compatible(con: sqlite3.Connection) -> None:
+    has_meta = con.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'"
     ).fetchone()
-    if row:
-        previous = con.execute(
-            "SELECT value FROM meta WHERE key='schema_version'"
-        ).fetchone()
-        if previous and previous[0] != "5":
-            raise ValueError(
-                f"Database schema v{previous[0]} cannot be resumed with schema v5; regenerate"
-            )
-    con.executescript(DDL)
-    values = {
-        "schema_version": "5",
-        "game": "unrestricted-16-2-6",
-        "value_convention": "minimum guaranteed additional repeats",
-    }
-    for k, v in values.items():
-        con.execute("INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)", (k, v))
-    con.commit()
-
-
-def add_state(con: sqlite3.Connection, s: State) -> int:
-    key = pack(s)
-    con.execute(
-        "INSERT OR IGNORE INTO states(key,depth,active) VALUES (?,?,?)",
-        (key, s.depth, len(s.players)),
-    )
-    sid: int = con.execute("SELECT id FROM states WHERE key=?", (key,)).fetchone()[0]
-    return sid
-
-
-def state_by_id(con: sqlite3.Connection, sid: int) -> State:
-    row = con.execute("SELECT key FROM states WHERE id=?", (sid,)).fetchone()
-    assert row is not None
-    return unpack(row[0])
+    if not has_meta:
+        return
+    previous = con.execute(
+        "SELECT value FROM meta WHERE key='schema_version'"
+    ).fetchone()
+    if previous and previous[0] != SCHEMA_VERSION:
+        raise ValueError(
+            f"Database schema v{previous[0]} cannot be resumed with schema "
+            f"v{SCHEMA_VERSION}; regenerate"
+        )

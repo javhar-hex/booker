@@ -15,7 +15,9 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZVec
 
-from booker.generate import generate, solve
+from booker.generate.backend import BLISS, VF2, Backend
+from booker.generate.generator import generate
+from booker.solve import solve
 from booker.verify import audit
 
 FIRST_ROUND_MATCHES = 8
@@ -50,8 +52,8 @@ REFERENCE = ZVec(
 )
 
 
-def _generate(directory: Path, max_depth: int, backend: str) -> Path:
-    db = directory / f"{backend}-{max_depth}.db"
+def _generate(directory: Path, max_depth: int, backend: Backend) -> Path:
+    db = directory / f"{backend.value}-{max_depth}.db"
     generate(str(db), max_depth=max_depth, backend=backend)
     return db
 
@@ -81,24 +83,24 @@ def _reference_below(max_depth: int) -> ZVec[LayerCounts]:
 
 @pytest.fixture(scope="module")
 def shallow_atlas(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return _generate(tmp_path_factory.mktemp("shallow"), SHALLOW_DEPTH, "bliss")
+    return _generate(tmp_path_factory.mktemp("shallow"), SHALLOW_DEPTH, BLISS)
 
 
 @pytest.fixture(scope="module")
 def deep_atlas(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return _generate(tmp_path_factory.mktemp("deep"), len(REFERENCE), "bliss")
+    return _generate(tmp_path_factory.mktemp("deep"), len(REFERENCE), BLISS)
 
 
 def test_layers_until_some_match_is_necessarily_outside_round_one(
     tmp_path: Path,
 ) -> None:
     max_depth = FIRST_ROUND_MATCHES + 2
-    db = _generate(tmp_path, max_depth, "bliss")
+    db = _generate(tmp_path, max_depth, BLISS)
     assert _expanded_layers(db, max_depth) == _reference_below(max_depth)
 
 
 def test_bliss_and_vf2_backends_agree(shallow_atlas: Path, tmp_path: Path) -> None:
-    vf2_atlas = _generate(tmp_path, SHALLOW_DEPTH, "vf2")
+    vf2_atlas = _generate(tmp_path, SHALLOW_DEPTH, VF2)
     expected = _expanded_layers(shallow_atlas, SHALLOW_DEPTH)
     assert _expanded_layers(vf2_atlas, SHALLOW_DEPTH) == expected
 

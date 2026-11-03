@@ -5,9 +5,11 @@ misses.
 """
 
 import random
+from collections.abc import Callable, Iterator
 
+import networkx as nx
 import pytest
-from javhar_util.immutables import ZMap, ZSet, ZVec
+from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
@@ -44,7 +46,7 @@ def _random_state(rng: random.Random) -> State:
             break
         pairing = rng.choice(pairings)
         winner = rng.choice([pairing.low, pairing.high])
-        state = successor(state, Outcome(winners=ZMap({pairing: winner})))
+        state = successor(state, Outcome.single(pairing, winner))
     return state
 
 
@@ -126,3 +128,24 @@ def test_distinguishes_who_is_paired_with_whom() -> None:
 
     assert CanonicalSchedule.of(rematches) != CanonicalSchedule.of(fresh)
     assert CanonicalSchedule.of(fresh) == CanonicalSchedule.of(also_fresh)
+
+
+def _graph(state: State) -> nx.Graph[int]:
+    graph: nx.Graph[int] = nx.Graph()
+    graph.add_nodes_from(
+        (team.index, {"record": state.record(team)}) for team in state.teams
+    )
+    graph.add_edges_from((p.low.index, p.high.index) for p in state.met)
+    return graph
+
+
+def test_canonical_state_is_isomorphic_to_the_original_by_networkx(
+    play_game: Callable[[random.Random], Iterator[State]],
+) -> None:
+    "An oracle independent of igraph/BLISS, which the canonical form is built on."
+    rng = random.Random(0)
+    same_record = nx.algorithms.isomorphism.categorical_node_match("record", None)
+
+    for state in (state for _ in range(20) for state in play_game(rng)):
+        canonical = CanonicalSchedule.of(Schedule.empty(state)).schedule.state
+        assert nx.is_isomorphic(_graph(canonical), _graph(state), node_match=same_record)
