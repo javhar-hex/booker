@@ -18,7 +18,10 @@ from javhar_util.immutables import ZVec
 from booker.generate.backend import BLISS, VF2, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
-from booker.verify import audit
+from booker.verify.audit import audit
+from booker.verify.failure import AuditFailure
+from booker.verify.isomorphism import NETWORKX
+from booker.verify.plan import AuditPlan, AuditReport, IdRange
 
 FIRST_ROUND_MATCHES = 8
 SHALLOW_DEPTH = 6
@@ -110,14 +113,30 @@ def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
         solve(str(shallow_atlas))
 
 
+def _audit(
+    db: Path,
+    ids: IdRange | None = None,
+    limit: int | None = None,
+    checkpoint: Path | None = None,
+) -> AuditReport:
+    plan = AuditPlan(
+        db=str(db),
+        mode=NETWORKX,
+        ids=IdRange() if ids is None else ids,
+        limit=limit,
+        checkpoint=None if checkpoint is None else str(checkpoint),
+    )
+    return audit(plan, log=lambda message: None)
+
+
 def test_verifier_accepts_the_shallow_atlas(shallow_atlas: Path) -> None:
-    audit(str(shallow_atlas))
+    _audit(shallow_atlas)
 
 
 def test_verifier_accepts_the_shallow_atlas_in_two_ranges(shallow_atlas: Path) -> None:
     middle = 10
-    audit(str(shallow_atlas), to_id=middle)
-    audit(str(shallow_atlas), from_id=middle)
+    _audit(shallow_atlas, ids=IdRange(stop=middle))
+    _audit(shallow_atlas, ids=IdRange(start=middle))
 
 
 WRONG_ROOT_CLASS_SIZE = (
@@ -162,8 +181,8 @@ def test_verifier_rejects_wrong_pairing_classes(
     shallow_atlas: Path, tmp_path: Path, tampering: str, complaint: str
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, tampering)
-    with pytest.raises(AssertionError, match=f"orbit {complaint}"):
-        audit(str(db))
+    with pytest.raises(AuditFailure, match=f"orbit {complaint}"):
+        _audit(db)
 
 
 def test_verifier_range_checks_only_its_own_states(
@@ -171,9 +190,9 @@ def test_verifier_range_checks_only_its_own_states(
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
     after_root = _root_id(db) + 1
-    audit(str(db), from_id=after_root)
-    with pytest.raises(AssertionError, match="orbit sizes"):
-        audit(str(db), to_id=after_root)
+    _audit(db, ids=IdRange(start=after_root))
+    with pytest.raises(AuditFailure, match="orbit sizes"):
+        _audit(db, ids=IdRange(stop=after_root))
 
 
 @pytest.mark.slow
@@ -183,26 +202,20 @@ def test_layers_well_past_the_first_round(deep_atlas: Path) -> None:
 
 @pytest.mark.slow
 def test_verifier_accepts_the_deep_atlas(deep_atlas: Path) -> None:
-    audit(str(deep_atlas))
+    _audit(deep_atlas)
 
 
 FIRST_SITTING = 5
 
 
-def _pass_line(captured: str) -> str:
-    return next(line for line in captured.splitlines() if line.startswith("PASS"))
-
-
 def test_verifier_resumes_to_the_same_totals(
-    shallow_atlas: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    shallow_atlas: Path, tmp_path: Path
 ) -> None:
-    audit(str(shallow_atlas))
-    in_one_sitting = _pass_line(capsys.readouterr().out)
-    checkpoint = str(tmp_path / "progress.json")
-    audit(str(shallow_atlas), limit=FIRST_SITTING, checkpoint=checkpoint)
-    capsys.readouterr()
-    audit(str(shallow_atlas), checkpoint=checkpoint)
-    assert _pass_line(capsys.readouterr().out) == in_one_sitting
+    in_one_sitting = _audit(shallow_atlas)
+    checkpoint = tmp_path / "progress.json"
+    _audit(shallow_atlas, limit=FIRST_SITTING, checkpoint=checkpoint)
+
+    assert _audit(shallow_atlas, checkpoint=checkpoint) == in_one_sitting
 
 
 def test_verifier_resume_skips_states_already_checked(
@@ -210,16 +223,16 @@ def test_verifier_resume_skips_states_already_checked(
 ) -> None:
     db = tmp_path / "atlas.db"
     shutil.copy(shallow_atlas, db)
-    checkpoint = str(tmp_path / "progress.json")
-    audit(str(db), limit=FIRST_SITTING, checkpoint=checkpoint)
+    checkpoint = tmp_path / "progress.json"
+    _audit(db, limit=FIRST_SITTING, checkpoint=checkpoint)
     _tamper(db, WRONG_ROOT_CLASS_SIZE)
-    audit(str(db), checkpoint=checkpoint)
+    _audit(db, checkpoint=checkpoint)
 
 
 def test_verifier_refuses_a_checkpoint_from_another_range(
     shallow_atlas: Path, tmp_path: Path
 ) -> None:
-    checkpoint = str(tmp_path / "progress.json")
-    audit(str(shallow_atlas), limit=FIRST_SITTING, checkpoint=checkpoint)
-    with pytest.raises(AssertionError, match="another run"):
-        audit(str(shallow_atlas), from_id=FIRST_SITTING, checkpoint=checkpoint)
+    checkpoint = tmp_path / "progress.json"
+    _audit(shallow_atlas, limit=FIRST_SITTING, checkpoint=checkpoint)
+    with pytest.raises(AuditFailure, match="another run"):
+        _audit(shallow_atlas, ids=IdRange(start=FIRST_SITTING), checkpoint=checkpoint)
