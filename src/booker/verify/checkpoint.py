@@ -44,7 +44,7 @@ class Scope:
     "What an audit covers; progress saved for one scope means nothing for another."
 
     db: str
-    mode: str
+    mode: str | None
     from_id: int | None
     to_id: int | None
 
@@ -52,7 +52,7 @@ class Scope:
     def of(cls, plan: AuditPlan) -> Scope:
         return cls(
             db=os.path.abspath(plan.db),
-            mode=plan.mode.value,
+            mode=None if plan.strict is None else plan.strict.value,
             from_id=plan.ids.start,
             to_id=plan.ids.stop,
         )

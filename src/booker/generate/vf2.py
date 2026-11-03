@@ -6,24 +6,14 @@ full atlas.
 
 from __future__ import annotations
 
-import dataclasses as dc
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Iterable
 
-import networkx as nx
 from javhar_util.immutables import ZVec
 
 from booker.core.model.state import State
-
-
-@dc.dataclass(frozen=True, slots=True, order=True)
-class TeamSignature:
-    "What an isomorphism cannot change about one team."
-
-    wins: int
-    losses: int
-    degree: int
-
+from booker.core.symmetry.invariant import TeamSignature, signature
+from booker.core.symmetry.vf2 import Vf2Symmetry
 
 Signature = ZVec[TeamSignature]
 
@@ -39,42 +29,15 @@ class VF2PrefixCanonicalizer:
     """
 
     def __init__(self, known: Iterable[State]) -> None:
+        self._symmetry = Vf2Symmetry()
         self._representatives: defaultdict[Signature, list[State]] = defaultdict(list)
         for state in known:
-            self._representatives[_signature(state)].append(state)
+            self._representatives[signature(state)].append(state)
 
     def __call__(self, state: State) -> State:
-        graph = _graph(state)
-        candidates = self._representatives[_signature(state)]
+        candidates = self._representatives[signature(state)]
         for representative in candidates:
-            if nx.is_isomorphic(graph, _graph(representative), node_match=_same_record):
+            if self._symmetry.are_isomorphic(state, representative):
                 return representative
         candidates.append(state)
         return state
-
-
-def _signature(state: State) -> Signature:
-    degree = Counter(
-        team for pairing in state.met for team in (pairing.low, pairing.high)
-    )
-    return ZVec(
-        sorted(
-            TeamSignature(wins=record.wins, losses=record.losses, degree=degree[team])
-            for team, record in zip(state.teams, state.records)
-        )
-    )
-
-
-def _graph(state: State) -> nx.Graph[int]:
-    graph: nx.Graph[int] = nx.Graph()
-    graph.add_nodes_from(
-        (team.index, {"record": state.record(team)}) for team in state.teams
-    )
-    graph.add_edges_from(
-        (pairing.low.index, pairing.high.index) for pairing in state.met
-    )
-    return graph
-
-
-def _same_record(a: dict[str, object], b: dict[str, object]) -> bool:
-    return a["record"] == b["record"]

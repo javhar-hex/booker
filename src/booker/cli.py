@@ -8,15 +8,18 @@ import argparse
 from collections.abc import Sequence
 from pathlib import Path
 
+from javhar_util.immutables import ZMap
+
 from booker.atlas.storage import Atlas
 from booker.core.model.invariants import MAX_MATCHES
+from booker.core.symmetry.kinds import SymmetryKind
 from booker.equilibrium.flags import build, summary
 from booker.generate.backend import BLISS, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
 from booker.verify.audit import audit
-from booker.verify.isomorphism import NETWORKX, Mode
 from booker.verify.plan import AuditPlan, IdRange
+from booker.verify.symmetry_sample import compare_symmetries
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -29,6 +32,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         _verify(args)
     elif args.command == "equilibrium":
         _equilibrium(args)
+    elif args.command == "compare-symmetry":
+        _compare_symmetry(args)
     else:
         _print_stats(args.db)
 
@@ -47,6 +52,13 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("solve").add_argument("db")
     sub.add_parser("stats").add_argument("db")
     _add_verify(sub)
+    comparing = sub.add_parser(
+        "compare-symmetry",
+        help="do the symmetry implementations agree on states sampled from an atlas?",
+    )
+    comparing.add_argument("db")
+    comparing.add_argument("--samples", type=int, default=300)
+    comparing.add_argument("--seed", type=int, default=0)
     equilibrium = sub.add_parser(
         "equilibrium", help="flag the positions reachable under optimal play"
     )
@@ -62,7 +74,9 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     )
     verifying.add_argument("db")
     verifying.add_argument(
-        "--mode", choices=[m.value for m in Mode], default=NETWORKX.value
+        "--strict",
+        choices=[k.value for k in SymmetryKind],
+        help="also compare every child and orbit, using this implementation (slow)",
     )
     verifying.add_argument(
         "--limit", type=int, default=0, help="Number of states to check (0=all)"
@@ -86,7 +100,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
 def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
         db=args.db,
-        mode=Mode(args.mode),
+        strict=None if args.strict is None else SymmetryKind(args.strict),
         ids=IdRange(start=args.from_id, stop=args.to_id),
         limit=args.limit or None,
         expect_root=args.expect_root,
@@ -94,6 +108,11 @@ def _verify(args: argparse.Namespace) -> None:
         checkpoint=args.checkpoint,
     )
     print(audit(plan, lambda message: print(message, flush=True)))
+
+
+def _compare_symmetry(args: argparse.Namespace) -> None:
+    implementations = ZMap({kind.value: kind.symmetry for kind in SymmetryKind})
+    print(compare_symmetries(args.db, implementations, args.samples, args.seed))
 
 
 def _equilibrium(args: argparse.Namespace) -> None:

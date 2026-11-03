@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import dataclasses as dc
 
-from javhar_util.immutables import ZMap, ZSet, ZVec
+from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.invariants import CHAMPION_WINS, MAX_MATCHES
 from booker.core.model.outcome import Outcome
+from booker.core.model.pairing import Pairing
+from booker.core.model.state import State
 from booker.core.model.successor import successor
+from booker.core.symmetry.interface import Symmetry
+from booker.core.symmetry.invariant import signature
+from booker.core.symmetry.orbits import PairingOrbits
 from booker.game.rules import legal_pairings
 from booker.verify.database import ActionRow, Database, StateId, StoredState
 from booker.verify.failure import AuditFailure
-from booker.verify.isomorphism import ColouredGraph, Mode, are_isomorphic
-from booker.verify.orbits import check_orbits
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -28,11 +31,11 @@ class StateCheck:
     Checks a position as the atlas stores it, and when it is solved the Bellman
     equations too: a Collider position is worth the larger of its two children, and a
     Scheduler position the least, over its actions, of what the action costs and is
-    worth.
+    worth. Children and orbits are checked cheaply, and with a `symmetry` thoroughly.
     """
 
     db: Database
-    mode: Mode
+    symmetry: Symmetry | None
     is_solved: bool
 
     def run(self, state_id: StateId) -> Tally:
@@ -56,17 +59,20 @@ class StateCheck:
             if rows:
                 raise AuditFailure(f"state {state_id.value}: unexpanded, with actions")
             return
-        if illegal := pairings - legal_pairings(stored.state):
+        legal = legal_pairings(stored.state)
+        if illegal := pairings - legal:
             raise AuditFailure(f"state {state_id.value}: illegal pairings {illegal}")
-        check_orbits(
-            stored.state,
-            ZMap({row.pairing: row.class_size for row in rows}),
-            self.mode,
-        )
+        if (size := sum(row.class_size for row in rows)) != len(legal):
+            raise AuditFailure(
+                f"state {state_id.value}: orbit sizes add up to {size}, "
+                f"but {len(legal)} pairings are legal"
+            )
         if (not rows) != stored.state.is_decided:
             raise AuditFailure(
                 f"state {state_id.value}: a dead end, or a decided state with moves"
             )
+        if self.symmetry is not None:
+            _check_orbits(state_id, self.symmetry.orbits(stored.state, legal), rows)
 
     def _check_children(
         self, state_id: StateId, stored: StoredState, row: ActionRow
@@ -84,12 +90,15 @@ class StateCheck:
             where = f"state {state_id.value}, pairing {pairing}, winner {winner.index}"
             expected = successor(stored.state, Outcome.single(pairing, winner))
             child = self.db.stored(child_id).state
-            if not are_isomorphic(
-                ColouredGraph.of(expected), ColouredGraph.of(child), self.mode
-            ):
-                raise AuditFailure(f"{where}: leads to the wrong state {child_id.value}")
             if child.matches_played != stored.depth + 1:
                 raise AuditFailure(f"{where}: the child is not one match deeper")
+            if not self._is_the_same_state(expected, child):
+                raise AuditFailure(f"{where}: leads to the wrong state {child_id.value}")
+
+    def _is_the_same_state(self, expected: State, stored: State) -> bool:
+        if signature(expected) != signature(stored):
+            return False
+        return self.symmetry is None or self.symmetry.are_isomorphic(expected, stored)
 
     def _check_values(
         self, state_id: StateId, stored: StoredState, rows: ZVec[ActionRow]
@@ -117,6 +126,29 @@ class StateCheck:
                 f"{row.value}, but the children are worth {low} and {high}"
             )
         return row.repeat_cost + row.value
+
+
+def _check_orbits(
+    state_id: StateId, orbits: PairingOrbits, rows: ZVec[ActionRow]
+) -> None:
+    "Each orbit has exactly one stored pairing, which carries the orbit's size."
+    sizes = {row.pairing: row.class_size for row in rows}
+    for orbit in orbits:
+        representatives = [pairing for pairing in sizes if pairing in orbit.members]
+        if len(representatives) != 1:
+            raise AuditFailure(
+                f"state {state_id.value}: orbit representatives: "
+                f"{_names(representatives)} stored for the orbit of {_names(orbit.members)}"
+            )
+        if sizes[representatives[0]] != orbit.size:
+            raise AuditFailure(
+                f"state {state_id.value}: orbit sizes: {representatives[0]} is stored "
+                f"as {sizes[representatives[0]]}, but its orbit has {orbit.size}"
+            )
+
+
+def _names(pairings: ZSet[Pairing] | list[Pairing]) -> list[tuple[int, int]]:
+    return sorted((p.low.index, p.high.index) for p in pairings)
 
 
 def _check_standings(state_id: StateId, stored: StoredState) -> None:

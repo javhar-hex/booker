@@ -3,16 +3,16 @@ from pathlib import Path
 
 import pytest
 
+from booker.core.symmetry.kinds import VF2
 from booker.verify.checkpoint import BEFORE_ANY_ID, Checkpoint, Progress, Scope
 from booker.verify.database import StateId
 from booker.verify.failure import AuditFailure
-from booker.verify.isomorphism import NETWORKX
 from booker.verify.plan import AuditPlan, IdRange
 
 
 def _scope(path: Path, ids: IdRange | None = None) -> Scope:
     ids = IdRange() if ids is None else ids
-    return Scope.of(AuditPlan(db=str(path / "atlas.db"), mode=NETWORKX, ids=ids))
+    return Scope.of(AuditPlan(db=str(path / "atlas.db"), strict=VF2, ids=ids))
 
 
 def test_a_whole_audit_starts_before_every_id() -> None:
@@ -64,7 +64,7 @@ def test_the_file_keeps_the_format_of_earlier_audits(tmp_path: Path) -> None:
     assert json.loads(path.read_text()) == {
         "scope": {
             "db": str(tmp_path / "atlas.db"),
-            "mode": "networkx",
+            "mode": "vf2",
             "from_id": 3,
             "to_id": None,
         },

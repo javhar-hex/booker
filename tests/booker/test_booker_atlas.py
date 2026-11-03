@@ -15,12 +15,13 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZVec
 
+from booker.core.symmetry.kinds import VF2 as VF2_KIND
+from booker.core.symmetry.kinds import SymmetryKind
 from booker.generate.backend import BLISS, VF2, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.failure import AuditFailure
-from booker.verify.isomorphism import NETWORKX
 from booker.verify.plan import AuditPlan, AuditReport, IdRange
 
 FIRST_ROUND_MATCHES = 8
@@ -118,10 +119,11 @@ def _audit(
     ids: IdRange | None = None,
     limit: int | None = None,
     checkpoint: Path | None = None,
+    strict: SymmetryKind | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db=str(db),
-        mode=NETWORKX,
+        strict=strict,
         ids=IdRange() if ids is None else ids,
         limit=limit,
         checkpoint=None if checkpoint is None else str(checkpoint),
@@ -142,6 +144,12 @@ def test_verifier_accepts_the_shallow_atlas_in_two_ranges(shallow_atlas: Path) -
 WRONG_ROOT_CLASS_SIZE = (
     "UPDATE actions SET class_size = class_size + 1 WHERE parent = {root}"
 )
+SPLIT_ROOT_ORBIT = (
+    "UPDATE actions SET class_size = class_size / 2 WHERE parent = {root};"
+    "INSERT INTO actions (parent, a, b, repeat_cost, class_size, a_wins, b_wins) "
+    "SELECT parent, a, b + 1, repeat_cost, class_size, a_wins, b_wins "
+    "FROM actions WHERE parent = {root};"
+)
 DUPLICATE_ROOT_REPRESENTATIVE = (
     "INSERT INTO actions (parent, a, b, repeat_cost, class_size, a_wins, b_wins) "
     "SELECT parent, a, b + 1, repeat_cost, class_size, a_wins, b_wins "
@@ -158,8 +166,7 @@ def _root_id(db: Path) -> int:
 
 def _tamper(db: Path, tampering: str) -> None:
     con = sqlite3.connect(db)
-    with con:
-        con.execute(tampering.format(root=_root_id(db)))
+    con.executescript(tampering.format(root=_root_id(db)))
     con.close()
 
 
@@ -170,19 +177,28 @@ def _tampered(atlas: Path, directory: Path, tampering: str) -> Path:
     return db
 
 
+@pytest.mark.parametrize("strict", [None, VF2_KIND])
 @pytest.mark.parametrize(
-    "tampering, complaint",
-    [
-        (WRONG_ROOT_CLASS_SIZE, "sizes"),
-        (DUPLICATE_ROOT_REPRESENTATIVE, "representatives"),
-    ],
+    "tampering", [WRONG_ROOT_CLASS_SIZE, DUPLICATE_ROOT_REPRESENTATIVE]
 )
-def test_verifier_rejects_wrong_pairing_classes(
-    shallow_atlas: Path, tmp_path: Path, tampering: str, complaint: str
+def test_verifier_rejects_orbit_sizes_that_add_up_wrongly(
+    shallow_atlas: Path, tmp_path: Path, tampering: str, strict: SymmetryKind | None
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, tampering)
-    with pytest.raises(AuditFailure, match=f"orbit {complaint}"):
-        _audit(db)
+
+    with pytest.raises(AuditFailure, match="orbit sizes add up"):
+        _audit(db, strict=strict)
+
+
+def test_only_the_strict_verifier_finds_two_stored_pairings_in_one_orbit(
+    shallow_atlas: Path, tmp_path: Path
+) -> None:
+    "The sizes still add up to the number of legal pairings, but the orbit is split."
+    db = _tampered(shallow_atlas, tmp_path, SPLIT_ROOT_ORBIT)
+
+    _audit(db)
+    with pytest.raises(AuditFailure, match="orbit representatives"):
+        _audit(db, strict=VF2_KIND)
 
 
 def test_verifier_range_checks_only_its_own_states(
@@ -191,7 +207,7 @@ def test_verifier_range_checks_only_its_own_states(
     db = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
     after_root = _root_id(db) + 1
     _audit(db, ids=IdRange(start=after_root))
-    with pytest.raises(AuditFailure, match="orbit sizes"):
+    with pytest.raises(AuditFailure, match="orbit sizes add up"):
         _audit(db, ids=IdRange(stop=after_root))
 
 

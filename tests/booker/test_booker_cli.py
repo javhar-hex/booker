@@ -62,17 +62,17 @@ def test_verifies_a_generated_atlas(
     assert capsys.readouterr().out.startswith("PASS: ids [start, end): checked ")
 
 
-@pytest.mark.parametrize("mode", ["networkx", "igraph"])
-def test_verifies_with_either_isomorphism_library(
-    path: str, mode: str, capsys: pytest.CaptureFixture[str]
+@pytest.mark.parametrize("implementation", ["bliss", "vf2"])
+def test_verifies_strictly_with_any_implementation_of_the_symmetries(
+    path: str, implementation: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     main(["generate", path, "--max-depth", "3"])
     capsys.readouterr()
-    main(["verify", path, "--mode", mode, "--from-id", "2", "--limit", "4"])
+    main(["verify", path, "--strict", implementation, "--from-id", "2", "--limit", "4"])
 
     out = capsys.readouterr().out
     assert "checked 4 states" in out
-    assert f"with independent {mode.upper()} isomorphism" in out
+    assert f"compared by {implementation}" in out
 
 
 def test_verify_fails_loudly_on_a_bad_atlas(path: str) -> None:
@@ -80,3 +80,23 @@ def test_verify_fails_loudly_on_a_bad_atlas(path: str) -> None:
 
     with pytest.raises(AuditFailure, match="not complete"):
         main(["verify", path, "--require-complete"])
+
+
+def test_compares_the_symmetry_implementations_on_sampled_states(
+    path: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["generate", path, "--max-depth", "4"])
+    capsys.readouterr()
+    main(["compare-symmetry", path, "--samples", "5", "--seed", "3"])
+
+    assert capsys.readouterr().out.startswith("AGREE: 5 states, 5 orbit questions, ")
+
+
+def test_there_can_be_no_more_samples_than_states(
+    path: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["generate", path, "--max-depth", "3"])
+    capsys.readouterr()
+    main(["compare-symmetry", path, "--samples", "500"])
+
+    assert capsys.readouterr().out.startswith("AGREE: 6 states, ")

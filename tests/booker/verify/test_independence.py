@@ -1,7 +1,7 @@
 """
 The verifier shares the game's rules and the model with the generator, which unit tests
-cover. What it must not share is the code it checks: how states are canonicalized,
-how orbits are found, and how the atlas is written.
+cover, and the implementations of the symmetries of states, which tests compare with one
+another. What it must not share is the code that generates and writes the atlas.
 """
 
 import ast
@@ -11,6 +11,7 @@ import booker.verify
 
 ALLOWED_OUTSIDE_VERIFY = (
     "booker.core.model.",
+    "booker.core.symmetry.",
     "booker.game.",
     "booker.atlas.codec",
     "booker.atlas.schema",

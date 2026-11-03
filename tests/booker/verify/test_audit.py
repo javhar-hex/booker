@@ -17,13 +17,17 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.generate.backend import BLISS, BlissCanonicalizer
-from booker.generate.generator import expand, generate
-from booker.solve import solve
+from booker.core.symmetry.bliss import BlissSymmetry
+from booker.core.symmetry.kinds import BLISS as BLISS_KIND
+from booker.core.symmetry.kinds import VF2, SymmetryKind
+from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
+from booker.generate.backend import BLISS
+from booker.generate.generator import generate
 from booker.verify.audit import audit
+from booker.verify.database import Database, StateId
 from booker.verify.failure import AuditFailure
-from booker.verify.isomorphism import NETWORKX
 from booker.verify.plan import AuditPlan, AuditReport, IdRange
+from booker.verify.state_checks import StateCheck
 
 PAIRING = Pairing.of(Team(index=0), Team(index=1))
 FINAL = Record(wins=5, losses=1)
@@ -75,10 +79,11 @@ def _audit(
     expect_root: int | None = None,
     checkpoint: Path | None = None,
     log: list[str] | None = None,
+    strict: SymmetryKind | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db=str(db),
-        mode=NETWORKX,
+        strict=strict,
         ids=ids,
         limit=limit,
         require_complete=require_complete,
@@ -121,7 +126,7 @@ def test_accepts_a_rematch_that_costs_one(tmp_path: Path) -> None:
         ("UPDATE states SET value=5 WHERE id=1", EVERY_STATE, "best action is worth"),
         ("UPDATE actions SET value=3", EVERY_STATE, "Collider value"),
         ("UPDATE actions SET repeat_cost=1", EVERY_STATE, "wrong repeat cost"),
-        ("UPDATE actions SET a_wins=1", EVERY_STATE, "wrong state"),
+        ("UPDATE actions SET a_wins=1", EVERY_STATE, "one match deeper"),
         ("UPDATE actions SET a_wins=99", EVERY_STATE, "does not exist"),
         ("UPDATE states SET expanded=0 WHERE id=1", EVERY_STATE, "unexpanded, with"),
         ("UPDATE states SET expanded=0 WHERE id=2", EVERY_STATE, "bad decided state"),
@@ -266,27 +271,8 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
     assert resumed == _audit(generated, ids=IdRange())
 
 
-ENDGAME = State(
-    records=ZVec([Record(wins=4, losses=0)] + [Record(wins=3, losses=1)] * 4),
-    met=ZSet(Pairing.of(Team(index=a), Team(index=4)) for a in (0, 1, 2)),
-)
 ENDGAME_STATES = 29
 ROOT = 1
-
-
-@pytest.fixture(scope="module")
-def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """
-    The rest of a real game from five teams on, fully generated and solved: unlike the
-    hand-built atlases, its Scheduler has actions worth different amounts, and its
-    Collider positions have children worth different amounts, so that a value taken as
-    a minimum where it should be a maximum, or the reverse, shows.
-    """
-    path = tmp_path_factory.mktemp("endgame") / "atlas.db"
-    with Atlas.open(path) as atlas:
-        expand(atlas, BlissCanonicalizer(), ENDGAME, MAX_MATCHES)
-    solve(str(path))
-    return path
 
 
 UNEQUAL_CHILDREN = (
@@ -325,3 +311,81 @@ def test_rejects_the_rest_of_a_real_game_valued_wrongly(
 ) -> None:
     with pytest.raises(AuditFailure, match=complaint):
         _audit(_tamper(endgame, sql))
+
+
+class NeverIsomorphic:
+    "Denies that any two states are alike, to show the verifier asks."
+
+    def are_isomorphic(self, first: State, second: State) -> bool:
+        return False
+
+    def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
+        return BlissSymmetry().orbits(state, pairings)
+
+
+class SplitsEveryOrbit:
+    "Finds every pairing alone in its orbit, to show the verifier asks."
+
+    def are_isomorphic(self, first: State, second: State) -> bool:
+        return True
+
+    def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
+        return PairingOrbits(
+            orbits=ZVec(PairingOrbit(members=ZSet([p])) for p in sorted(pairings))
+        )
+
+
+@pytest.mark.parametrize("kind", [BLISS_KIND, VF2])
+def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementation(
+    endgame: Path, kind: SymmetryKind
+) -> None:
+    assert _audit(endgame, strict=kind).states == ENDGAME_STATES
+
+
+def test_the_strict_audit_asks_the_symmetry_whether_children_are_the_right_ones(
+    endgame: Path,
+) -> None:
+    with Database.open(str(endgame)) as db:
+        StateCheck(db=db, symmetry=None, is_solved=True).run(StateId(value=ROOT))
+
+        with pytest.raises(AuditFailure, match="wrong state"):
+            StateCheck(db=db, symmetry=NeverIsomorphic(), is_solved=True).run(
+                StateId(value=ROOT)
+            )
+
+
+def test_the_strict_audit_asks_the_symmetry_for_the_orbits(endgame: Path) -> None:
+    with (
+        Database.open(str(endgame)) as db,
+        pytest.raises(AuditFailure, match="orbit (sizes|representatives)"),
+    ):
+        StateCheck(db=db, symmetry=SplitsEveryOrbit(), is_solved=True).run(
+            StateId(value=ROOT)
+        )
+
+
+SWAPPED_CHILDREN = "UPDATE actions SET a_wins = b_wins, b_wins = a_wins WHERE rowid = 1"
+SWAPPED_SIZES = (
+    f"UPDATE actions SET class_size = 3 - class_size WHERE parent = {ROOT} "
+    "AND (a, b) IN ((0, 1), (0, 3))"
+)
+
+
+@pytest.mark.parametrize("strict", [None, BLISS_KIND, VF2])
+def test_rejects_children_of_the_right_depth_that_are_swapped(
+    endgame: Path, strict: SymmetryKind | None
+) -> None:
+    with pytest.raises(AuditFailure, match="wrong state"):
+        _audit(_tamper(endgame, SWAPPED_CHILDREN), strict=strict)
+
+
+def test_only_the_strict_audit_finds_orbit_sizes_that_add_up_but_are_swapped(
+    endgame: Path,
+) -> None:
+    "One orbit of two pairings and one of a single pairing trade their sizes."
+    tampered = _tamper(endgame, SWAPPED_SIZES)
+
+    _audit(tampered)
+    for kind in (BLISS_KIND, VF2):
+        with pytest.raises(AuditFailure, match="orbit sizes"):
+            _audit(tampered, strict=kind)

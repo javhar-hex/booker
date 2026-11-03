@@ -30,7 +30,7 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
             check_root_value(db, root, plan.expect_root)
     return AuditReport(
         ids=plan.ids,
-        mode=plan.mode,
+        strict=plan.strict,
         states=progress.states,
         actions=progress.actions,
         pairings=progress.pairings,
@@ -48,7 +48,8 @@ def _walk(
     progress = (checkpoint and checkpoint.load()) or Progress.start(plan.ids)
     if progress.states:
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")
-    check = StateCheck(db=db, mode=plan.mode, is_solved=is_solved)
+    symmetry = None if plan.strict is None else plan.strict.symmetry
+    check = StateCheck(db=db, symmetry=symmetry, is_solved=is_solved)
     for state_id in db.state_ids(progress.next_id, plan.ids.stop):
         tally = check.run(state_id)
         progress = progress.after(state_id, tally.actions, tally.pairings)
