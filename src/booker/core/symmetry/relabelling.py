@@ -1,3 +1,5 @@
+"""Permutations of the teams of a state, and their effect on what names teams."""
+
 from __future__ import annotations
 
 import dataclasses as dc
@@ -32,14 +34,10 @@ class Relabelling:
     def __len__(self) -> int:
         return len(self.images)
 
-    def team(self, team: Team) -> Team:
-        return self.images[team]
-
-    def pairing(self, pairing: Pairing) -> Pairing:
-        return Pairing.of(self.team(pairing.low), self.team(pairing.high))
-
-    def pairings(self, pairings: ZSet[Pairing]) -> ZSet[Pairing]:
-        return ZSet(self.pairing(pairing) for pairing in pairings)
+    def schedule(self, schedule: Schedule) -> Schedule:
+        return Schedule(
+            state=self.state(schedule.state), pairings=self.pairings(schedule.pairings)
+        )
 
     def state(self, state: State) -> State:
         self._require_size(state)
@@ -49,10 +47,14 @@ class Relabelling:
             met=self.pairings(state.met),
         )
 
-    def schedule(self, schedule: Schedule) -> Schedule:
-        return Schedule(
-            state=self.state(schedule.state), pairings=self.pairings(schedule.pairings)
-        )
+    def pairings(self, pairings: ZSet[Pairing]) -> ZSet[Pairing]:
+        return ZSet(self.pairing(pairing) for pairing in pairings)
+
+    def pairing(self, pairing: Pairing) -> Pairing:
+        return Pairing.of(self.team(pairing.low), self.team(pairing.high))
+
+    def team(self, team: Team) -> Team:
+        return self.images[team]
 
     def _require_size(self, state: State) -> None:
         if state.size != len(self):
