@@ -18,10 +18,10 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
-from booker.core.symmetry.kinds import BLISS as BLISS_KIND
-from booker.core.symmetry.kinds import VF2, SymmetryKind
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.symmetry_kind import BLISS as BLISS_KIND
+from booker.core.symmetry.symmetry_kind import VF2, SymmetryKind
 from booker.generate.backend import BLISS
 from booker.generate.generator import generate
 from booker.verify.audit import audit

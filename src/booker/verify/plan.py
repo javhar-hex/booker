@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses as dc
 
-from booker.core.symmetry.kinds import SymmetryKind
+from booker.core.symmetry.symmetry_kind import SymmetryKind
 
 
 @dc.dataclass(frozen=True, slots=True)

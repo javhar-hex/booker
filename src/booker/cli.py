@@ -12,7 +12,7 @@ from javhar_util.immutables import ZMap
 
 from booker.atlas.storage import Atlas
 from booker.core.model.invariants import MAX_MATCHES
-from booker.core.symmetry.kinds import SymmetryKind
+from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.equilibrium.flags import build, summary
 from booker.generate.backend import BLISS, Backend
 from booker.generate.generator import generate

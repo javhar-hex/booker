@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZVec
 
-from booker.core.symmetry.kinds import VF2 as VF2_KIND
-from booker.core.symmetry.kinds import SymmetryKind
+from booker.core.symmetry.symmetry_kind import VF2 as VF2_KIND
+from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.generate.backend import BLISS, VF2, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
