@@ -111,11 +111,11 @@ class Atlas:
     def num_unvalued(self, depth: int) -> int:
         return self._count(
             """
-            SELECT (SELECT COUNT(*) FROM states WHERE depth=?1 AND value IS NULL)
+            SELECT (SELECT COUNT(*) FROM states WHERE depth=? AND value IS NULL)
                  + (SELECT COUNT(*) FROM actions WHERE value IS NULL
-                    AND parent IN (SELECT id FROM states WHERE depth=?1))
+                    AND parent IN (SELECT id FROM states WHERE depth=?))
             """,
-            (depth,),
+            (depth, depth),
         )
 
     def mark_solved(self) -> None:

@@ -4,6 +4,8 @@ random schedules, on states reached by random results; distinctness on hand-buil
 misses.
 """
 
+from __future__ import annotations
+
 import random
 from collections.abc import Callable, Iterator
 

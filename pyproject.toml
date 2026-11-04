@@ -28,6 +28,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --maxfail=1"
+markers = ["slow: generates a deep atlas, which takes a while"]
 
 [tool.ruff]
 line-length = 89
