@@ -10,11 +10,12 @@ from javhar_util.immutables import ZVec
 from booker.core.model.state import State
 from booker.core.symmetry.symmetry import TeamSignature, signature
 from booker.core.symmetry.vf2_symmetry import Vf2Symmetry
+from booker.generate.canonicalizer import Canonicalizer
 
 Signature = ZVec[TeamSignature]
 
 
-class StateCanonicalizer:
+class StateCanonicalizer(Canonicalizer):
     """
     Maps a state to a representative of its isomorphism class: isomorphic states get the
     same one. Which state represents a class depends on what the canonicalizer has been

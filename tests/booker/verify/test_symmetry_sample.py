@@ -20,7 +20,7 @@ from booker.verify.symmetry_sample import compare_symmetries
 ALL = ZMap({kind.value: kind.symmetry for kind in SymmetryKind})
 
 
-class NeverIsomorphic:
+class NeverIsomorphic(Symmetry):
     "Wrong about isomorphism, right about orbits."
 
     def are_isomorphic(self, first: State, second: State) -> bool:
@@ -30,7 +30,7 @@ class NeverIsomorphic:
         return BlissSymmetry().orbits(state, pairings)
 
 
-class AlwaysIsomorphic:
+class AlwaysIsomorphic(Symmetry):
     "Wrong about isomorphism, right about orbits."
 
     def are_isomorphic(self, first: State, second: State) -> bool:
@@ -40,7 +40,7 @@ class AlwaysIsomorphic:
         return BlissSymmetry().orbits(state, pairings)
 
 
-class NoSymmetry:
+class NoSymmetry(Symmetry):
     "Right about isomorphism, but finds every pairing alone in its orbit."
 
     def are_isomorphic(self, first: State, second: State) -> bool:

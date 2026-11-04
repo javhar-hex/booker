@@ -10,9 +10,10 @@ from booker.core.model.state import State
 from booker.core.symmetry.bliss_graph import BlissGraph
 from booker.core.symmetry.canonical import canonical_state
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
+from booker.core.symmetry.symmetry import Symmetry
 
 
-class BlissSymmetry:
+class BlissSymmetry(Symmetry):
     "Canonical forms and the generators of the automorphism group, from BLISS."
 
     def are_isomorphic(self, first: State, second: State) -> bool:

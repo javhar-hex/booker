@@ -4,20 +4,14 @@ from __future__ import annotations
 
 import enum
 from collections.abc import Iterable
-from typing import Protocol
 
 from booker.core.model.state import State
 from booker.core.symmetry.canonical import canonical_state
+from booker.generate.canonicalizer import Canonicalizer
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
-class Canonicalizer(Protocol):
-    "Maps a state to the representative of its isomorphism class."
-
-    def __call__(self, state: State) -> State: ...
-
-
-class BlissCanonicalizer:
+class BlissCanonicalizer(Canonicalizer):
     def __call__(self, state: State) -> State:
         return canonical_state(state)
 

@@ -19,7 +19,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
-from booker.core.symmetry.symmetry import signature
+from booker.core.symmetry.symmetry import Symmetry, signature
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -55,7 +55,7 @@ class _LabelledGraph:
         )
 
 
-class Vf2Symmetry:
+class Vf2Symmetry(Symmetry):
     "Isomorphism by VF2++, and orbits by comparing pairings with one another."
 
     def are_isomorphic(self, first: State, second: State) -> bool:

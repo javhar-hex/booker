@@ -21,6 +21,7 @@ from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.kinds import BLISS as BLISS_KIND
 from booker.core.symmetry.kinds import VF2, SymmetryKind
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
+from booker.core.symmetry.symmetry import Symmetry
 from booker.generate.backend import BLISS
 from booker.generate.generator import generate
 from booker.verify.audit import audit
@@ -313,7 +314,7 @@ def test_rejects_the_rest_of_a_real_game_valued_wrongly(
         _audit(_tamper(endgame, sql))
 
 
-class NeverIsomorphic:
+class NeverIsomorphic(Symmetry):
     "Denies that any two states are alike, to show the verifier asks."
 
     def are_isomorphic(self, first: State, second: State) -> bool:
@@ -323,7 +324,7 @@ class NeverIsomorphic:
         return BlissSymmetry().orbits(state, pairings)
 
 
-class SplitsEveryOrbit:
+class SplitsEveryOrbit(Symmetry):
     "Finds every pairing alone in its orbit, to show the verifier asks."
 
     def are_isomorphic(self, first: State, second: State) -> bool:

@@ -52,6 +52,13 @@ def _pool(
     return [state for _ in range(GAMES) for state in play_game(rng)]
 
 
+@pytest.mark.parametrize("kind", list(SymmetryKind))
+def test_every_implementation_declares_that_it_implements_the_protocol(
+    kind: SymmetryKind,
+) -> None:
+    assert Symmetry in type(kind.symmetry).__mro__
+
+
 @pytest.mark.parametrize("kind", KINDS)
 def test_relabelled_states_are_isomorphic(kind: SymmetryKind) -> None:
     path = _state([ONE_ONE] * 4, (0, 1), (1, 2), (2, 3))

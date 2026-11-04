@@ -18,6 +18,10 @@ class Symmetry(Protocol):
     Decisions about the symmetries of states. The generator needs canonical forms, which
     only BLISS gives at scale; these are the questions that any graph library can answer,
     so implementations on different libraries can be compared with one another.
+
+    An implementation names this protocol as a base class: it adds nothing to the class,
+    but it says what the class is for, and a method that is missing or has drifted is an
+    error where the class is defined, not where it is first used.
     """
 
     def are_isomorphic(self, first: State, second: State) -> bool:

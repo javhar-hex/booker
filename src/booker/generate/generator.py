@@ -11,7 +11,8 @@ from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.game.rules import legal_pairings
-from booker.generate.backend import Backend, Canonicalizer
+from booker.generate.backend import Backend
+from booker.generate.canonicalizer import Canonicalizer
 
 
 def generate(path: str, max_depth: int, backend: Backend) -> None:
