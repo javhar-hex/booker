@@ -1,3 +1,5 @@
+"""Pairings that symmetries of a state map onto one another; nothing here finds them."""
+
 from __future__ import annotations
 
 import dataclasses as dc
@@ -6,8 +8,6 @@ from collections.abc import Iterator
 from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.pairing import Pairing
-from booker.core.model.schedule import Schedule
-from booker.core.symmetry.coloured_graph import ColouredGraph
 from booker.core.symmetry.relabelling import Relabelling
 
 
@@ -49,8 +49,8 @@ class PairingOrbit:
 @dc.dataclass(frozen=True, slots=True)
 class PairingOrbits:
     """
-    The pairings that may be added to a schedule, partitioned into orbits under the
-    schedule's symmetries, in order of representative.
+    Pairings partitioned into orbits under the symmetries of a state or schedule, in order
+    of representative.
     """
 
     orbits: ZVec[PairingOrbit]
@@ -61,27 +61,6 @@ class PairingOrbits:
         representatives = [orbit.representative for orbit in self.orbits]
         if representatives != sorted(representatives):
             raise ValueError("orbits must be in order of representative")
-
-    @classmethod
-    def of(cls, schedule: Schedule, additions: ZSet[Pairing]) -> PairingOrbits:
-        """
-        Which pairings may be added is for the rules of each game to say; being legal,
-        they are closed under the schedule's symmetries, and none is booked already.
-        """
-        if booked := additions & schedule.pairings:
-            raise ValueError(f"already booked: {sorted(booked)}")
-        symmetries = ColouredGraph(schedule=schedule).automorphism_generators
-        remaining = set(additions)
-        orbits = []
-        while remaining:
-            orbit = PairingOrbit.of(min(remaining), symmetries)
-            if strays := orbit.members - additions:
-                raise ValueError(
-                    f"additions not closed under symmetry: {sorted(strays)}"
-                )
-            remaining -= set(orbit.members)
-            orbits.append(orbit)
-        return cls(orbits=ZVec(orbits))
 
     def __iter__(self) -> Iterator[PairingOrbit]:
         return iter(self.orbits)

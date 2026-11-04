@@ -20,7 +20,7 @@ from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.model.team import Team
-from booker.core.symmetry.canonical import CanonicalSchedule
+from booker.core.symmetry.canonical import CanonicalSchedule, canonical_state
 from booker.core.symmetry.relabelling import Relabelling
 
 SAMPLES = 200
@@ -149,5 +149,25 @@ def test_canonical_state_is_isomorphic_to_the_original_by_networkx(
     same_record = nx.algorithms.isomorphism.categorical_node_match("record", None)
 
     for state in (state for _ in range(20) for state in play_game(rng)):
-        canonical = CanonicalSchedule.of(Schedule.empty(state)).schedule.state
+        canonical = canonical_state(state)
         assert nx.is_isomorphic(_graph(canonical), _graph(state), node_match=same_record)
+
+
+def test_a_state_and_its_relabelling_have_the_same_canonical_state() -> None:
+    rng = random.Random(5)
+
+    for seed in range(SAMPLES):
+        state = _random_state(random.Random(seed))
+        shuffled = _shuffled(Schedule.empty(state), rng).state
+
+        assert canonical_state(shuffled) == canonical_state(state)
+        assert canonical_state(canonical_state(state)) == canonical_state(state)
+
+
+def test_the_canonical_state_is_that_of_the_canonical_schedule() -> None:
+    state = _random_state(random.Random(0))
+
+    assert (
+        canonical_state(state)
+        == CanonicalSchedule.of(Schedule.empty(state)).schedule.state
+    )

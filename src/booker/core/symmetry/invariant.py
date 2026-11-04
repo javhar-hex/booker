@@ -1,4 +1,4 @@
-"""A cheap necessary condition for two states to be isomorphic."""
+"""What an isomorphism cannot change, as cheap necessary conditions."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ from collections import Counter
 
 from javhar_util.immutables import ZVec
 
+from booker.core.model.invariants import ELIMINATION_LOSSES
+from booker.core.model.record import Record
 from booker.core.model.state import State
 
 
@@ -17,6 +19,11 @@ class TeamSignature:
     wins: int
     losses: int
     degree: int
+
+
+def team_colour(record: Record) -> int:
+    "The colour of a team in a graph of a state: distinct for every live record."
+    return record.wins * ELIMINATION_LOSSES + record.losses
 
 
 def signature(state: State) -> ZVec[TeamSignature]:

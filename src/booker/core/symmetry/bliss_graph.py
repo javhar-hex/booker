@@ -1,3 +1,5 @@
+"""A schedule as the vertex-coloured graph that BLISS works on."""
+
 from __future__ import annotations
 
 import dataclasses as dc
@@ -8,21 +10,17 @@ from javhar_util.immutables import ZVec
 
 from booker.core.model.invariants import CHAMPION_WINS, ELIMINATION_LOSSES
 from booker.core.model.pairing import Pairing
-from booker.core.model.record import Record
 from booker.core.model.schedule import Schedule
+from booker.core.symmetry.invariant import team_colour
 from booker.core.symmetry.relabelling import Relabelling
 
-BLISS_PROVIDER = f"igraph {ig.__version__}"
 SCHEDULED_COLOUR = (CHAMPION_WINS + 1) * ELIMINATION_LOSSES
+"One more than the colour of any team, `team_colour` being at most one less."
 
 
-def team_colour(record: Record) -> int:
-    "Distinct for every live record, and below `SCHEDULED_COLOUR`."
-    return record.wins * ELIMINATION_LOSSES + record.losses
-
-
+# No slots: `cached_property` keeps what it caches in the instance's `__dict__`.
 @dc.dataclass(frozen=True)
-class ColouredGraph:
+class BlissGraph:
     """
     A schedule as the vertex-coloured graph handed to BLISS. Teams are vertices
     coloured by record, adjacent when they have met. Each scheduled pairing is one more

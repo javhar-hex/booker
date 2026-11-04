@@ -6,9 +6,8 @@ import enum
 from collections.abc import Iterable
 from typing import Protocol
 
-from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
-from booker.core.symmetry.canonical import CanonicalSchedule
+from booker.core.symmetry.canonical import canonical_state
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
@@ -20,7 +19,7 @@ class Canonicalizer(Protocol):
 
 class BlissCanonicalizer:
     def __call__(self, state: State) -> State:
-        return CanonicalSchedule.of(Schedule.empty(state)).schedule.state
+        return canonical_state(state)
 
 
 class Backend(enum.Enum):

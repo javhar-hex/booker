@@ -15,11 +15,9 @@ import dataclasses as dc
 import networkx as nx
 from javhar_util.immutables import ZSet, ZVec
 
-from booker.core.model.invariants import ELIMINATION_LOSSES
 from booker.core.model.pairing import Pairing
-from booker.core.model.record import Record
 from booker.core.model.state import State
-from booker.core.symmetry.invariant import signature
+from booker.core.symmetry.invariant import signature, team_colour
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 
 
@@ -32,7 +30,8 @@ class _ColouredGraph:
     def of(cls, state: State) -> _ColouredGraph:
         "Teams coloured by record, adjacent when they have met."
         return cls(
-            colours=ZVec(_colour(record) for record in state.records), edges=state.met
+            colours=ZVec(team_colour(record) for record in state.records),
+            edges=state.met,
         )
 
     @classmethod
@@ -40,7 +39,7 @@ class _ColouredGraph:
         "The state's graph, with the two teams of `pairing` set apart by colour."
         return cls(
             colours=ZVec(
-                2 * _colour(state.record(team)) + pairing.involves(team)
+                2 * team_colour(state.record(team)) + pairing.involves(team)
                 for team in state.teams
             ),
             edges=state.met,
@@ -48,6 +47,8 @@ class _ColouredGraph:
 
 
 class Vf2Symmetry:
+    "Isomorphism by VF2++, and orbits by comparing pairings with one another."
+
     def are_isomorphic(self, first: State, second: State) -> bool:
         if signature(first) != signature(second):
             return False
@@ -70,10 +71,6 @@ class Vf2Symmetry:
         if state.has_met(x) != state.has_met(y):
             return False
         return _alike(_ColouredGraph.marked(state, x), _ColouredGraph.marked(state, y))
-
-
-def _colour(record: Record) -> int:
-    return record.wins * ELIMINATION_LOSSES + record.losses
 
 
 def _alike(first: _ColouredGraph, second: _ColouredGraph) -> bool:
