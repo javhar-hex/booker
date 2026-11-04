@@ -11,9 +11,9 @@ from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.interface import Symmetry
 from booker.core.symmetry.invariant import signature
 from booker.core.symmetry.orbits import PairingOrbits
+from booker.core.symmetry.symmetry import Symmetry
 from booker.game.rules import legal_pairings
 from booker.verify.database import ActionRow, Database, StateId, StoredState
 from booker.verify.failure import AuditFailure

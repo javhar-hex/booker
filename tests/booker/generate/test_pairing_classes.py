@@ -13,7 +13,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.bliss import BlissSymmetry
+from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.game.rules import legal_pairings
 
 FRESH = Record(wins=0, losses=0)

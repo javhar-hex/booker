@@ -10,7 +10,7 @@ from booker.core.model.record import Record
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.bliss import BlissSymmetry, orbits_of_schedule
+from booker.core.symmetry.bliss_symmetry import BlissSymmetry, orbits_of_schedule
 from booker.core.symmetry.orbits import PairingOrbits
 
 

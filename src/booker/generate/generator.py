@@ -9,7 +9,7 @@ from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.bliss import BlissSymmetry
+from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.game.rules import legal_pairings
 from booker.generate.backend import Backend, Canonicalizer
 

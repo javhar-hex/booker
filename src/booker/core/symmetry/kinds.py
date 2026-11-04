@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import enum
 
-from booker.core.symmetry.bliss import BlissSymmetry
-from booker.core.symmetry.interface import Symmetry
-from booker.core.symmetry.vf2 import Vf2Symmetry
+from booker.core.symmetry.bliss_symmetry import BlissSymmetry
+from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.vf2_symmetry import Vf2Symmetry
 
 
 class SymmetryKind(enum.Enum):

@@ -17,7 +17,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.bliss import BlissSymmetry
+from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.kinds import BLISS as BLISS_KIND
 from booker.core.symmetry.kinds import VF2, SymmetryKind
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits

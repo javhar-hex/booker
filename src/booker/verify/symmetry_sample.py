@@ -20,8 +20,8 @@ from javhar_util.immutables import ZMap
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.interface import Symmetry
 from booker.core.symmetry.relabelling import Relabelling
+from booker.core.symmetry.symmetry import Symmetry
 from booker.game.rules import legal_pairings
 from booker.verify.database import Database, StateId
 from booker.verify.failure import AuditFailure
