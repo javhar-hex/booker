@@ -16,30 +16,39 @@ import networkx as nx
 from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.pairing import Pairing
+from booker.core.model.record import Record
 from booker.core.model.state import State
-from booker.core.symmetry.invariant import signature, team_colour
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
+from booker.core.symmetry.symmetry import signature
 
 
 @dc.dataclass(frozen=True, slots=True)
-class _ColouredGraph:
-    colours: ZVec[int]
+class _Label:
+    "What a team is called in a graph: its record, and whether it is one of a pair."
+
+    record: Record
+    is_paired: bool
+
+
+@dc.dataclass(frozen=True, slots=True)
+class _LabelledGraph:
+    labels: ZVec[_Label]
     edges: ZSet[Pairing]
 
     @classmethod
-    def of(cls, state: State) -> _ColouredGraph:
-        "Teams coloured by record, adjacent when they have met."
+    def of(cls, state: State) -> _LabelledGraph:
+        "Teams labelled by record, adjacent when they have met."
         return cls(
-            colours=ZVec(team_colour(record) for record in state.records),
+            labels=ZVec(_Label(record, is_paired=False) for record in state.records),
             edges=state.met,
         )
 
     @classmethod
-    def marked(cls, state: State, pairing: Pairing) -> _ColouredGraph:
-        "The state's graph, with the two teams of `pairing` set apart by colour."
+    def marked(cls, state: State, pairing: Pairing) -> _LabelledGraph:
+        "The state's graph, with the two teams of `pairing` set apart."
         return cls(
-            colours=ZVec(
-                2 * team_colour(state.record(team)) + pairing.involves(team)
+            labels=ZVec(
+                _Label(state.record(team), is_paired=pairing.involves(team))
                 for team in state.teams
             ),
             edges=state.met,
@@ -52,7 +61,7 @@ class Vf2Symmetry:
     def are_isomorphic(self, first: State, second: State) -> bool:
         if signature(first) != signature(second):
             return False
-        return _alike(_ColouredGraph.of(first), _ColouredGraph.of(second))
+        return _alike(_LabelledGraph.of(first), _LabelledGraph.of(second))
 
     def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
         groups: list[list[Pairing]] = []
@@ -70,14 +79,14 @@ class Vf2Symmetry:
     def _equivalent(self, state: State, x: Pairing, y: Pairing) -> bool:
         if state.has_met(x) != state.has_met(y):
             return False
-        return _alike(_ColouredGraph.marked(state, x), _ColouredGraph.marked(state, y))
+        return _alike(_LabelledGraph.marked(state, x), _LabelledGraph.marked(state, y))
 
 
-def _alike(first: _ColouredGraph, second: _ColouredGraph) -> bool:
+def _alike(first: _LabelledGraph, second: _LabelledGraph) -> bool:
     graphs: list[nx.Graph[int]] = []
     for g in (first, second):
         graph: nx.Graph[int] = nx.Graph()
-        graph.add_nodes_from((i, {"c": colour}) for i, colour in enumerate(g.colours))
+        graph.add_nodes_from((i, {"label": label}) for i, label in enumerate(g.labels))
         graph.add_edges_from((e.low.index, e.high.index) for e in g.edges)
         graphs.append(graph)
-    return bool(nx.vf2pp_is_isomorphic(graphs[0], graphs[1], node_label="c"))
+    return bool(nx.vf2pp_is_isomorphic(graphs[0], graphs[1], node_label="label"))

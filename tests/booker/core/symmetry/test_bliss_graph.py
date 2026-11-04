@@ -10,8 +10,7 @@ from booker.core.model.record import Record
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.bliss_graph import SCHEDULED_COLOUR, BlissGraph
-from booker.core.symmetry.invariant import team_colour
+from booker.core.symmetry.bliss_graph import SCHEDULED_COLOUR, BlissGraph, team_colour
 from booker.core.symmetry.relabelling import Relabelling
 
 ONE_ONE = Record(wins=1, losses=1)
@@ -31,6 +30,12 @@ def _schedule(
 ) -> Schedule:
     state = State(records=ZVec(records), met=ZSet(_pairing(a, b) for a, b in met))
     return Schedule(state=state, pairings=ZSet(_pairing(a, b) for a, b in booked))
+
+
+def test_every_live_record_has_a_colour_of_its_own() -> None:
+    records = [Record(wins=w, losses=loss) for w in range(7) for loss in range(2)]
+
+    assert len({team_colour(record) for record in records}) == len(records)
 
 
 def test_scheduled_pairings_are_a_colour_that_no_team_has() -> None:

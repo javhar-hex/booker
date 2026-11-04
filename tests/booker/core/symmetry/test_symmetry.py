@@ -4,8 +4,8 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.invariant import TeamSignature, signature, team_colour
 from booker.core.symmetry.relabelling import Relabelling
+from booker.core.symmetry.symmetry import TeamSignature, signature
 
 ONE_ONE = Record(wins=1, losses=1)
 ZERO_ONE = Record(wins=0, losses=1)
@@ -39,9 +39,3 @@ def test_states_that_differ_in_who_has_met_whom_can_differ() -> None:
     triangle_free = _state([ONE_ONE] * 3, (0, 1))
 
     assert signature(path) != signature(triangle_free)
-
-
-def test_every_live_record_has_a_colour_of_its_own() -> None:
-    records = [Record(wins=w, losses=loss) for w in range(7) for loss in range(2)]
-
-    assert len({team_colour(record) for record in records}) == len(records)

@@ -17,11 +17,10 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.invariant import signature
 from booker.core.symmetry.kinds import BLISS, VF2, SymmetryKind
 from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.relabelling import Relabelling
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.symmetry import Symmetry, signature
 from booker.game.rules import legal_pairings
 
 KINDS = [BLISS, VF2]
