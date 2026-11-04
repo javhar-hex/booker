@@ -10,9 +10,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 
 
-def test_a_failed_transaction_writes_nothing(
-    path: Path, champion_state: State
-) -> None:
+def test_a_failed_transaction_writes_nothing(path: Path, champion_state: State) -> None:
     with Atlas.open(path) as atlas:
         with pytest.raises(RuntimeError), atlas.transaction() as tx:
             tx.add_state(champion_state)
