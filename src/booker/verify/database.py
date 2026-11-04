@@ -14,7 +14,7 @@ from typing import Self
 
 from javhar_util.immutables import ZMap, ZVec
 
-from booker.atlas.codec import PackedState
+from booker.atlas.packed_state import PackedState
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.team import Team

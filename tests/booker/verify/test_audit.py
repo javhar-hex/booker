@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZSet, ZVec
 
-from booker.atlas.storage import Atlas
+from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
@@ -58,9 +58,9 @@ def _build(
                 tx.add_action(parent_id, pairing, is_rematch, 1, low, high)
             tx.mark_expanded(parent_id)
             tx.mark_decided_expanded()
-        atlas.reset_values()
+        atlas.valuation().reset_values()
         for depth in range(MAX_MATCHES, -1, -1):
-            atlas.back_up(depth)
+            atlas.valuation().back_up(depth)
     return path
 
 

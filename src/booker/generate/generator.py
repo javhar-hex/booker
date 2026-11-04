@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from booker.atlas.storage import Atlas
-from booker.atlas.stored import StoredState
-from booker.atlas.transaction import AtlasTransaction
+from booker.atlas.atlas import Atlas
+from booker.atlas.atlas_transaction import AtlasTransaction
+from booker.atlas.stored_state import StoredState
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State

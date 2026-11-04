@@ -1,10 +1,21 @@
-"""SQLite schema; action rows contract the implicit Collider-to-move nodes.
+"""
+The SQLite schema of an atlas: one row per position, and one per Collider-to-move
+position, which the action rows contract.
 
-One action row per Collider-to-move state up to isomorphism: (a,b) is the smallest
-legal pairing of its automorphism orbit, class_size the size of that orbit. The
-Scheduler pays repeat_cost on choosing the pairing, so a Collider state's value is the
-max of its two children's values, and a Scheduler state's value is the min over its
-Collider children of repeat_cost + value.
+states: `id`; `key`, the position as `PackedState` bytes, unique; `depth`, the number of
+matches played; `active`, the number of live teams, so 1 for a decided position; `expanded`,
+whether its actions have been generated; `value`, the minimum guaranteed number of further
+repeats, once solved.
+
+actions: one per Collider-to-move state up to isomorphism, from the position `parent`.
+(a, b) is the smallest legal pairing of its automorphism orbit, as team indices, and
+`class_size` the size of that orbit. The Scheduler pays `repeat_cost`, 1 for a rematch, on
+choosing the pairing; `a_wins` and `b_wins` are the positions that follow each winner. A
+Collider state's `value` is the larger of its two children's values, and a Scheduler
+state's the least, over its actions, of `repeat_cost` + `value`.
+
+meta: the schema version and game, the canonicalization backend, the id of the root
+position, and whether the atlas is solved.
 """
 
 from __future__ import annotations

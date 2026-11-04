@@ -13,7 +13,7 @@ ALLOWED_OUTSIDE_VERIFY = (
     "booker.core.model.",
     "booker.core.symmetry.",
     "booker.game.",
-    "booker.atlas.codec",
+    "booker.atlas.packed_state",
     "booker.atlas.schema",
 )
 

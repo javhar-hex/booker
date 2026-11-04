@@ -10,7 +10,7 @@ from pathlib import Path
 
 from javhar_util.immutables import ZMap
 
-from booker.atlas.storage import Atlas
+from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.equilibrium.flags import build, summary
@@ -146,7 +146,7 @@ def _equilibrium(args: argparse.Namespace) -> None:
 def _print_stats(path: str) -> None:
     print("depth  states  collider  pairings  min-value  max-value")
     with Atlas.open(path) as atlas:
-        for row in atlas.depth_summaries():
+        for row in atlas.valuation().depth_summaries():
             print(
                 f"{row.depth:>5} {row.num_states:>7,} {row.num_colliders:>9,} "
                 f"{row.num_pairings:>9,} {row.min_value!s:>10} {row.max_value!s:>10}"

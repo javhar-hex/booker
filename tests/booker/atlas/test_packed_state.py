@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterator
 import pytest
 from javhar_util.immutables import ZSet, ZVec
 
-from booker.atlas.codec import MAX_CODE, PackedState
+from booker.atlas.packed_state import MAX_CODE, PackedState
 from booker.core.model.invariants import NUM_PARTICIPANTS
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record

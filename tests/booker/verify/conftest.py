@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZSet, ZVec
 
-from booker.atlas.storage import Atlas
+from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
