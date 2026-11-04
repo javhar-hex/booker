@@ -1,4 +1,4 @@
-"""The writes of a generation, committed together or not at all."""
+"""The writes that generate an atlas."""
 
 from __future__ import annotations
 
@@ -10,10 +10,12 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 
 
-class AtlasTransaction:
+class AtlasWriter:
     """
-    Writes that are committed together, or not at all, and that can be made only while the
-    transaction is open: once it is over, a write would be one that nothing commits.
+    What generates an atlas: its backend, root, positions and actions. Obtain one from
+    `Atlas.transaction`, which commits what is written through it, or none of it, when the
+    transaction ends. After that every write is an error, as it would be one that nothing
+    commits.
     """
 
     def __init__(self, con: sqlite3.Connection) -> None:

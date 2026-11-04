@@ -4,13 +4,15 @@ from pathlib import Path
 import pytest
 
 from booker.atlas.atlas import Atlas
-from booker.atlas.atlas_transaction import AtlasTransaction
+from booker.atlas.atlas_writer import AtlasWriter
 from booker.atlas.state_id import StateId
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 
 
-def test_a_failed_transaction_writes_nothing(path: Path, champion_state: State) -> None:
+def test_a_failed_transaction_writes_nothing(
+    path: Path, champion_state: State
+) -> None:
     with Atlas.open(path) as atlas:
         with pytest.raises(RuntimeError), atlas.transaction() as tx:
             tx.add_state(champion_state)
@@ -45,7 +47,7 @@ def test_an_action_is_stored_with_its_children(
 
 def _writes(
     parent: StateId, pairing: Pairing
-) -> dict[str, Callable[[AtlasTransaction], object]]:
+) -> dict[str, Callable[[AtlasWriter], object]]:
     return {
         "use_backend": lambda tx: tx.use_backend("bliss"),
         "record_root": lambda tx: tx.record_root(parent),

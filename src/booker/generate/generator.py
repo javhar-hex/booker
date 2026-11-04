@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from booker.atlas.atlas import Atlas
-from booker.atlas.atlas_transaction import AtlasTransaction
+from booker.atlas.atlas_writer import AtlasWriter
 from booker.atlas.stored_state import StoredState
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
@@ -55,7 +55,7 @@ def _expand_depth(atlas: Atlas, canon: Canonicalizer, depth: int) -> None:
             tx.mark_expanded(parent.id)
 
 
-def _expand(tx: AtlasTransaction, canon: Canonicalizer, parent: StoredState) -> None:
+def _expand(tx: AtlasWriter, canon: Canonicalizer, parent: StoredState) -> None:
     "Book the Collider state of each pairing orbit of `parent` that can be scheduled."
     state = parent.state
     for orbit in BlissSymmetry().orbits(state, legal_pairings(state)):

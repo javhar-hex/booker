@@ -1,7 +1,7 @@
 """
 An atlas, positions and the Scheduler's actions in SQLite, reached only through an
 opened `Atlas`. Reading is done by the `Atlas` itself. Writing a generation is done
-through the `AtlasTransaction` of `Atlas.transaction`, so that nothing is written without
+through the `AtlasWriter` of `Atlas.transaction`, so that nothing is written without
 being committed, and valuing it through its `AtlasValuation`. The tables are described
 in `booker.atlas.schema`.
 """
@@ -17,8 +17,8 @@ from typing import Self
 
 from javhar_util.immutables import ZVec
 
-from booker.atlas.atlas_transaction import AtlasTransaction
 from booker.atlas.atlas_valuation import AtlasValuation
+from booker.atlas.atlas_writer import AtlasWriter
 from booker.atlas.packed_state import PackedState
 from booker.atlas.schema import open_connection
 from booker.atlas.state_id import StateId
@@ -48,9 +48,9 @@ class Atlas:
         self._con.close()
 
     @contextlib.contextmanager
-    def transaction(self) -> Iterator[AtlasTransaction]:
+    def transaction(self) -> Iterator[AtlasWriter]:
         with self._con:
-            transaction = AtlasTransaction(self._con)
+            transaction = AtlasWriter(self._con)
             try:
                 yield transaction
             finally:
