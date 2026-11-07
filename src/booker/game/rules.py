@@ -37,17 +37,10 @@ def legal_pairings(state: State) -> ZSet[Pairing]:
 
 
 def _may_meet(x: Record, y: Record, num_unbeaten: int) -> bool:
-    return _equals_may_meet(x, y, num_unbeaten) or _sole_unbeaten_may_meet(
-        x, y, num_unbeaten
-    )
-
-
-def _equals_may_meet(x: Record, y: Record, num_unbeaten: int) -> bool:
-    return x == y and (x != LOWER_BRACKET_SURVIVOR or num_unbeaten == 0)
-
-
-def _sole_unbeaten_may_meet(x: Record, y: Record, num_unbeaten: int) -> bool:
-    return num_unbeaten == 1 and (
-        (x.is_unbeaten and y == LOWER_BRACKET_SURVIVOR)
-        or (y.is_unbeaten and x == LOWER_BRACKET_SURVIVOR)
-    )
+    if x == y:
+        return x != LOWER_BRACKET_SURVIVOR or num_unbeaten == 0
+    else:
+        return num_unbeaten == 1 and (
+            (x.is_unbeaten and y == LOWER_BRACKET_SURVIVOR)
+            or (y.is_unbeaten and x == LOWER_BRACKET_SURVIVOR)
+        )
