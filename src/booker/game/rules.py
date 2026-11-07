@@ -30,9 +30,9 @@ def legal_pairings(state: State) -> ZSet[Pairing]:
     """
     num_unbeaten = sum(record.is_unbeaten for record in state.records)
     return ZSet(
-        Pairing.of(team_lhs, team_rhs)
-        for team_lhs, team_rhs in itertools.combinations(state.teams, 2)
-        if _may_meet(state.record(team_lhs), state.record(team_rhs), num_unbeaten)
+        Pairing.of(team_lo, team_hi)
+        for team_lo, team_hi in itertools.combinations(state.teams, 2)
+        if _may_meet(state.record(team_lo), state.record(team_hi), num_unbeaten)
     )
 
 
