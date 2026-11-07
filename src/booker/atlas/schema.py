@@ -24,6 +24,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from javhar_util.immutables import ZMap
+
 SCHEMA_VERSION = 5
 
 DDL = """
@@ -54,10 +56,12 @@ CREATE INDEX IF NOT EXISTS ix_actions_a ON actions(a_wins);
 CREATE INDEX IF NOT EXISTS ix_actions_b ON actions(b_wins);
 """
 
-META = {
-    "game": "unrestricted-16-2-6",
-    "value_convention": "minimum guaranteed additional repeats",
-}
+META = ZMap(
+    {
+        "game": "unrestricted-16-2-6",
+        "value_convention": "minimum guaranteed additional repeats",
+    }
+)
 
 
 def open_connection(path: str | Path) -> sqlite3.Connection:

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from booker.atlas.atlas import Atlas
-from booker.atlas.schema import SCHEMA_VERSION
+from booker.atlas.schema import META, SCHEMA_VERSION
 from booker.atlas.state_id import StateId
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.pairing import Pairing
@@ -84,6 +84,13 @@ def test_what_is_done_in_a_transaction_that_raises_is_not_kept(
             raise RuntimeError("interrupted")
 
         assert atlas.num_states() == 0
+
+
+def test_a_new_atlas_says_what_game_and_values_it_holds(path: Path) -> None:
+    with Atlas.open(path) as atlas:
+        rows = dict(atlas.connection.execute("SELECT key, value FROM meta"))
+
+    assert rows == dict(META.items())
 
 
 def test_a_new_atlas_has_the_schema_version_that_sqlite_keeps(path: Path) -> None:
