@@ -13,12 +13,12 @@ def test_a_rematch_costs_the_scheduler_one(
 ) -> None:
     with solved(met) as atlas:
         assert atlas.num_actions() == 1
-        assert atlas.solver().root_value() == int(met)
+        assert atlas.retrograde_solver().root_value() == int(met)
 
 
 def test_an_unsolved_atlas_has_no_root_value(path: Path) -> None:
     with Atlas.open(path) as atlas, pytest.raises(ValueError):
-        atlas.solver().root_value()
+        atlas.retrograde_solver().root_value()
 
 
 def test_every_position_is_unvalued_until_backed_up(
@@ -28,7 +28,7 @@ def test_every_position_is_unvalued_until_backed_up(
         with atlas.transaction() as tx:
             tx.add_state(final_pair(False))
             tx.add_state(champion_state)
-        solver = atlas.solver()
+        solver = atlas.retrograde_solver()
 
         assert solver.num_unvalued(final_pair(False).matches_played) == 1
         solver.reset_values()

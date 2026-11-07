@@ -131,7 +131,7 @@ def test_summarizes_a_depth_of_several_positions(
                     tx.add_action(parent, chosen, met, class_size, champion, champion)
                 tx.mark_expanded(parent)
             tx.mark_decided_expanded()
-        solver = atlas.solver()
+        solver = atlas.retrograde_solver()
         solver.reset_values()
         for depth in range(MAX_MATCHES, -1, -1):
             solver.back_up(depth)

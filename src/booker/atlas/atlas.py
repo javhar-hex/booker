@@ -1,9 +1,9 @@
 """
 An atlas, positions and the Scheduler's actions in SQLite, reached only through an
-opened `Atlas`. Reading is done by the `Atlas` itself. Writing a generation is done
-through the `AtlasWriter` of `Atlas.transaction`, so that nothing is written without
-being committed, and solving it through its `AtlasSolver`. The tables are described
-in `booker.atlas.schema`.
+opened `Atlas`. Reading is done by the `Atlas` itself. Recording its expansion is done
+through the `AtlasExpansionWriter` of `Atlas.transaction`, so that nothing is written
+without being committed, and solving it through its `AtlasRetrogradeSolver`. The tables
+are described in `booker.atlas.schema`.
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ from typing import Self
 
 from javhar_util.immutables import ZVec
 
-from booker.atlas.atlas_solver import AtlasSolver
-from booker.atlas.atlas_writer import AtlasWriter
+from booker.atlas.atlas_expansion_writer import AtlasExpansionWriter
+from booker.atlas.atlas_retrograde_solver import AtlasRetrogradeSolver
 from booker.atlas.depth_summary import DepthSummary
 from booker.atlas.packed_state import PackedState
 from booker.atlas.schema import open_connection
@@ -49,16 +49,16 @@ class Atlas:
         self._con.close()
 
     @contextlib.contextmanager
-    def transaction(self) -> Iterator[AtlasWriter]:
+    def transaction(self) -> Iterator[AtlasExpansionWriter]:
         with self._con:
-            transaction = AtlasWriter(self._con)
+            transaction = AtlasExpansionWriter(self._con)
             try:
                 yield transaction
             finally:
                 transaction.end()
 
-    def solver(self) -> AtlasSolver:
-        return AtlasSolver(self._con)
+    def retrograde_solver(self) -> AtlasRetrogradeSolver:
+        return AtlasRetrogradeSolver(self._con)
 
     def state(self, state_id: StateId) -> State:
         row = self._con.execute(

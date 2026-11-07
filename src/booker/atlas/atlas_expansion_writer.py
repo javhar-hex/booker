@@ -1,4 +1,4 @@
-"""The writes that generate an atlas."""
+"""The writes that record the expansion of an atlas, forward from its root."""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 
 
-class AtlasWriter:
+class AtlasExpansionWriter:
     """
-    What generates an atlas: its backend, root, positions and actions. Obtain one from
-    `Atlas.transaction`, which commits what is written through it, or none of it, when the
-    transaction ends. After that every write is an error, as it would be one that nothing
-    commits.
+    What records the expansion of an atlas, which the generator carries out: its backend,
+    root, positions and actions. Obtain one from `Atlas.transaction`, which commits what
+    is written through it, or none of it, when the transaction ends. After that every
+    write is an error, as it would be one that nothing commits.
     """
 
     def __init__(self, con: sqlite3.Connection) -> None:

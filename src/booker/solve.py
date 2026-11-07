@@ -13,7 +13,7 @@ def solve(path: str) -> None:
             raise RuntimeError(
                 f"Cannot solve truncated atlas: {unexpanded:,} unexpanded states"
             )
-        solver = atlas.solver()
+        solver = atlas.retrograde_solver()
         solver.reset_values()
         # A state's children are one match deeper, so they are valued before it.
         for depth in range(MAX_MATCHES, -1, -1):

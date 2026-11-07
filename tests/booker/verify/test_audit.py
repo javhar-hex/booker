@@ -58,9 +58,9 @@ def _build(
                 tx.add_action(parent_id, pairing, is_rematch, 1, low, high)
             tx.mark_expanded(parent_id)
             tx.mark_decided_expanded()
-        atlas.solver().reset_values()
+        atlas.retrograde_solver().reset_values()
         for depth in range(MAX_MATCHES, -1, -1):
-            atlas.solver().back_up(depth)
+            atlas.retrograde_solver().back_up(depth)
     return path
 
 

@@ -1,7 +1,7 @@
 """
-Solving an atlas, from its last layer back to its root. A Collider position is worth the
-larger of its two children, and a Scheduler position the least, over its actions, of what
-the action costs and is worth.
+Solving an atlas by retrograde analysis: from its last layer back to its root, where a
+search would go forward. A Collider position is worth the larger of its two children, and a
+Scheduler position the least, over its actions, of what the action costs and is worth.
 """
 
 from __future__ import annotations
@@ -9,10 +9,10 @@ from __future__ import annotations
 import sqlite3
 
 
-class AtlasSolver:
+class AtlasRetrogradeSolver:
     """
-    The steps that solve an atlas, which `solve` puts in order. Obtain one with
-    `Atlas.solver`; each step is committed.
+    The steps of the retrograde analysis that solves an atlas, which `solve` puts in order.
+    Obtain one with `Atlas.retrograde_solver`; each step is committed.
     """
 
     def __init__(self, con: sqlite3.Connection) -> None:
