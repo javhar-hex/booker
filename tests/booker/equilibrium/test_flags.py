@@ -167,8 +167,8 @@ def _only(directory: Path) -> list[str]:
     [
         (f"UPDATE states SET value = NULL WHERE id = {V}", "positions without a value"),
         ("DELETE FROM meta WHERE key = 'solved'", "not been through"),
-        ("UPDATE meta SET value = '4' WHERE key = 'schema_version'", "schema v4"),
-        ("DELETE FROM meta WHERE key = 'schema_version'", "schema None"),
+        ("PRAGMA user_version = 4", "schema v4"),
+        ("PRAGMA user_version = 0", "schema v0"),
     ],
 )
 def test_refuses_an_atlas_it_cannot_read(

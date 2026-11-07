@@ -119,12 +119,10 @@ class FlagsDatabase:
         )
 
     def _require_this_schema(self) -> None:
-        row = self._con.execute(
-            "SELECT value FROM atlas.meta WHERE key='schema_version'"
-        ).fetchone()
-        if row is None or row[0] != SCHEMA_VERSION:
+        version = self._con.execute("PRAGMA atlas.user_version").fetchone()[0]
+        if version != SCHEMA_VERSION:
             raise ValueError(
-                f"Atlas has schema {None if row is None else 'v' + row[0]}, "
+                f"Atlas has schema v{version}, "
                 f"but the equilibrium pass reads v{SCHEMA_VERSION}"
             )
 

@@ -25,9 +25,9 @@ def test_every_position_is_unvalued_until_backed_up(
     path: Path, final_pair: Callable[[bool], State], champion_state: State
 ) -> None:
     with Atlas.open(path) as atlas:
-        with atlas.transaction() as tx:
-            tx.add_state(final_pair(False))
-            tx.add_state(champion_state)
+        writer = atlas.expansion_writer()
+        writer.add_state(final_pair(False))
+        writer.add_state(champion_state)
         solver = atlas.retrograde_solver()
 
         assert solver.num_unvalued(final_pair(False).matches_played) == 1

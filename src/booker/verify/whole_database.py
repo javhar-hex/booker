@@ -19,10 +19,8 @@ from booker.verify.plan import AuditPlan
 def check_metadata(db: Database) -> StateId:
     "The atlas is of this game and schema; returns the id of its root."
     metadata = db.metadata()
-    if metadata.get("schema_version") != SCHEMA_VERSION:
-        raise AuditFailure(
-            f"schema version {metadata.get('schema_version')}, not {SCHEMA_VERSION}"
-        )
+    if db.schema_version() != SCHEMA_VERSION:
+        raise AuditFailure(f"schema version {db.schema_version()}, not {SCHEMA_VERSION}")
     if metadata.get("game") != META["game"]:
         raise AuditFailure(f"game {metadata.get('game')}, not {META['game']}")
     root = metadata.get("root_id")

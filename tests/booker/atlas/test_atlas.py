@@ -17,10 +17,10 @@ def test_a_state_is_stored_once_and_comes_back_equal(
     path: Path, final_pair: Callable[[bool], State]
 ) -> None:
     with Atlas.open(path) as atlas:
-        with atlas.transaction() as tx:
-            first = tx.add_state(final_pair(True))
-            again = tx.add_state(final_pair(True))
-            other = tx.add_state(final_pair(False))
+        writer = atlas.expansion_writer()
+        first = writer.add_state(final_pair(True))
+        again = writer.add_state(final_pair(True))
+        other = writer.add_state(final_pair(False))
 
         assert first == again
         assert first != other
@@ -32,9 +32,9 @@ def test_lists_every_stored_state(
     path: Path, final_pair: Callable[[bool], State], champion_state: State
 ) -> None:
     with Atlas.open(path) as atlas:
-        with atlas.transaction() as tx:
-            tx.add_state(final_pair(True))
-            tx.add_state(champion_state)
+        writer = atlas.expansion_writer()
+        writer.add_state(final_pair(True))
+        writer.add_state(champion_state)
 
         assert set(atlas.states()) == {final_pair(True), champion_state}
 
@@ -44,42 +44,60 @@ def test_an_unknown_state_is_an_error(path: Path) -> None:
         atlas.state(StateId(value=1))
 
 
-def test_committed_writes_outlive_the_atlas(path: Path, champion_state: State) -> None:
-    with Atlas.open(path) as atlas, atlas.transaction() as tx:
-        stored = tx.add_state(champion_state)
-
-    with Atlas.open(path) as reopened:
-        assert reopened.state(stored) == champion_state
-
-
 def test_unexpanded_states_are_listed_by_depth_until_marked(
     path: Path, final_pair: Callable[[bool], State], champion_state: State
 ) -> None:
     depth = final_pair(True).matches_played
     with Atlas.open(path) as atlas:
-        with atlas.transaction() as tx:
-            parent = tx.add_state(final_pair(True))
-            tx.add_state(champion_state)
+        writer = atlas.expansion_writer()
+        parent = writer.add_state(final_pair(True))
+        writer.add_state(champion_state)
 
         listed = atlas.unexpanded(depth)
         assert [stored.id for stored in listed] == [parent]
         assert listed[0].state == final_pair(True)
         assert atlas.num_unexpanded() == 2
 
-        with atlas.transaction() as tx:
-            tx.mark_expanded(parent)
-            tx.mark_decided_expanded()
+        writer.mark_expanded(parent)
+        writer.mark_decided_expanded()
 
         assert atlas.num_unexpanded() == 0
         assert len(atlas.unexpanded(depth)) == 0
+
+
+def test_what_is_done_in_a_transaction_is_kept(
+    path: Path, champion_state: State
+) -> None:
+    with Atlas.open(path) as atlas, atlas.transaction():
+        stored = atlas.expansion_writer().add_state(champion_state)
+
+    with Atlas.open(path) as reopened:
+        assert reopened.state(stored) == champion_state
+
+
+def test_what_is_done_in_a_transaction_that_raises_is_not_kept(
+    path: Path, champion_state: State
+) -> None:
+    with Atlas.open(path) as atlas:
+        with pytest.raises(RuntimeError), atlas.transaction():
+            atlas.expansion_writer().add_state(champion_state)
+            raise RuntimeError("interrupted")
+
+        assert atlas.num_states() == 0
+
+
+def test_a_new_atlas_has_the_schema_version_that_sqlite_keeps(path: Path) -> None:
+    with Atlas.open(path) as atlas:
+        version = atlas.connection.execute("PRAGMA user_version").fetchone()[0]
+
+    assert version == SCHEMA_VERSION
 
 
 def test_refuses_a_database_of_another_schema_version(path: Path) -> None:
     with Atlas.open(path):
         pass
     con = sqlite3.connect(path)
-    with con:
-        con.execute("UPDATE meta SET value='0' WHERE key='schema_version'")
+    con.execute("PRAGMA user_version = 0")
     con.close()
 
     with pytest.raises(ValueError, match=f"schema v0.*v{SCHEMA_VERSION}"):
@@ -103,8 +121,7 @@ def test_the_values_of_an_unsolved_atlas_are_none(
     path: Path, final_pair: Callable[[bool], State]
 ) -> None:
     with Atlas.open(path) as atlas:
-        with atlas.transaction() as tx:
-            tx.add_state(final_pair(False))
+        atlas.expansion_writer().add_state(final_pair(False))
 
         (summary,) = atlas.depth_summaries()
 
@@ -120,17 +137,17 @@ def test_summarizes_a_depth_of_several_positions(
     "Two positions at one depth, worth 1 and 0, with one action and two."
     other = Pairing.of(Team(index=0), Team(index=2))
     with Atlas.open(path) as atlas:
-        with atlas.transaction() as tx:
-            champion = tx.add_state(champion_state)
-            for met, pairings in (
-                (True, [(pairing, 1)]),
-                (False, [(pairing, 3), (other, 2)]),
-            ):
-                parent = tx.add_state(final_pair(met))
-                for chosen, class_size in pairings:
-                    tx.add_action(parent, chosen, met, class_size, champion, champion)
-                tx.mark_expanded(parent)
-            tx.mark_decided_expanded()
+        writer = atlas.expansion_writer()
+        champion = writer.add_state(champion_state)
+        for met, pairings in (
+            (True, [(pairing, 1)]),
+            (False, [(pairing, 3), (other, 2)]),
+        ):
+            parent = writer.add_state(final_pair(met))
+            for chosen, class_size in pairings:
+                writer.add_action(parent, chosen, met, class_size, champion, champion)
+            writer.mark_expanded(parent)
+        writer.mark_decided_expanded()
         solver = atlas.retrograde_solver()
         solver.reset_values()
         for depth in range(MAX_MATCHES, -1, -1):

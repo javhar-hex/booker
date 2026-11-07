@@ -14,8 +14,9 @@ choosing the pairing; `a_wins` and `b_wins` are the positions that follow each w
 Collider state's `value` is the larger of its two children's values, and a Scheduler
 state's the least, over its actions, of `repeat_cost` + `value`.
 
-meta: the schema version and game, the canonicalization backend, the id of the root
-position, and whether the atlas is solved.
+meta: the game and its value convention, the canonicalization backend, the id of the
+root position, and whether the atlas is solved. The schema version is SQLite's own
+`PRAGMA user_version`.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = "5"
+SCHEMA_VERSION = 5
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -54,37 +55,35 @@ CREATE INDEX IF NOT EXISTS ix_actions_b ON actions(b_wins);
 """
 
 META = {
-    "schema_version": SCHEMA_VERSION,
     "game": "unrestricted-16-2-6",
     "value_convention": "minimum guaranteed additional repeats",
 }
 
 
 def open_connection(path: str | Path) -> sqlite3.Connection:
-    "A connection to the database at `path`, which has this schema, created if new."
-    con = sqlite3.connect(str(path))
+    """
+    A connection to the database at `path`, which has this schema, created if new. It is in
+    autocommit mode: each statement commits itself, and what is done together is done
+    between an explicit BEGIN and COMMIT.
+    """
+    con = sqlite3.connect(str(path), isolation_level=None)
     con.execute("PRAGMA foreign_keys=ON")
     con.execute("PRAGMA busy_timeout=5000")
     con.execute("PRAGMA journal_mode=WAL")
     _require_compatible(con)
     con.executescript(DDL)
+    con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     for key, value in META.items():
         con.execute("INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)", (key, value))
-    con.commit()
     return con
 
 
 def _require_compatible(con: sqlite3.Connection) -> None:
-    has_meta = con.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='meta'"
-    ).fetchone()
-    if not has_meta:
-        return
-    previous = con.execute(
-        "SELECT value FROM meta WHERE key='schema_version'"
-    ).fetchone()
-    if previous and previous[0] != SCHEMA_VERSION:
+    "A database that has tables already must have been written with this schema."
+    is_new = con.execute("SELECT COUNT(*) FROM sqlite_master").fetchone()[0] == 0
+    version = con.execute("PRAGMA user_version").fetchone()[0]
+    if not is_new and version != SCHEMA_VERSION:
         raise ValueError(
-            f"Database schema v{previous[0]} cannot be resumed with schema "
+            f"Database schema v{version} cannot be resumed with schema "
             f"v{SCHEMA_VERSION}; regenerate"
         )

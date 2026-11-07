@@ -106,6 +106,9 @@ class Database:
         for (state_id,) in rows:
             yield StateId(value=state_id)
 
+    def schema_version(self) -> int:
+        return self._count("PRAGMA user_version")
+
     def decided_ids(self) -> ZVec[StateId]:
         rows = self._con.execute("SELECT id FROM states WHERE active=1")
         return ZVec(StateId(value=state_id) for (state_id,) in rows)

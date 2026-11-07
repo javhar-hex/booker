@@ -53,13 +53,13 @@ def solved(
 
     def build(met: bool) -> Atlas:
         atlas = Atlas.open(path)
-        with atlas.transaction() as tx:
-            parent = tx.add_state(final_pair(met))
-            champion = tx.add_state(champion_state)
-            tx.record_root(parent)
-            tx.add_action(parent, pairing, met, 1, champion, champion)
-            tx.mark_expanded(parent)
-            tx.mark_decided_expanded()
+        writer = atlas.expansion_writer()
+        parent = writer.add_state(final_pair(met))
+        champion = writer.add_state(champion_state)
+        writer.record_root(parent)
+        writer.add_action(parent, pairing, met, 1, champion, champion)
+        writer.mark_expanded(parent)
+        writer.mark_decided_expanded()
         solver = atlas.retrograde_solver()
         solver.reset_values()
         for depth in range(MAX_MATCHES, -1, -1):

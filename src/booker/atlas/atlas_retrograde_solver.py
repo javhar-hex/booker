@@ -6,48 +6,48 @@ Scheduler position the least, over its actions, of what the action costs and is 
 
 from __future__ import annotations
 
+import dataclasses as dc
 import sqlite3
 
 
+@dc.dataclass(frozen=True, slots=True)
 class AtlasRetrogradeSolver:
     """
     The steps of the retrograde analysis that solves an atlas, which `solve` puts in order.
-    Obtain one with `Atlas.retrograde_solver`; each step is committed.
+    Obtain one with `Atlas.retrograde_solver`. Each statement commits itself, and `solve`
+    begins with `reset_values`, so that a stop in the middle costs nothing.
     """
 
-    def __init__(self, con: sqlite3.Connection) -> None:
-        self._con = con
+    connection: sqlite3.Connection
 
     def reset_values(self) -> None:
         "Forget every value but the decided positions', which are worth nothing more."
-        with self._con:
-            self._con.execute("UPDATE actions SET value=NULL")
-            self._con.execute("UPDATE states SET value=NULL")
-            self._con.execute("UPDATE states SET value=0 WHERE active=1")
+        self.connection.execute("UPDATE actions SET value=NULL")
+        self.connection.execute("UPDATE states SET value=NULL")
+        self.connection.execute("UPDATE states SET value=0 WHERE active=1")
 
     def back_up(self, depth: int) -> None:
         "Values the positions at `depth` from their children, which are at `depth + 1`."
-        with self._con:
-            self._con.execute(
-                """
-                UPDATE actions SET value=(
-                  SELECT MAX(c1.value,c2.value) FROM states c1, states c2
-                  WHERE c1.id=actions.a_wins AND c2.id=actions.b_wins
-                ) WHERE parent IN (SELECT id FROM states WHERE depth=?)
-                """,
-                (depth,),
-            )
-            self._con.execute(
-                """
-                UPDATE states SET value=(
-                  SELECT MIN(repeat_cost + value) FROM actions WHERE parent=states.id
-                ) WHERE depth=? AND active>1
-                """,
-                (depth,),
-            )
+        self.connection.execute(
+            """
+            UPDATE actions SET value=(
+              SELECT MAX(c1.value,c2.value) FROM states c1, states c2
+              WHERE c1.id=actions.a_wins AND c2.id=actions.b_wins
+            ) WHERE parent IN (SELECT id FROM states WHERE depth=?)
+            """,
+            (depth,),
+        )
+        self.connection.execute(
+            """
+            UPDATE states SET value=(
+              SELECT MIN(repeat_cost + value) FROM actions WHERE parent=states.id
+            ) WHERE depth=? AND active>1
+            """,
+            (depth,),
+        )
 
     def num_unvalued(self, depth: int) -> int:
-        count: int = self._con.execute(
+        count: int = self.connection.execute(
             """
             SELECT (SELECT COUNT(*) FROM states WHERE depth=? AND value IS NULL)
                  + (SELECT COUNT(*) FROM actions WHERE value IS NULL
@@ -58,13 +58,12 @@ class AtlasRetrogradeSolver:
         return count
 
     def mark_solved(self) -> None:
-        with self._con:
-            self._con.execute(
-                "INSERT OR REPLACE INTO meta(key,value) VALUES ('solved','true')"
-            )
+        self.connection.execute(
+            "INSERT OR REPLACE INTO meta(key,value) VALUES ('solved','true')"
+        )
 
     def root_value(self) -> int:
-        row = self._con.execute(
+        row = self.connection.execute(
             "SELECT value FROM states WHERE id="
             "(SELECT CAST(value AS INTEGER) FROM meta WHERE key='root_id')"
         ).fetchone()

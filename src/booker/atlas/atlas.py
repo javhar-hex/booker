@@ -1,14 +1,15 @@
 """
-An atlas, positions and the Scheduler's actions in SQLite, reached only through an
-opened `Atlas`. Reading is done by the `Atlas` itself. Recording its expansion is done
-through the `AtlasExpansionWriter` of `Atlas.transaction`, so that nothing is written
-without being committed, and solving it through its `AtlasRetrogradeSolver`. The tables
-are described in `booker.atlas.schema`.
+An atlas, positions and the Scheduler's actions in SQLite, reached only through an opened
+`Atlas`. Reading is done by the `Atlas` itself, recording its expansion by its
+`AtlasExpansionWriter`, and solving it by its `AtlasRetrogradeSolver`. The connection is in
+autocommit mode: each statement commits itself, and `Atlas.transaction` makes what is done
+inside it atomic. The tables are described in `booker.atlas.schema`.
 """
 
 from __future__ import annotations
 
 import contextlib
+import dataclasses as dc
 import sqlite3
 from collections.abc import Iterator
 from pathlib import Path
@@ -27,15 +28,15 @@ from booker.atlas.stored_state import StoredState
 from booker.core.model.state import State
 
 
+@dc.dataclass(frozen=True, slots=True)
 class Atlas:
     "An open atlas database. Obtain one with `Atlas.open`."
 
-    def __init__(self, con: sqlite3.Connection) -> None:
-        self._con = con
+    connection: sqlite3.Connection
 
     @classmethod
     def open(cls, path: str | Path) -> Atlas:
-        return cls(open_connection(path))
+        return cls(connection=open_connection(path))
 
     def __enter__(self) -> Self:
         return self
@@ -46,22 +47,27 @@ class Atlas:
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        self._con.close()
+        self.connection.close()
 
     @contextlib.contextmanager
-    def transaction(self) -> Iterator[AtlasExpansionWriter]:
-        with self._con:
-            transaction = AtlasExpansionWriter(self._con)
-            try:
-                yield transaction
-            finally:
-                transaction.end()
+    def transaction(self) -> Iterator[None]:
+        "What is done inside is committed together at the end, or not at all if it raises."
+        self.connection.execute("BEGIN")
+        try:
+            yield
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
+        self.connection.execute("COMMIT")
+
+    def expansion_writer(self) -> AtlasExpansionWriter:
+        return AtlasExpansionWriter(connection=self.connection)
 
     def retrograde_solver(self) -> AtlasRetrogradeSolver:
-        return AtlasRetrogradeSolver(self._con)
+        return AtlasRetrogradeSolver(connection=self.connection)
 
     def state(self, state_id: StateId) -> State:
-        row = self._con.execute(
+        row = self.connection.execute(
             "SELECT key FROM states WHERE id=?", (state_id.value,)
         ).fetchone()
         if row is None:
@@ -69,11 +75,11 @@ class Atlas:
         return PackedState(data=row[0]).state
 
     def states(self) -> Iterator[State]:
-        for (data,) in self._con.execute("SELECT key FROM states"):
+        for (data,) in self.connection.execute("SELECT key FROM states"):
             yield PackedState(data=data).state
 
     def unexpanded(self, depth: int) -> ZVec[StoredState]:
-        rows = self._con.execute(
+        rows = self.connection.execute(
             "SELECT id,key FROM states WHERE depth=? AND expanded=0 ORDER BY id",
             (depth,),
         )
@@ -92,7 +98,7 @@ class Atlas:
         return self._count("SELECT COUNT(*) FROM states WHERE expanded=0")
 
     def depth_summaries(self) -> Iterator[DepthSummary]:
-        rows = self._con.execute("""
+        rows = self.connection.execute("""
             SELECT s.depth, COUNT(DISTINCT s.id), COUNT(a.a),
                    COALESCE(SUM(a.class_size),0), MIN(s.value), MAX(s.value)
             FROM states s LEFT JOIN actions a ON a.parent=s.id
@@ -109,5 +115,5 @@ class Atlas:
             )
 
     def _count(self, sql: str, params: tuple[int, ...] = ()) -> int:
-        count: int = self._con.execute(sql, params).fetchone()[0]
+        count: int = self.connection.execute(sql, params).fetchone()[0]
         return count
