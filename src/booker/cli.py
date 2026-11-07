@@ -146,7 +146,7 @@ def _equilibrium(args: argparse.Namespace) -> None:
 def _print_stats(path: str) -> None:
     print("depth  states  collider  pairings  min-value  max-value")
     with Atlas.open(path) as atlas:
-        for row in atlas.valuation().depth_summaries():
+        for row in atlas.depth_summaries():
             print(
                 f"{row.depth:>5} {row.num_states:>7,} {row.num_colliders:>9,} "
                 f"{row.num_pairings:>9,} {row.min_value!s:>10} {row.max_value!s:>10}"

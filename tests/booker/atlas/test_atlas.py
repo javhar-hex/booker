@@ -7,7 +7,10 @@ import pytest
 from booker.atlas.atlas import Atlas
 from booker.atlas.schema import SCHEMA_VERSION
 from booker.atlas.state_id import StateId
+from booker.core.model.invariants import MAX_MATCHES
+from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
+from booker.core.model.team import Team
 
 
 def test_a_state_is_stored_once_and_comes_back_equal(
@@ -81,3 +84,64 @@ def test_refuses_a_database_of_another_schema_version(path: Path) -> None:
 
     with pytest.raises(ValueError, match=f"schema v0.*v{SCHEMA_VERSION}"):
         Atlas.open(path)
+
+
+def test_summarizes_each_depth(
+    final_pair: Callable[[bool], State], solved: Callable[[bool], Atlas]
+) -> None:
+    with solved(True) as atlas:
+        summaries = list(atlas.depth_summaries())
+
+    parent_depth = final_pair(True).matches_played
+    assert [summary.depth for summary in summaries] == [parent_depth, parent_depth + 1]
+    assert (summaries[0].num_states, summaries[0].num_colliders) == (1, 1)
+    assert (summaries[0].num_pairings, summaries[0].min_value) == (1, 1)
+    assert (summaries[1].num_states, summaries[1].max_value) == (1, 0)
+
+
+def test_the_values_of_an_unsolved_atlas_are_none(
+    path: Path, final_pair: Callable[[bool], State]
+) -> None:
+    with Atlas.open(path) as atlas:
+        with atlas.transaction() as tx:
+            tx.add_state(final_pair(False))
+
+        (summary,) = atlas.depth_summaries()
+
+    assert (summary.min_value, summary.max_value) == (None, None)
+
+
+def test_summarizes_a_depth_of_several_positions(
+    path: Path,
+    final_pair: Callable[[bool], State],
+    champion_state: State,
+    pairing: Pairing,
+) -> None:
+    "Two positions at one depth, worth 1 and 0, with one action and two."
+    other = Pairing.of(Team(index=0), Team(index=2))
+    with Atlas.open(path) as atlas:
+        with atlas.transaction() as tx:
+            champion = tx.add_state(champion_state)
+            for met, pairings in (
+                (True, [(pairing, 1)]),
+                (False, [(pairing, 3), (other, 2)]),
+            ):
+                parent = tx.add_state(final_pair(met))
+                for chosen, class_size in pairings:
+                    tx.add_action(parent, chosen, met, class_size, champion, champion)
+                tx.mark_expanded(parent)
+            tx.mark_decided_expanded()
+        solver = atlas.solver()
+        solver.reset_values()
+        for depth in range(MAX_MATCHES, -1, -1):
+            solver.back_up(depth)
+
+        summary = {s.depth: s for s in atlas.depth_summaries()}
+
+    parents = summary[final_pair(True).matches_played]
+    assert (parents.num_states, parents.num_colliders, parents.num_pairings) == (2, 3, 6)
+    assert (parents.min_value, parents.max_value) == (0, 1)
+
+    decided = summary[champion_state.matches_played]
+    assert (decided.num_states, decided.num_colliders, decided.num_pairings) == (1, 0, 0)
+    assert (decided.min_value, decided.max_value) == (0, 0)

@@ -2,7 +2,7 @@
 An atlas, positions and the Scheduler's actions in SQLite, reached only through an
 opened `Atlas`. Reading is done by the `Atlas` itself. Writing a generation is done
 through the `AtlasWriter` of `Atlas.transaction`, so that nothing is written without
-being committed, and valuing it through its `AtlasValuation`. The tables are described
+being committed, and solving it through its `AtlasSolver`. The tables are described
 in `booker.atlas.schema`.
 """
 
@@ -17,8 +17,9 @@ from typing import Self
 
 from javhar_util.immutables import ZVec
 
-from booker.atlas.atlas_valuation import AtlasValuation
+from booker.atlas.atlas_solver import AtlasSolver
 from booker.atlas.atlas_writer import AtlasWriter
+from booker.atlas.depth_summary import DepthSummary
 from booker.atlas.packed_state import PackedState
 from booker.atlas.schema import open_connection
 from booker.atlas.state_id import StateId
@@ -56,8 +57,8 @@ class Atlas:
             finally:
                 transaction.end()
 
-    def valuation(self) -> AtlasValuation:
-        return AtlasValuation(self._con)
+    def solver(self) -> AtlasSolver:
+        return AtlasSolver(self._con)
 
     def state(self, state_id: StateId) -> State:
         row = self._con.execute(
@@ -89,6 +90,23 @@ class Atlas:
 
     def num_unexpanded(self) -> int:
         return self._count("SELECT COUNT(*) FROM states WHERE expanded=0")
+
+    def depth_summaries(self) -> Iterator[DepthSummary]:
+        rows = self._con.execute("""
+            SELECT s.depth, COUNT(DISTINCT s.id), COUNT(a.a),
+                   COALESCE(SUM(a.class_size),0), MIN(s.value), MAX(s.value)
+            FROM states s LEFT JOIN actions a ON a.parent=s.id
+            GROUP BY s.depth ORDER BY s.depth
+            """)
+        for depth, states, colliders, pairings, lowest, highest in rows:
+            yield DepthSummary(
+                depth=depth,
+                num_states=states,
+                num_colliders=colliders,
+                num_pairings=pairings,
+                min_value=lowest,
+                max_value=highest,
+            )
 
     def _count(self, sql: str, params: tuple[int, ...] = ()) -> int:
         count: int = self._con.execute(sql, params).fetchone()[0]

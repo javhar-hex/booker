@@ -1,19 +1,19 @@
 """
-Valuing an atlas, from its last layer back to its root, and what that gives. A Collider
-position is worth the larger of its two children, and a Scheduler position the least,
-over its actions, of what the action costs and is worth.
+Solving an atlas, from its last layer back to its root. A Collider position is worth the
+larger of its two children, and a Scheduler position the least, over its actions, of what
+the action costs and is worth.
 """
 
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import Iterator
-
-from booker.atlas.depth_summary import DepthSummary
 
 
-class AtlasValuation:
-    "The values of an atlas. Obtain one with `Atlas.valuation`; each step is committed."
+class AtlasSolver:
+    """
+    The steps that solve an atlas, which `solve` puts in order. Obtain one with
+    `Atlas.solver`; each step is committed.
+    """
 
     def __init__(self, con: sqlite3.Connection) -> None:
         self._con = con
@@ -72,20 +72,3 @@ class AtlasValuation:
             raise ValueError("the atlas has no solved root")
         value: int = row[0]
         return value
-
-    def depth_summaries(self) -> Iterator[DepthSummary]:
-        rows = self._con.execute("""
-            SELECT s.depth, COUNT(DISTINCT s.id), COUNT(a.a),
-                   COALESCE(SUM(a.class_size),0), MIN(s.value), MAX(s.value)
-            FROM states s LEFT JOIN actions a ON a.parent=s.id
-            GROUP BY s.depth ORDER BY s.depth
-            """)
-        for depth, states, colliders, pairings, lowest, highest in rows:
-            yield DepthSummary(
-                depth=depth,
-                num_states=states,
-                num_colliders=colliders,
-                num_pairings=pairings,
-                min_value=lowest,
-                max_value=highest,
-            )

@@ -13,14 +13,14 @@ def solve(path: str) -> None:
             raise RuntimeError(
                 f"Cannot solve truncated atlas: {unexpanded:,} unexpanded states"
             )
-        valuation = atlas.valuation()
-        valuation.reset_values()
+        solver = atlas.solver()
+        solver.reset_values()
         # A state's children are one match deeper, so they are valued before it.
         for depth in range(MAX_MATCHES, -1, -1):
-            valuation.back_up(depth)
-            if missing := valuation.num_unvalued(depth):
+            solver.back_up(depth)
+            if missing := solver.num_unvalued(depth):
                 raise RuntimeError(
                     f"Bellman backup missing {missing} values at depth {depth}"
                 )
-        valuation.mark_solved()
-        print(f"root minimax value: {valuation.root_value()}")
+        solver.mark_solved()
+        print(f"root minimax value: {solver.root_value()}")
