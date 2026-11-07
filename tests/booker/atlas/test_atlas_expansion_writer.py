@@ -8,14 +8,14 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 
 
-def test_the_canonicalization_backend_cannot_change(path: Path) -> None:
+def test_the_canonicalization_cannot_change(path: Path) -> None:
     with Atlas.open(path) as atlas:
         writer = atlas.expansion_writer()
-        writer.use_backend("bliss")
-        writer.use_backend("bliss")
+        writer.use_canonicalization("bliss")
+        writer.use_canonicalization("bliss")
 
         with pytest.raises(ValueError, match="Cannot resume bliss atlas using vf2"):
-            writer.use_backend("vf2")
+            writer.use_canonicalization("vf2")
 
 
 def test_the_root_is_recorded_once(

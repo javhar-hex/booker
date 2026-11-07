@@ -20,7 +20,7 @@ def generate(path: str, max_depth: int, backend: Backend) -> None:
     if not 0 <= max_depth <= MAX_MATCHES:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
-        atlas.expansion_writer().use_backend(backend.value)
+        atlas.expansion_writer().use_canonicalization(backend.value)
         canon = backend.canonicalizer(atlas.states())
         expand(atlas, canon, State.start(), max_depth)
         print("states:", atlas.num_states(), "actions:", atlas.num_actions())

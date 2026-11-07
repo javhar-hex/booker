@@ -22,17 +22,17 @@ class AtlasExpansionWriter:
 
     connection: sqlite3.Connection
 
-    def use_backend(self, backend: str) -> None:
+    def use_canonicalization(self, name: str) -> None:
         "Record how states are canonicalized; an atlas is never resumed with another."
         prior = self.connection.execute(
             "SELECT value FROM meta WHERE key='backend'"
         ).fetchone()
-        if prior and prior[0] != backend:
+        if prior and prior[0] != name:
             raise ValueError(
-                f"Cannot resume {prior[0]} atlas using {backend} canonicalization"
+                f"Cannot resume {prior[0]} atlas using {name} canonicalization"
             )
         self.connection.execute(
-            "INSERT OR IGNORE INTO meta(key,value) VALUES ('backend',?)", (backend,)
+            "INSERT OR IGNORE INTO meta(key,value) VALUES ('backend',?)", (name,)
         )
 
     def record_root(self, root: StateId) -> None:
