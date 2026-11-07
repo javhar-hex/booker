@@ -30,17 +30,17 @@ def legal_pairings(state: State) -> ZSet[Pairing]:
     """
     num_unbeaten = sum(record.is_unbeaten for record in state.records)
     return ZSet(
-        Pairing.of(a, b)
-        for a, b in itertools.combinations(state.teams, 2)
-        if _may_meet(state.record(a), state.record(b), num_unbeaten)
+        Pairing.of(team_lhs, team_rhs)
+        for team_lhs, team_rhs in itertools.combinations(state.teams, 2)
+        if _may_meet(state.record(team_lhs), state.record(team_rhs), num_unbeaten)
     )
 
 
-def _may_meet(x: Record, y: Record, num_unbeaten: int) -> bool:
-    if x == y:
-        return x != LOWER_BRACKET_SURVIVOR or num_unbeaten == 0
+def _may_meet(record_lhs: Record, record_rhs: Record, num_unbeaten: int) -> bool:
+    if record_lhs == record_rhs:
+        return record_lhs != LOWER_BRACKET_SURVIVOR or num_unbeaten == 0
     else:
         return num_unbeaten == 1 and (
-            (x.is_unbeaten and y == LOWER_BRACKET_SURVIVOR)
-            or (y.is_unbeaten and x == LOWER_BRACKET_SURVIVOR)
+            (record_lhs.is_unbeaten and record_rhs == LOWER_BRACKET_SURVIVOR)
+            or (record_rhs.is_unbeaten and record_lhs == LOWER_BRACKET_SURVIVOR)
         )
