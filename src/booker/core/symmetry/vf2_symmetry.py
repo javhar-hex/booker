@@ -76,17 +76,26 @@ class Vf2Symmetry(Symmetry):
             orbits=ZVec(PairingOrbit(members=ZSet(group)) for group in groups)
         )
 
-    def _equivalent(self, state: State, x: Pairing, y: Pairing) -> bool:
-        if state.has_met(x) != state.has_met(y):
+    def _equivalent(
+        self, state: State, pairing_lhs: Pairing, pairing_rhs: Pairing
+    ) -> bool:
+        if state.has_met(pairing_lhs) != state.has_met(pairing_rhs):
             return False
-        return _alike(_LabelledGraph.marked(state, x), _LabelledGraph.marked(state, y))
+        return _alike(
+            _LabelledGraph.marked(state, pairing_lhs),
+            _LabelledGraph.marked(state, pairing_rhs),
+        )
 
 
 def _alike(first: _LabelledGraph, second: _LabelledGraph) -> bool:
     graphs: list[nx.Graph[int]] = []
-    for g in (first, second):
+    for labelled_graph in (first, second):
         graph: nx.Graph[int] = nx.Graph()
-        graph.add_nodes_from((i, {"label": label}) for i, label in enumerate(g.labels))
-        graph.add_edges_from((e.lhs.index, e.rhs.index) for e in g.edges)
+        graph.add_nodes_from(
+            (idx, {"label": label}) for idx, label in enumerate(labelled_graph.labels)
+        )
+        graph.add_edges_from(
+            (pairing.lhs.index, pairing.rhs.index) for pairing in labelled_graph.edges
+        )
         graphs.append(graph)
     return bool(nx.vf2pp_is_isomorphic(graphs[0], graphs[1], node_label="label"))

@@ -43,9 +43,12 @@ class BlissGraph:
     @cached_property
     def automorphism_generators(self) -> ZVec[Relabelling]:
         "Generators of the group of relabellings that leave the schedule unchanged."
-        teams = range(self.schedule.state.size)
+        indices = range(self.schedule.state.size)
         generators = self._graph.automorphism_group(color=self._colours)
-        return ZVec(Relabelling.of([g[team] for team in teams]) for g in generators)
+        return ZVec(
+            Relabelling.of([generator[idx] for idx in indices])
+            for generator in generators
+        )
 
     @property
     def _scheduled(self) -> list[Pairing]:
@@ -59,10 +62,12 @@ class BlissGraph:
     @property
     def _graph(self) -> ig.Graph:
         state = self.schedule.state
-        past_pairings = [(p.lhs.index, p.rhs.index) for p in state.past_pairings]
+        past_pairings = [
+            (pairing.lhs.index, pairing.rhs.index) for pairing in state.past_pairings
+        ]
         gadgets = [
-            (state.size + k, team.index)
-            for k, pairing in enumerate(self._scheduled)
+            (state.size + idx, team.index)
+            for idx, pairing in enumerate(self._scheduled)
             for team in (pairing.lhs, pairing.rhs)
         ]
         return ig.Graph(

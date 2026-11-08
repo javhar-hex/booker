@@ -20,15 +20,20 @@ class Relabelling:
     images: ZMap[Team, Team]
 
     def __post_init__(self) -> None:
-        teams = {Team(index=i) for i in range(len(self.images))}
+        teams = {Team(index=idx) for idx in range(len(self.images))}
         if set(self.images.keys()) != teams or set(self.images.values()) != teams:
             raise ValueError(f"not a permutation of {len(teams)} teams: {self.images}")
 
     @classmethod
     def of(cls, indices: Sequence[int]) -> Relabelling:
-        "Team `i` becomes team `indices[i]`."
+        "Team `idx_pre` becomes team `indices[idx_pre]`."
         return cls(
-            images=ZMap({Team(index=i): Team(index=j) for i, j in enumerate(indices)})
+            images=ZMap(
+                {
+                    Team(index=idx_pre): Team(index=idx_post)
+                    for idx_pre, idx_post in enumerate(indices)
+                }
+            )
         )
 
     def __len__(self) -> int:
