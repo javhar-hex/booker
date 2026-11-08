@@ -10,10 +10,10 @@ from booker.core.symmetry.relabelling import Relabelling
 
 TEAM_A, TEAM_B, TEAM_C = (Team(index=idx) for idx in range(3))
 ROTATION = Relabelling.of([1, 2, 0])
-UNBEATEN = Record(wins=2, losses=0)
-ONE_LOSS = Record(wins=1, losses=1)
+RECORD_2_0 = Record(wins=2, losses=0)
+RECORD_1_1 = Record(wins=1, losses=1)
 STATE = State(
-    records=ZVec([UNBEATEN, ONE_LOSS, ONE_LOSS]),
+    records=ZVec([RECORD_2_0, RECORD_1_1, RECORD_1_1]),
     past_pairings=ZSet([Pairing.of(TEAM_A, TEAM_B)]),
 )
 
@@ -38,7 +38,7 @@ def test_maps_teams_and_pairings() -> None:
 def test_moves_each_record_with_its_team() -> None:
     relabelled = ROTATION.state(STATE)
 
-    assert relabelled.record(TEAM_B) == UNBEATEN
+    assert relabelled.record(TEAM_B) == RECORD_2_0
     assert relabelled.past_pairings == ZSet([Pairing.of(TEAM_B, TEAM_C)])
 
 

@@ -31,9 +31,9 @@ from booker.verify.plan import AuditPlan, AuditReport, IdRange
 from booker.verify.state_checks import StateCheck
 
 PAIRING = Pairing.of(Team(index=0), Team(index=1))
-FINAL = Record(wins=5, losses=1)
-CHAMPION = Record(wins=6, losses=1)
-SURVIVOR = Record(wins=4, losses=1)
+RECORD_5_1 = Record(wins=5, losses=1)
+RECORD_6_1 = Record(wins=6, losses=1)
+RECORD_4_1 = Record(wins=4, losses=1)
 EVERY_STATE = IdRange(start=0)
 PARENT, CHILD = 1, 2
 
@@ -66,9 +66,9 @@ def _build(
 
 def _final_pair(path: Path, met: bool = False) -> Path:
     "Two teams a loss from elimination: whoever wins the match is the champion."
-    champion = _state(CHAMPION)
+    champion = _state(RECORD_6_1)
     return _build(
-        path, _state(FINAL, FINAL, met=met), (champion, champion), PAIRING, met
+        path, _state(RECORD_5_1, RECORD_5_1, met=met), (champion, champion), PAIRING, met
     )
 
 
@@ -177,11 +177,11 @@ def test_an_atlas_missing_a_value_is_audited_as_unsolved(solved: Path) -> None:
 
 
 def test_rejects_an_illegal_pairing(tmp_path: Path) -> None:
-    parent = _state(FINAL, SURVIVOR)
+    parent = _state(RECORD_5_1, RECORD_4_1)
     atlas = _build(
         tmp_path / "illegal.db",
         parent,
-        (_state(CHAMPION), _state(FINAL)),
+        (_state(RECORD_6_1), _state(RECORD_5_1)),
         PAIRING,
     )
 
@@ -192,8 +192,8 @@ def test_rejects_an_illegal_pairing(tmp_path: Path) -> None:
 def test_rejects_a_dead_end(tmp_path: Path) -> None:
     atlas = _build(
         tmp_path / "dead.db",
-        _state(FINAL, SURVIVOR),
-        (_state(CHAMPION), _state(CHAMPION)),
+        _state(RECORD_5_1, RECORD_4_1),
+        (_state(RECORD_6_1), _state(RECORD_6_1)),
         pairing=None,
     )
 

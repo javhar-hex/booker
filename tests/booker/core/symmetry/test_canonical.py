@@ -29,8 +29,8 @@ MAX_SCHEDULED = 3
 # Pairing only equal records below this many wins keeps every team under 6 wins.
 WIN_CEILING = 4
 TEAM_A, TEAM_B, TEAM_C, TEAM_D = (Team(index=idx) for idx in range(4))
-WON = Record(wins=1, losses=0)
-ONE_LOSS = Record(wins=0, losses=1)
+RECORD_1_0 = Record(wins=1, losses=0)
+RECORD_0_1 = Record(wins=0, losses=1)
 
 
 def _random_state(rng: random.Random) -> State:
@@ -96,10 +96,10 @@ def test_canonical_schedule_is_its_own_canonical_schedule(seed: int) -> None:
 
 def test_distinguishes_a_path_from_a_star() -> None:
     path = _schedule(
-        WON,
-        ONE_LOSS,
-        ONE_LOSS,
-        ONE_LOSS,
+        RECORD_1_0,
+        RECORD_0_1,
+        RECORD_0_1,
+        RECORD_0_1,
         past_pairings=(
             Pairing.of(TEAM_A, TEAM_B),
             Pairing.of(TEAM_B, TEAM_C),
@@ -108,10 +108,10 @@ def test_distinguishes_a_path_from_a_star() -> None:
         pairings=(),
     )
     star = _schedule(
-        WON,
-        ONE_LOSS,
-        ONE_LOSS,
-        ONE_LOSS,
+        RECORD_1_0,
+        RECORD_0_1,
+        RECORD_0_1,
+        RECORD_0_1,
         past_pairings=(
             Pairing.of(TEAM_A, TEAM_B),
             Pairing.of(TEAM_A, TEAM_C),
@@ -125,18 +125,24 @@ def test_distinguishes_a_path_from_a_star() -> None:
 
 def test_distinguishes_records() -> None:
     past_pairings = (Pairing.of(TEAM_A, TEAM_B),)
-    one = _schedule(WON, ONE_LOSS, ONE_LOSS, past_pairings=past_pairings, pairings=())
-    other = _schedule(ONE_LOSS, WON, ONE_LOSS, past_pairings=past_pairings, pairings=())
+    one = _schedule(
+        RECORD_1_0, RECORD_0_1, RECORD_0_1, past_pairings=past_pairings, pairings=()
+    )
+    other = _schedule(
+        RECORD_0_1, RECORD_1_0, RECORD_0_1, past_pairings=past_pairings, pairings=()
+    )
 
     assert CanonicalSchedule.of(one) == CanonicalSchedule.of(other)
     assert CanonicalSchedule.of(one) != CanonicalSchedule.of(
-        _schedule(ONE_LOSS, ONE_LOSS, ONE_LOSS, past_pairings=past_pairings, pairings=())
+        _schedule(
+            RECORD_0_1, RECORD_0_1, RECORD_0_1, past_pairings=past_pairings, pairings=()
+        )
     )
 
 
 def test_distinguishes_who_is_paired_with_whom() -> None:
     past_pairings = (Pairing.of(TEAM_A, TEAM_B), Pairing.of(TEAM_C, TEAM_D))
-    four = (ONE_LOSS,) * 4
+    four = (RECORD_0_1,) * 4
     rematches = _schedule(
         *four,
         past_pairings=past_pairings,

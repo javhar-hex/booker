@@ -23,9 +23,9 @@ from booker.core.symmetry.symmetry_kind import BLISS, VF2, SymmetryKind
 from booker.game.rules import legal_pairings
 
 KINDS = [BLISS, VF2]
-ONE_ONE = Record(wins=1, losses=1)
-WON = Record(wins=1, losses=0)
-LOST = Record(wins=0, losses=1)
+RECORD_1_1 = Record(wins=1, losses=1)
+RECORD_1_0 = Record(wins=1, losses=0)
+RECORD_0_1 = Record(wins=0, losses=1)
 GAMES = 10
 MOST_PAIRS_PER_GROUP = 15
 
@@ -62,16 +62,16 @@ def test_every_implementation_declares_that_it_implements_the_protocol(
 
 @pytest.mark.parametrize("kind", KINDS)
 def test_relabelled_states_are_isomorphic(kind: SymmetryKind) -> None:
-    path = _state([ONE_ONE] * 4, (0, 1), (1, 2), (2, 3))
-    shuffled = _state([ONE_ONE] * 4, (0, 2), (0, 3), (1, 3))
+    path = _state([RECORD_1_1] * 4, (0, 1), (1, 2), (2, 3))
+    shuffled = _state([RECORD_1_1] * 4, (0, 2), (0, 3), (1, 3))
 
     assert kind.symmetry.are_isomorphic(path, shuffled)
 
 
 @pytest.mark.parametrize("kind", KINDS)
 def test_a_path_is_not_a_star(kind: SymmetryKind) -> None:
-    path = _state([ONE_ONE] * 4, (0, 1), (1, 2), (2, 3))
-    star = _state([ONE_ONE] * 4, (0, 1), (0, 2), (0, 3))
+    path = _state([RECORD_1_1] * 4, (0, 1), (1, 2), (2, 3))
+    star = _state([RECORD_1_1] * 4, (0, 1), (0, 2), (0, 3))
 
     assert not kind.symmetry.are_isomorphic(path, star)
 
@@ -79,8 +79,8 @@ def test_a_path_is_not_a_star(kind: SymmetryKind) -> None:
 @pytest.mark.parametrize("kind", KINDS)
 def test_two_triangles_are_not_a_six_cycle(kind: SymmetryKind) -> None:
     "The same signature, so only the algorithm can tell them apart."
-    triangles = _state([ONE_ONE] * 6, (0, 1), (1, 2), (0, 2), (3, 4), (4, 5), (3, 5))
-    cycle = _state([ONE_ONE] * 6, (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5))
+    triangles = _state([RECORD_1_1] * 6, (0, 1), (1, 2), (0, 2), (3, 4), (4, 5), (3, 5))
+    cycle = _state([RECORD_1_1] * 6, (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5))
 
     assert signature(triangles) == signature(cycle)
     assert not kind.symmetry.are_isomorphic(triangles, cycle)
@@ -88,18 +88,20 @@ def test_two_triangles_are_not_a_six_cycle(kind: SymmetryKind) -> None:
 
 @pytest.mark.parametrize("kind", KINDS)
 def test_records_must_match(kind: SymmetryKind) -> None:
-    winner_at_the_end = _state([WON, LOST, LOST], (0, 1), (1, 2))
-    winner_in_the_middle = _state([LOST, WON, LOST], (0, 1), (1, 2))
+    winner_at_the_end = _state([RECORD_1_0, RECORD_0_1, RECORD_0_1], (0, 1), (1, 2))
+    winner_in_the_middle = _state([RECORD_0_1, RECORD_1_0, RECORD_0_1], (0, 1), (1, 2))
 
     assert not kind.symmetry.are_isomorphic(winner_at_the_end, winner_in_the_middle)
     assert kind.symmetry.are_isomorphic(
-        winner_at_the_end, _state([LOST, LOST, WON], (0, 1), (1, 2))
+        winner_at_the_end, _state([RECORD_0_1, RECORD_0_1, RECORD_1_0], (0, 1), (1, 2))
     )
 
 
 @pytest.mark.parametrize("kind", KINDS)
 def test_states_of_different_sizes_are_not_isomorphic(kind: SymmetryKind) -> None:
-    assert not kind.symmetry.are_isomorphic(_state([ONE_ONE] * 2), _state([ONE_ONE] * 3))
+    assert not kind.symmetry.are_isomorphic(
+        _state([RECORD_1_1] * 2), _state([RECORD_1_1] * 3)
+    )
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -115,7 +117,7 @@ def test_every_first_round_pairing_is_alike(kind: SymmetryKind) -> None:
 
 @pytest.mark.parametrize("kind", KINDS)
 def test_a_rematch_is_an_orbit_of_its_own(kind: SymmetryKind) -> None:
-    state = _state([ONE_ONE] * 4, (0, 1))
+    state = _state([RECORD_1_1] * 4, (0, 1))
 
     orbits = kind.symmetry.orbits(state, legal_pairings(state))
 

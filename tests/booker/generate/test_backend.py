@@ -9,9 +9,9 @@ from booker.core.symmetry.relabelling import Relabelling
 from booker.generate.backend import BLISS, VF2, Backend, BlissCanonicalizer
 from booker.generate.canonicalizer import Canonicalizer
 
-ONE_ONE = Record(wins=1, losses=1)
+RECORD_1_1 = Record(wins=1, losses=1)
 PATH = State(
-    records=ZVec([ONE_ONE] * 4),
+    records=ZVec([RECORD_1_1] * 4),
     past_pairings=ZSet(
         Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
         for index_lhs, index_rhs in [(0, 1), (1, 2), (2, 3)]

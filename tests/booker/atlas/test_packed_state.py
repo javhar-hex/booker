@@ -12,9 +12,9 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 
 TEAM_A, TEAM_B, TEAM_C = (Team(index=idx) for idx in range(3))
-ONE_ONE = Record(wins=1, losses=1)
-ZERO_ONE = Record(wins=0, losses=1)
-TWO_ZERO = Record(wins=2, losses=0)
+RECORD_1_1 = Record(wins=1, losses=1)
+RECORD_0_1 = Record(wins=0, losses=1)
+RECORD_2_0 = Record(wins=2, losses=0)
 
 
 def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
@@ -23,7 +23,7 @@ def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
 
 def test_packs_to_the_documented_layout() -> None:
     state = _state(
-        ONE_ONE, ZERO_ONE, TWO_ZERO, past_pairings=(Pairing.of(TEAM_A, TEAM_B),)
+        RECORD_1_1, RECORD_0_1, RECORD_2_0, past_pairings=(Pairing.of(TEAM_A, TEAM_B),)
     )
 
     assert PackedState.of(state).data == bytes([3, 3, 1, 4, 0b001])
@@ -31,9 +31,9 @@ def test_packs_to_the_documented_layout() -> None:
 
 def test_packs_each_met_pair_into_its_own_bit() -> None:
     state = _state(
-        ONE_ONE,
-        ZERO_ONE,
-        TWO_ZERO,
+        RECORD_1_1,
+        RECORD_0_1,
+        RECORD_2_0,
         past_pairings=(Pairing.of(TEAM_A, TEAM_C), Pairing.of(TEAM_B, TEAM_C)),
     )
 
@@ -49,17 +49,17 @@ def test_packs_the_start_without_any_meetings() -> None:
 
 
 def test_different_states_pack_differently() -> None:
-    first = _state(ONE_ONE, ZERO_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
+    first = _state(RECORD_1_1, RECORD_0_1, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
 
-    assert PackedState.of(first) != PackedState.of(_state(ONE_ONE, ZERO_ONE))
+    assert PackedState.of(first) != PackedState.of(_state(RECORD_1_1, RECORD_0_1))
     assert PackedState.of(first) != PackedState.of(
-        _state(ZERO_ONE, ONE_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
+        _state(RECORD_0_1, RECORD_1_1, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
     )
 
 
 def test_equal_states_pack_equally() -> None:
-    assert PackedState.of(_state(ONE_ONE, ZERO_ONE)) == PackedState.of(
-        _state(ONE_ONE, ZERO_ONE)
+    assert PackedState.of(_state(RECORD_1_1, RECORD_0_1)) == PackedState.of(
+        _state(RECORD_1_1, RECORD_0_1)
     )
 
 

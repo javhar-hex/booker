@@ -8,8 +8,8 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 
 TEAM_A, TEAM_B, TEAM_C = (Team(index=idx) for idx in range(3))
-ONE_ONE = Record(wins=1, losses=1)
-TWO_ZERO = Record(wins=2, losses=0)
+RECORD_1_1 = Record(wins=1, losses=1)
+RECORD_2_0 = Record(wins=2, losses=0)
 
 
 def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
@@ -26,27 +26,27 @@ def test_start_has_every_team_fresh_and_no_meetings() -> None:
 
 
 def test_matches_played_counts_lives_lost_including_eliminated_teams() -> None:
-    state = _state(TWO_ZERO, ONE_ONE, ONE_ONE)
+    state = _state(RECORD_2_0, RECORD_1_1, RECORD_1_1)
 
     assert state.matches_played == (NUM_PARTICIPANTS - 3) * ELIMINATION_LOSSES + 2
 
 
 def test_decided_when_one_team_is_left() -> None:
     assert _state(Record(wins=6, losses=1)).is_decided
-    assert not _state(TWO_ZERO, ONE_ONE).is_decided
+    assert not _state(RECORD_2_0, RECORD_1_1).is_decided
 
 
 def test_knows_its_teams() -> None:
-    state = _state(TWO_ZERO, ONE_ONE)
+    state = _state(RECORD_2_0, RECORD_1_1)
 
     assert state.teams == ZVec([TEAM_A, TEAM_B])
     assert TEAM_B in state and TEAM_C not in state
-    assert state.record(TEAM_B) == ONE_ONE
+    assert state.record(TEAM_B) == RECORD_1_1
 
 
 def test_counts_rematches_among_pairings() -> None:
     state = _state(
-        TWO_ZERO, ONE_ONE, ONE_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_B),)
+        RECORD_2_0, RECORD_1_1, RECORD_1_1, past_pairings=(Pairing.of(TEAM_A, TEAM_B),)
     )
 
     assert state.has_met(Pairing.of(TEAM_A, TEAM_B))
@@ -64,19 +64,19 @@ def test_rejects_impossible_team_counts(size: int) -> None:
 
 def test_rejects_eliminated_teams() -> None:
     with pytest.raises(ValueError, match="eliminated"):
-        _state(TWO_ZERO, Record(wins=1, losses=ELIMINATION_LOSSES))
+        _state(RECORD_2_0, Record(wins=1, losses=ELIMINATION_LOSSES))
 
 
 def test_rejects_meetings_with_unknown_teams() -> None:
     with pytest.raises(ValueError, match="not one of"):
-        _state(TWO_ZERO, ONE_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_C),))
+        _state(RECORD_2_0, RECORD_1_1, past_pairings=(Pairing.of(TEAM_A, TEAM_C),))
 
 
 def test_rejects_two_unbeaten_teams_having_met() -> None:
     with pytest.raises(ValueError, match="unbeaten"):
-        _state(TWO_ZERO, TWO_ZERO, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
+        _state(RECORD_2_0, RECORD_2_0, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
 
 
 def test_record_of_unknown_team_is_an_error() -> None:
     with pytest.raises(ValueError, match="not one of"):
-        _state(TWO_ZERO).record(TEAM_B)
+        _state(RECORD_2_0).record(TEAM_B)
