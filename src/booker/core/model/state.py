@@ -45,7 +45,7 @@ class State:
 
     @property
     def teams(self) -> ZVec[Team]:
-        return ZVec(Team(index=i) for i in range(self.size))
+        return ZVec(Team(index=idx) for idx in range(self.size))
 
     @property
     def is_decided(self) -> bool:
