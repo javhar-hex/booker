@@ -70,22 +70,24 @@ def open_connection(path: str | Path) -> sqlite3.Connection:
     autocommit mode: each statement commits itself, and what is done together is done
     between an explicit BEGIN and COMMIT.
     """
-    con = sqlite3.connect(str(path), isolation_level=None)
-    con.execute("PRAGMA foreign_keys=ON")
-    con.execute("PRAGMA busy_timeout=5000")
-    con.execute("PRAGMA journal_mode=WAL")
-    _require_compatible(con)
-    con.executescript(DDL)
-    con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    connection = sqlite3.connect(str(path), isolation_level=None)
+    connection.execute("PRAGMA foreign_keys=ON")
+    connection.execute("PRAGMA busy_timeout=5000")
+    connection.execute("PRAGMA journal_mode=WAL")
+    _require_compatible(connection)
+    connection.executescript(DDL)
+    connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     for key, value in META.items():
-        con.execute("INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)", (key, value))
-    return con
+        connection.execute(
+            "INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)", (key, value)
+        )
+    return connection
 
 
-def _require_compatible(con: sqlite3.Connection) -> None:
+def _require_compatible(connection: sqlite3.Connection) -> None:
     "A database that has tables already must have been written with this schema."
-    is_new = con.execute("SELECT COUNT(*) FROM sqlite_master").fetchone()[0] == 0
-    version = con.execute("PRAGMA user_version").fetchone()[0]
+    is_new = connection.execute("SELECT COUNT(*) FROM sqlite_master").fetchone()[0] == 0
+    version = connection.execute("PRAGMA user_version").fetchone()[0]
     if not is_new and version != SCHEMA_VERSION:
         raise ValueError(
             f"Database schema v{version} cannot be resumed with schema "

@@ -103,9 +103,9 @@ def test_a_new_atlas_has_the_schema_version_that_sqlite_keeps(path: Path) -> Non
 def test_refuses_a_database_of_another_schema_version(path: Path) -> None:
     with Atlas.open(path):
         pass
-    con = sqlite3.connect(path)
-    con.execute("PRAGMA user_version = 0")
-    con.close()
+    connection = sqlite3.connect(path)
+    connection.execute("PRAGMA user_version = 0")
+    connection.close()
 
     with pytest.raises(ValueError, match=f"schema v0.*v{SCHEMA_VERSION}"):
         Atlas.open(path)
