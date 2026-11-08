@@ -25,7 +25,7 @@ def _state(*records: Record) -> State:
 
 
 def _pairings(*pairs: tuple[Team, Team]) -> ZSet[Pairing]:
-    return ZSet(Pairing.of(a, b) for a, b in pairs)
+    return ZSet(Pairing.of(team_lhs, team_rhs) for team_lhs, team_rhs in pairs)
 
 
 def test_everyone_may_meet_everyone_at_the_start() -> None:

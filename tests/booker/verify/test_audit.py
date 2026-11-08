@@ -52,10 +52,10 @@ def _build(
     with Atlas.open(path) as atlas:
         writer = atlas.expansion_writer()
         parent_id = writer.add_state(parent)
-        low, high = (writer.add_state(child) for child in children)
+        lhs_wins, rhs_wins = (writer.add_state(child) for child in children)
         writer.record_root(parent_id)
         if pairing is not None:
-            writer.add_action(parent_id, pairing, is_rematch, 1, low, high)
+            writer.add_action(parent_id, pairing, is_rematch, 1, lhs_wins, rhs_wins)
         writer.mark_expanded(parent_id)
         writer.mark_decided_expanded()
         atlas.retrograde_solver().reset_values()

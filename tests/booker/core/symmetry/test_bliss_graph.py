@@ -19,8 +19,8 @@ LOST = Record(wins=0, losses=1)
 FRESH = Record.fresh()
 
 
-def _pairing(a: int, b: int) -> Pairing:
-    return Pairing.of(Team(index=a), Team(index=b))
+def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
+    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 def _schedule(
@@ -28,8 +28,14 @@ def _schedule(
     met: tuple[tuple[int, int], ...] = (),
     booked: tuple[tuple[int, int], ...] = (),
 ) -> Schedule:
-    state = State(records=ZVec(records), met=ZSet(_pairing(a, b) for a, b in met))
-    return Schedule(state=state, pairings=ZSet(_pairing(a, b) for a, b in booked))
+    state = State(
+        records=ZVec(records),
+        met=ZSet(_pairing(index_lhs, index_rhs) for index_lhs, index_rhs in met),
+    )
+    return Schedule(
+        state=state,
+        pairings=ZSet(_pairing(index_lhs, index_rhs) for index_lhs, index_rhs in booked),
+    )
 
 
 def test_every_live_record_has_a_colour_of_its_own() -> None:

@@ -22,8 +22,8 @@ WON = Record(wins=1, losses=0)
 LOST = Record(wins=0, losses=1)
 
 
-def _pairing(a: int, b: int) -> Pairing:
-    return Pairing.of(Team(index=a), Team(index=b))
+def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
+    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 def _classes(state: State) -> list[tuple[Pairing, int]]:

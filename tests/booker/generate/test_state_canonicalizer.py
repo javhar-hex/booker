@@ -13,7 +13,10 @@ LOST = Record(wins=0, losses=1)
 
 
 def _met(*pairs: tuple[int, int]) -> ZSet[Pairing]:
-    return ZSet(Pairing.of(Team(index=a), Team(index=b)) for a, b in pairs)
+    return ZSet(
+        Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
+        for index_lhs, index_rhs in pairs
+    )
 
 
 def _state(records: list[Record], met: ZSet[Pairing]) -> State:

@@ -14,8 +14,8 @@ from booker.core.symmetry.bliss_symmetry import BlissSymmetry, orbits_of_schedul
 from booker.core.symmetry.orbits import PairingOrbits
 
 
-def _pairing(a: int, b: int) -> Pairing:
-    return Pairing.of(Team(index=a), Team(index=b))
+def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
+    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 @dc.dataclass(frozen=True)
@@ -24,8 +24,8 @@ class OrbitShape:
     size: int
 
 
-def _orbit(a: int, b: int, size: int) -> OrbitShape:
-    return OrbitShape(representative=_pairing(a, b), size=size)
+def _orbit(index_lhs: int, index_rhs: int, size: int) -> OrbitShape:
+    return OrbitShape(representative=_pairing(index_lhs, index_rhs), size=size)
 
 
 def _shapes(orbits: PairingOrbits) -> list[OrbitShape]:
@@ -37,10 +37,10 @@ ONE_BOOKED = Schedule(state=State.start(), pairings=ZSet([_pairing(0, 1)]))
 
 def _same_record_pairings(state: State) -> ZSet[Pairing]:
     return ZSet(
-        Pairing.of(x, y)
-        for x in state.teams
-        for y in state.teams
-        if x < y and state.record(x) == state.record(y)
+        Pairing.of(team_lhs, team_rhs)
+        for team_lhs in state.teams
+        for team_rhs in state.teams
+        if team_lhs < team_rhs and state.record(team_lhs) == state.record(team_rhs)
     )
 
 

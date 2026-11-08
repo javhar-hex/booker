@@ -37,12 +37,12 @@ def _random_state(rng: random.Random) -> State:
     state = State.start()
     for _ in range(rng.randrange(MAX_MATCHES + 1)):
         pairings = [
-            Pairing.of(x, y)
-            for x in state.teams
-            for y in state.teams
-            if x < y
-            and state.record(x) == state.record(y)
-            and state.record(x).wins <= WIN_CEILING
+            Pairing.of(team_lhs, team_rhs)
+            for team_lhs in state.teams
+            for team_rhs in state.teams
+            if team_lhs < team_rhs
+            and state.record(team_lhs) == state.record(team_rhs)
+            and state.record(team_lhs).wins <= WIN_CEILING
         ]
         if not pairings:
             break
@@ -54,7 +54,12 @@ def _random_state(rng: random.Random) -> State:
 
 def _random_schedule(rng: random.Random) -> Schedule:
     state = _random_state(rng)
-    pairings = [Pairing.of(x, y) for x in state.teams for y in state.teams if x < y]
+    pairings = [
+        Pairing.of(team_lhs, team_rhs)
+        for team_lhs in state.teams
+        for team_rhs in state.teams
+        if team_lhs < team_rhs
+    ]
     chosen = rng.sample(pairings, min(len(pairings), rng.randrange(MAX_SCHEDULED + 1)))
     return Schedule(state=state, pairings=ZSet(chosen))
 

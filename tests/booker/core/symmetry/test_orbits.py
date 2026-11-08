@@ -9,8 +9,8 @@ from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.relabelling import Relabelling
 
 
-def _pairing(a: int, b: int) -> Pairing:
-    return Pairing.of(Team(index=a), Team(index=b))
+def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
+    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 def test_orbit_of_a_pairing_under_a_rotation_of_three_teams() -> None:
@@ -31,8 +31,8 @@ def test_an_orbit_is_never_empty() -> None:
         PairingOrbit(members=ZSet([]))
 
 
-def _single(a: int, b: int) -> PairingOrbit:
-    return PairingOrbit(members=ZSet([_pairing(a, b)]))
+def _single(index_lhs: int, index_rhs: int) -> PairingOrbit:
+    return PairingOrbit(members=ZSet([_pairing(index_lhs, index_rhs)]))
 
 
 def test_rejects_overlapping_orbits() -> None:

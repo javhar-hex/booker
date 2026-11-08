@@ -13,7 +13,8 @@ ONE_ONE = Record(wins=1, losses=1)
 PATH = State(
     records=ZVec([ONE_ONE] * 4),
     met=ZSet(
-        Pairing.of(Team(index=a), Team(index=b)) for a, b in [(0, 1), (1, 2), (2, 3)]
+        Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
+        for index_lhs, index_rhs in [(0, 1), (1, 2), (2, 3)]
     ),
 )
 SHUFFLED_PATH = Relabelling.of([2, 0, 3, 1]).state(PATH)

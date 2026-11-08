@@ -16,9 +16,9 @@ def test_of_orders_the_teams() -> None:
 
 
 def test_order_given_does_not_matter() -> None:
-    a, b = Team(index=3), Team(index=7)
+    team_lhs, team_rhs = Team(index=3), Team(index=7)
 
-    assert Pairing.of(a, b) == Pairing.of(b, a)
+    assert Pairing.of(team_lhs, team_rhs) == Pairing.of(team_rhs, team_lhs)
 
 
 def test_rejects_a_team_paired_with_itself() -> None:
@@ -39,10 +39,13 @@ def test_knows_which_teams_it_involves() -> None:
 
 
 def test_opponent_is_the_other_team() -> None:
-    a, b = Team(index=2), Team(index=5)
-    pairing = Pairing.of(a, b)
+    team_lhs, team_rhs = Team(index=2), Team(index=5)
+    pairing = Pairing.of(team_lhs, team_rhs)
 
-    assert (pairing.opponent(a), pairing.opponent(b)) == (b, a)
+    assert (pairing.opponent(team_lhs), pairing.opponent(team_rhs)) == (
+        team_rhs,
+        team_lhs,
+    )
 
 
 def test_a_team_outside_the_pairing_has_no_opponent() -> None:

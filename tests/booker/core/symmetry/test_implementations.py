@@ -31,12 +31,15 @@ GAMES = 10
 MOST_PAIRS_PER_GROUP = 15
 
 
-def _pairing(a: int, b: int) -> Pairing:
-    return Pairing.of(Team(index=a), Team(index=b))
+def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
+    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 def _state(records: list[Record], *met: tuple[int, int]) -> State:
-    return State(records=ZVec(records), met=ZSet(_pairing(a, b) for a, b in met))
+    return State(
+        records=ZVec(records),
+        met=ZSet(_pairing(index_lhs, index_rhs) for index_lhs, index_rhs in met),
+    )
 
 
 def _relabelled(state: State, rng: random.Random) -> State:
