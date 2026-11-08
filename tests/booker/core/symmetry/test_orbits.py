@@ -2,28 +2,27 @@
 
 import pytest
 from javhar_util.immutables import ZSet, ZVec
+from support.pairings import pairing_of_indices
 
-from booker.core.model.pairing import Pairing
-from booker.core.model.team import Team
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.relabelling import Relabelling
-
-
-def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
-    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 def test_orbit_of_a_pairing_under_a_rotation_of_three_teams() -> None:
     rotation = ZVec([Relabelling.of([1, 2, 0])])
 
-    orbit = PairingOrbit.of(_pairing(0, 1), rotation)
+    orbit = PairingOrbit.of(pairing_of_indices(0, 1), rotation)
 
-    assert orbit.members == ZSet([_pairing(0, 1), _pairing(1, 2), _pairing(0, 2)])
-    assert (orbit.representative, orbit.size) == (_pairing(0, 1), 3)
+    assert orbit.members == ZSet(
+        [pairing_of_indices(0, 1), pairing_of_indices(1, 2), pairing_of_indices(0, 2)]
+    )
+    assert (orbit.representative, orbit.size) == (pairing_of_indices(0, 1), 3)
 
 
 def test_without_symmetries_an_orbit_is_a_single_pairing() -> None:
-    assert PairingOrbit.of(_pairing(2, 5), ZVec([])).members == ZSet([_pairing(2, 5)])
+    assert PairingOrbit.of(pairing_of_indices(2, 5), ZVec([])).members == ZSet(
+        [pairing_of_indices(2, 5)]
+    )
 
 
 def test_an_orbit_is_never_empty() -> None:
@@ -32,11 +31,13 @@ def test_an_orbit_is_never_empty() -> None:
 
 
 def _single(index_lhs: int, index_rhs: int) -> PairingOrbit:
-    return PairingOrbit(members=ZSet([_pairing(index_lhs, index_rhs)]))
+    return PairingOrbit(members=ZSet([pairing_of_indices(index_lhs, index_rhs)]))
 
 
 def test_rejects_overlapping_orbits() -> None:
-    overlapping = PairingOrbit(members=ZSet([_pairing(0, 1), _pairing(2, 3)]))
+    overlapping = PairingOrbit(
+        members=ZSet([pairing_of_indices(0, 1), pairing_of_indices(2, 3)])
+    )
 
     with pytest.raises(ValueError, match="cannot overlap"):
         PairingOrbits(orbits=ZVec([overlapping, _single(2, 3)]))

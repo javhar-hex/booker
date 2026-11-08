@@ -4,18 +4,14 @@ import dataclasses as dc
 
 import pytest
 from javhar_util.immutables import ZSet, ZVec
+from support.pairings import pairing_of_indices
 
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
-from booker.core.model.team import Team
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry, orbits_of_schedule
 from booker.core.symmetry.orbits import PairingOrbits
-
-
-def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
-    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 @dc.dataclass(frozen=True)
@@ -25,14 +21,14 @@ class OrbitShape:
 
 
 def _orbit(index_lhs: int, index_rhs: int, size: int) -> OrbitShape:
-    return OrbitShape(representative=_pairing(index_lhs, index_rhs), size=size)
+    return OrbitShape(representative=pairing_of_indices(index_lhs, index_rhs), size=size)
 
 
 def _shapes(orbits: PairingOrbits) -> list[OrbitShape]:
     return [OrbitShape(representative=o.representative, size=o.size) for o in orbits]
 
 
-ONE_BOOKED = Schedule(state=State.start(), pairings=ZSet([_pairing(0, 1)]))
+ONE_BOOKED = Schedule(state=State.start(), pairings=ZSet([pairing_of_indices(0, 1)]))
 
 
 def _same_record_pairings(state: State) -> ZSet[Pairing]:
@@ -64,7 +60,7 @@ def test_two_played_matches_leave_three_orbits() -> None:
         lost,
         won,
         lost,
-        met=(_pairing(12, 13), _pairing(14, 15)),
+        met=(pairing_of_indices(12, 13), pairing_of_indices(14, 15)),
     )
 
     orbits = orbits_of_schedule(Schedule.empty(state), _same_record_pairings(state))
@@ -73,7 +69,7 @@ def test_two_played_matches_leave_three_orbits() -> None:
 
 
 def test_a_rematch_is_an_orbit_of_its_own() -> None:
-    state = _state(*[Record(wins=1, losses=1)] * 4, met=(_pairing(0, 1),))
+    state = _state(*[Record(wins=1, losses=1)] * 4, met=(pairing_of_indices(0, 1),))
 
     orbits = orbits_of_schedule(Schedule.empty(state), _same_record_pairings(state))
 
@@ -107,7 +103,9 @@ def test_no_additions_no_orbits() -> None:
 
 def test_rejects_additions_not_closed_under_symmetry() -> None:
     with pytest.raises(ValueError, match="not closed"):
-        orbits_of_schedule(Schedule.empty(State.start()), ZSet([_pairing(0, 1)]))
+        orbits_of_schedule(
+            Schedule.empty(State.start()), ZSet([pairing_of_indices(0, 1)])
+        )
 
 
 def test_rejects_additions_already_booked() -> None:
@@ -116,7 +114,7 @@ def test_rejects_additions_already_booked() -> None:
 
 
 def test_the_symmetry_of_a_state_is_that_of_the_schedule_with_nothing_booked() -> None:
-    state = _state(*[Record(wins=1, losses=1)] * 4, met=(_pairing(0, 1),))
+    state = _state(*[Record(wins=1, losses=1)] * 4, met=(pairing_of_indices(0, 1),))
     legal = _same_record_pairings(state)
 
     assert BlissSymmetry().orbits(state, legal) == orbits_of_schedule(

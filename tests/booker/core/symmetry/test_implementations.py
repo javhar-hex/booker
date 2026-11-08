@@ -12,11 +12,10 @@ from collections.abc import Callable, Iterator, Mapping
 
 import pytest
 from javhar_util.immutables import ZSet, ZVec
+from support.pairings import pairing_of_indices
 
-from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
-from booker.core.model.team import Team
 from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.symmetry import Symmetry, signature
@@ -31,14 +30,12 @@ GAMES = 10
 MOST_PAIRS_PER_GROUP = 15
 
 
-def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
-    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
-
-
 def _state(records: list[Record], *met: tuple[int, int]) -> State:
     return State(
         records=ZVec(records),
-        met=ZSet(_pairing(index_lhs, index_rhs) for index_lhs, index_rhs in met),
+        met=ZSet(
+            pairing_of_indices(index_lhs, index_rhs) for index_lhs, index_rhs in met
+        ),
     )
 
 
@@ -110,7 +107,9 @@ def test_every_first_round_pairing_is_alike(kind: SymmetryKind) -> None:
 
     orbits = kind.symmetry.orbits(start, legal_pairings(start))
 
-    assert [(o.representative, o.size) for o in orbits] == [(_pairing(0, 1), 120)]
+    assert [(o.representative, o.size) for o in orbits] == [
+        (pairing_of_indices(0, 1), 120)
+    ]
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -120,9 +119,9 @@ def test_a_rematch_is_an_orbit_of_its_own(kind: SymmetryKind) -> None:
     orbits = kind.symmetry.orbits(state, legal_pairings(state))
 
     assert [(o.representative, o.size) for o in orbits] == [
-        (_pairing(0, 1), 1),
-        (_pairing(0, 2), 4),
-        (_pairing(2, 3), 1),
+        (pairing_of_indices(0, 1), 1),
+        (pairing_of_indices(0, 2), 4),
+        (pairing_of_indices(2, 3), 1),
     ]
 
 

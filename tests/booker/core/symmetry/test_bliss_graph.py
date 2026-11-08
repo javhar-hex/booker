@@ -4,8 +4,8 @@ and the generators of the symmetries that it finds.
 """
 
 from javhar_util.immutables import ZSet, ZVec
+from support.pairings import pairing_of_indices
 
-from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
@@ -19,10 +19,6 @@ LOST = Record(wins=0, losses=1)
 FRESH = Record.fresh()
 
 
-def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
-    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
-
-
 def _schedule(
     records: list[Record],
     met: tuple[tuple[int, int], ...] = (),
@@ -30,11 +26,15 @@ def _schedule(
 ) -> Schedule:
     state = State(
         records=ZVec(records),
-        met=ZSet(_pairing(index_lhs, index_rhs) for index_lhs, index_rhs in met),
+        met=ZSet(
+            pairing_of_indices(index_lhs, index_rhs) for index_lhs, index_rhs in met
+        ),
     )
     return Schedule(
         state=state,
-        pairings=ZSet(_pairing(index_lhs, index_rhs) for index_lhs, index_rhs in booked),
+        pairings=ZSet(
+            pairing_of_indices(index_lhs, index_rhs) for index_lhs, index_rhs in booked
+        ),
     )
 
 

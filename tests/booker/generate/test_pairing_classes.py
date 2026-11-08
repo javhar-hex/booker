@@ -8,11 +8,11 @@ import random
 from collections.abc import Callable, Iterator
 
 from javhar_util.immutables import ZSet, ZVec
+from support.pairings import pairing_of_indices
 
 from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
-from booker.core.model.team import Team
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.game.rules import legal_pairings
 
@@ -20,10 +20,6 @@ FRESH = Record(wins=0, losses=0)
 ONE_ONE = Record(wins=1, losses=1)
 WON = Record(wins=1, losses=0)
 LOST = Record(wins=0, losses=1)
-
-
-def _pairing(index_lhs: int, index_rhs: int) -> Pairing:
-    return Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
 
 
 def _classes(state: State) -> list[tuple[Pairing, int]]:
@@ -36,28 +32,29 @@ def _state(records: list[Record], met: list[Pairing]) -> State:
 
 
 def test_all_first_round_pairings_are_one_class() -> None:
-    assert _classes(State.start()) == [(_pairing(0, 1), 120)]
+    assert _classes(State.start()) == [(pairing_of_indices(0, 1), 120)]
 
 
 def test_two_disjoint_matches_leave_three_classes() -> None:
     state = _state(
-        [FRESH] * 12 + [WON, LOST, WON, LOST], [_pairing(12, 13), _pairing(14, 15)]
+        [FRESH] * 12 + [WON, LOST, WON, LOST],
+        [pairing_of_indices(12, 13), pairing_of_indices(14, 15)],
     )
 
     assert _classes(state) == [
-        (_pairing(0, 1), 66),
-        (_pairing(12, 14), 1),
-        (_pairing(13, 15), 1),
+        (pairing_of_indices(0, 1), 66),
+        (pairing_of_indices(12, 14), 1),
+        (pairing_of_indices(13, 15), 1),
     ]
 
 
 def test_rematch_is_its_own_class() -> None:
-    state = _state([ONE_ONE] * 4, [_pairing(0, 1)])
+    state = _state([ONE_ONE] * 4, [pairing_of_indices(0, 1)])
 
     assert _classes(state) == [
-        (_pairing(0, 1), 1),
-        (_pairing(0, 2), 4),
-        (_pairing(2, 3), 1),
+        (pairing_of_indices(0, 1), 1),
+        (pairing_of_indices(0, 2), 4),
+        (pairing_of_indices(2, 3), 1),
     ]
 
 
