@@ -44,7 +44,7 @@ def signature(state: State) -> ZVec[TeamSignature]:
     different ones are.
     """
     degree = Counter(
-        team for pairing in state.met for team in (pairing.low, pairing.high)
+        team for pairing in state.met for team in (pairing.lhs, pairing.rhs)
     )
     return ZVec(
         sorted(

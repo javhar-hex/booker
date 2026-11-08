@@ -75,7 +75,7 @@ class _Questions:
                 self.db.stored(row.low_wins).state,
                 self.db.stored(row.high_wins).state,
             )
-            for winner, child in zip((row.pairing.low, row.pairing.high), children):
+            for winner, child in zip((row.pairing.lhs, row.pairing.rhs), children):
                 expected = successor(state, Outcome.single(row.pairing, winner))
                 self._all_say(True, expected, child, f"{where}, winner {winner.index}")
             self._same_answer(

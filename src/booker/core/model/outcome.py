@@ -29,7 +29,7 @@ class Outcome:
     def every(cls, pairings: ZSet[Pairing]) -> Iterator[Outcome]:
         "All 2^k outcomes of k pairings."
         ordered = sorted(pairings)
-        for winners in itertools.product(*((p.low, p.high) for p in ordered)):
+        for winners in itertools.product(*((p.lhs, p.rhs) for p in ordered)):
             yield cls(winners=ZMap(zip(ordered, winners)))
 
     @property

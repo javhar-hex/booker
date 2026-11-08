@@ -15,7 +15,7 @@ def _play_game(rng: random.Random) -> Iterator[State]:
     yield state
     while not state.is_decided:
         pairing = rng.choice(sorted(legal_pairings(state)))
-        winner = rng.choice((pairing.low, pairing.high))
+        winner = rng.choice((pairing.lhs, pairing.rhs))
         state = successor(state, Outcome.single(pairing, winner))
         yield state
 

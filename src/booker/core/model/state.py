@@ -74,5 +74,5 @@ class State:
         return sum(self.has_met(pairing) for pairing in pairings)
 
     def _require_meetable(self, pairing: Pairing) -> None:
-        if all(self.record(team).is_unbeaten for team in (pairing.low, pairing.high)):
+        if all(self.record(team).is_unbeaten for team in (pairing.lhs, pairing.rhs)):
             raise ValueError(f"two unbeaten teams cannot have met: {pairing}")

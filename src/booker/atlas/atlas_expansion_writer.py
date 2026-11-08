@@ -67,8 +67,8 @@ class AtlasExpansionWriter:
             "VALUES (?,?,?,?,?,?,?)",
             (
                 parent.value,
-                pairing.low.index,
-                pairing.high.index,
+                pairing.lhs.index,
+                pairing.rhs.index,
                 int(is_rematch),
                 class_size,
                 low_wins.value,

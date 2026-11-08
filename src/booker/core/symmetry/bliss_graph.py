@@ -59,11 +59,11 @@ class BlissGraph:
     @property
     def _graph(self) -> ig.Graph:
         state = self.schedule.state
-        met = [(p.low.index, p.high.index) for p in state.met]
+        met = [(p.lhs.index, p.rhs.index) for p in state.met]
         gadgets = [
             (state.size + k, team.index)
             for k, pairing in enumerate(self._scheduled)
-            for team in (pairing.low, pairing.high)
+            for team in (pairing.lhs, pairing.rhs)
         ]
         return ig.Graph(n=len(self._colours), edges=met + gadgets, directed=False)
 

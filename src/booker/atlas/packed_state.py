@@ -46,7 +46,7 @@ class PackedState:
 
     @classmethod
     def of(cls, state: State) -> PackedState:
-        met = {(p.low.index, p.high.index) for p in state.met}
+        met = {(p.lhs.index, p.rhs.index) for p in state.met}
         adjacency = sum(
             1 << bit for bit, pair in enumerate(_pairs(state.size)) if pair in met
         )

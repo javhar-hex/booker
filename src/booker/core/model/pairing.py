@@ -9,24 +9,24 @@ from booker.core.model.team import Team
 class Pairing:
     """
     A pair of two distinct teams, representing a match that has been played or will be
-    played. Canonical form with `low < high`.
+    played. Canonical form with `lhs < rhs`.
     """
 
-    low: Team
-    high: Team
+    lhs: Team
+    rhs: Team
 
     def __post_init__(self) -> None:
-        if not self.low < self.high:
-            raise ValueError(f"need low < high, got {self.low} and {self.high}")
+        if not self.lhs < self.rhs:
+            raise ValueError(f"need lhs < rhs, got {self.lhs} and {self.rhs}")
 
     @classmethod
-    def of(cls, a: Team, b: Team) -> Pairing:
-        return cls(low=min(a, b), high=max(a, b))
+    def of(cls, team_lhs: Team, team_rhs: Team) -> Pairing:
+        return cls(lhs=min(team_lhs, team_rhs), rhs=max(team_lhs, team_rhs))
 
     def involves(self, team: Team) -> bool:
-        return team in (self.low, self.high)
+        return team in (self.lhs, self.rhs)
 
     def opponent(self, team: Team) -> Team:
         if not self.involves(team):
             raise ValueError(f"{team} is not in {self}")
-        return self.high if team == self.low else self.low
+        return self.rhs if team == self.lhs else self.lhs

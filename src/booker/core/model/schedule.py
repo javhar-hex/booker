@@ -20,7 +20,7 @@ class Schedule:
 
     def __post_init__(self) -> None:
         for pairing in self.pairings:
-            self.state.require_known(pairing.high)
+            self.state.require_known(pairing.rhs)
 
     @classmethod
     def empty(cls, state: State) -> Schedule:

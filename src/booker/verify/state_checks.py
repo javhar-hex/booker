@@ -83,8 +83,8 @@ class StateCheck:
                 f"wrong repeat cost {row.repeat_cost}"
             )
         for winner, child_id in (
-            (pairing.low, row.low_wins),
-            (pairing.high, row.high_wins),
+            (pairing.lhs, row.low_wins),
+            (pairing.rhs, row.high_wins),
         ):
             where = f"state {state_id.value}, pairing {pairing}, winner {winner.index}"
             expected = successor(stored.state, Outcome.single(pairing, winner))
@@ -147,7 +147,7 @@ def _check_orbits(
 
 
 def _names(pairings: ZSet[Pairing] | list[Pairing]) -> list[tuple[int, int]]:
-    return sorted((p.low.index, p.high.index) for p in pairings)
+    return sorted((p.lhs.index, p.rhs.index) for p in pairings)
 
 
 def _check_standings(state_id: StateId, stored: StoredState) -> None:

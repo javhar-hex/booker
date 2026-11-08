@@ -47,7 +47,7 @@ def _random_state(rng: random.Random) -> State:
         if not pairings:
             break
         pairing = rng.choice(pairings)
-        winner = rng.choice([pairing.low, pairing.high])
+        winner = rng.choice([pairing.lhs, pairing.rhs])
         state = successor(state, Outcome.single(pairing, winner))
     return state
 
@@ -137,7 +137,7 @@ def _graph(state: State) -> nx.Graph[int]:
     graph.add_nodes_from(
         (team.index, {"record": state.record(team)}) for team in state.teams
     )
-    graph.add_edges_from((p.low.index, p.high.index) for p in state.met)
+    graph.add_edges_from((p.lhs.index, p.rhs.index) for p in state.met)
     return graph
 
 

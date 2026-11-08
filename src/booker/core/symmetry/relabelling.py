@@ -51,7 +51,7 @@ class Relabelling:
         return ZSet(self.pairing(pairing) for pairing in pairings)
 
     def pairing(self, pairing: Pairing) -> Pairing:
-        return Pairing.of(self.team(pairing.low), self.team(pairing.high))
+        return Pairing.of(self.team(pairing.lhs), self.team(pairing.rhs))
 
     def team(self, team: Team) -> Team:
         return self.images[team]

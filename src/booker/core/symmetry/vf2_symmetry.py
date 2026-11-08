@@ -87,6 +87,6 @@ def _alike(first: _LabelledGraph, second: _LabelledGraph) -> bool:
     for g in (first, second):
         graph: nx.Graph[int] = nx.Graph()
         graph.add_nodes_from((i, {"label": label}) for i, label in enumerate(g.labels))
-        graph.add_edges_from((e.low.index, e.high.index) for e in g.edges)
+        graph.add_edges_from((e.lhs.index, e.rhs.index) for e in g.edges)
         graphs.append(graph)
     return bool(nx.vf2pp_is_isomorphic(graphs[0], graphs[1], node_label="label"))

@@ -11,7 +11,7 @@ def test_team_index_cannot_be_negative() -> None:
 
 def test_of_orders_the_teams() -> None:
     assert Pairing.of(Team(index=5), Team(index=2)) == Pairing(
-        low=Team(index=2), high=Team(index=5)
+        lhs=Team(index=2), rhs=Team(index=5)
     )
 
 
@@ -28,7 +28,7 @@ def test_rejects_a_team_paired_with_itself() -> None:
 
 def test_constructor_rejects_unordered_teams() -> None:
     with pytest.raises(ValueError):
-        Pairing(low=Team(index=5), high=Team(index=2))
+        Pairing(lhs=Team(index=5), rhs=Team(index=2))
 
 
 def test_knows_which_teams_it_involves() -> None:
