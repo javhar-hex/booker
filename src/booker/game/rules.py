@@ -14,18 +14,18 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 
-LOWER_BRACKET_SURVIVOR = Record(wins=4, losses=1)
+LB_SURVIVOR_RECORD = Record(wins=4, losses=1)
 """
-Two teams emerge from the lower bracket at this record, and the one team that emerges
-unbeaten from the upper bracket then meets both of them.
+Two teams emerge from the lower bracket (LB) at this record, and the one team that
+emerges unbeaten from the upper bracket then meets both of them.
 """
 
 
 def legal_pairings(state: State) -> ZSet[Pairing]:
     """
-    Teams of equal record may meet, except that two `LOWER_BRACKET_SURVIVOR` teams may
+    Teams of equal record may meet, except that two teams at `LB_SURVIVOR_RECORD` may
     not while any team is unbeaten. Once exactly one team is unbeaten, the upper bracket
-    has produced its winner, who may meet only a `LOWER_BRACKET_SURVIVOR`. Nothing else
+    has produced its winner, who may meet only a team at `LB_SURVIVOR_RECORD`. Nothing else
     is legal; a decided state has no pairings at all.
     """
     num_unbeaten = sum(record.is_unbeaten for record in state.records)
@@ -38,9 +38,9 @@ def legal_pairings(state: State) -> ZSet[Pairing]:
 
 def _may_meet(record_lhs: Record, record_rhs: Record, num_unbeaten: int) -> bool:
     if record_lhs == record_rhs:
-        return record_lhs != LOWER_BRACKET_SURVIVOR or num_unbeaten == 0
+        return record_lhs != LB_SURVIVOR_RECORD or num_unbeaten == 0
     else:
         return num_unbeaten == 1 and (
-            (record_lhs.is_unbeaten and record_rhs == LOWER_BRACKET_SURVIVOR)
-            or (record_rhs.is_unbeaten and record_lhs == LOWER_BRACKET_SURVIVOR)
+            (record_lhs.is_unbeaten and record_rhs == LB_SURVIVOR_RECORD)
+            or (record_rhs.is_unbeaten and record_lhs == LB_SURVIVOR_RECORD)
         )

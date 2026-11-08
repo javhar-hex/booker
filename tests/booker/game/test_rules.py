@@ -10,7 +10,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.game.rules import LOWER_BRACKET_SURVIVOR, legal_pairings
+from booker.game.rules import LB_SURVIVOR_RECORD, legal_pairings
 
 TEAM_A, TEAM_B, TEAM_C = (Team(index=idx) for idx in range(3))
 RECORD_2_0 = Record(wins=2, losses=0)
@@ -46,7 +46,7 @@ def test_teams_of_equal_record_may_meet() -> None:
 
 
 def test_lower_bracket_survivors_may_not_meet_while_a_team_is_unbeaten() -> None:
-    survivor = LOWER_BRACKET_SURVIVOR
+    survivor = LB_SURVIVOR_RECORD
 
     assert legal_pairings(_state(survivor, survivor, RECORD_2_0)) == _pairings(
         (TEAM_A, TEAM_C), (TEAM_B, TEAM_C)
@@ -57,19 +57,19 @@ def test_lower_bracket_survivors_may_not_meet_while_a_team_is_unbeaten() -> None
 
 
 def test_lower_bracket_survivors_may_meet_once_no_team_is_unbeaten() -> None:
-    survivor = LOWER_BRACKET_SURVIVOR
+    survivor = LB_SURVIVOR_RECORD
 
     assert legal_pairings(_state(survivor, survivor)) == _pairings((TEAM_A, TEAM_B))
 
 
 def test_sole_unbeaten_team_may_meet_only_a_lower_bracket_survivor() -> None:
-    state = _state(RECORD_3_1, LOWER_BRACKET_SURVIVOR, RECORD_2_0)
+    state = _state(RECORD_3_1, LB_SURVIVOR_RECORD, RECORD_2_0)
 
     assert legal_pairings(state) == _pairings((TEAM_B, TEAM_C))
 
 
 def test_one_of_two_unbeaten_teams_may_not_meet_a_lower_bracket_survivor() -> None:
-    state = _state(LOWER_BRACKET_SURVIVOR, RECORD_2_0, RECORD_3_0)
+    state = _state(LB_SURVIVOR_RECORD, RECORD_2_0, RECORD_3_0)
 
     assert legal_pairings(state) == ZSet([])
 
