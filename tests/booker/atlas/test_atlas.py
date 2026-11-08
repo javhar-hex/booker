@@ -160,7 +160,10 @@ def test_summarizes_a_depth_of_several_positions(
         for depth in range(MAX_MATCHES, -1, -1):
             solver.back_up(depth)
 
-        summary = {s.depth: s for s in atlas.depth_summaries()}
+        summary = {
+            depth_summary.depth: depth_summary
+            for depth_summary in atlas.depth_summaries()
+        }
 
     parents = summary[final_pair(True).matches_played]
     assert (parents.num_states, parents.num_colliders, parents.num_pairings) == (2, 3, 6)

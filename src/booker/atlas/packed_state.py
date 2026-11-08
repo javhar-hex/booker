@@ -46,11 +46,13 @@ class PackedState:
 
     @classmethod
     def of(cls, state: State) -> PackedState:
-        past_pairings = {(p.lhs.index, p.rhs.index) for p in state.past_pairings}
+        past_index_pairs = {
+            (pairing.lhs.index, pairing.rhs.index) for pairing in state.past_pairings
+        }
         adjacency = sum(
             1 << bit
-            for bit, pair in enumerate(_pairs(state.size))
-            if pair in past_pairings
+            for bit, index_pair in enumerate(_pairs(state.size))
+            if index_pair in past_index_pairs
         )
         return cls(
             data=bytes([state.size])
