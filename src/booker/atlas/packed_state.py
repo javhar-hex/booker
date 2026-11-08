@@ -4,7 +4,7 @@ The byte encoding of a `State`, used as the key of a position in the atlas.
 Layout: `[n, code_0 .. code_{n-1}, adjacency]`. `n` is the number of live teams, each
 `code_i` is `wins * ELIMINATION_LOSSES + losses` of team `i`, and `adjacency` is a
 little-endian bitset with one bit per pair `i < j` in lexicographic order, set when the
-two teams have past_pairings.
+two teams have met.
 """
 
 from __future__ import annotations
@@ -46,13 +46,13 @@ class PackedState:
 
     @classmethod
     def of(cls, state: State) -> PackedState:
-        past_index_pairs = {
+        past_idx_pairs = {
             (pairing.lhs.index, pairing.rhs.index) for pairing in state.past_pairings
         }
         adjacency = sum(
             1 << bit
-            for bit, index_pair in enumerate(_pairs(state.size))
-            if index_pair in past_index_pairs
+            for bit, idx_pair in enumerate(_team_idx_pairs(state.size))
+            if idx_pair in past_idx_pairs
         )
         return cls(
             data=bytes([state.size])
@@ -67,8 +67,8 @@ class PackedState:
     @property
     def state(self) -> State:
         past_pairings = (
-            Pairing.of(Team(index=low), Team(index=high))
-            for bit, (low, high) in enumerate(_pairs(self.size))
+            Pairing.of(Team(index=idx_lhs), Team(index=idx_rhs))
+            for bit, (idx_lhs, idx_rhs) in enumerate(_team_idx_pairs(self.size))
             if (self._adjacency >> bit) & 1
         )
         return State(
@@ -97,8 +97,8 @@ def _adjacency_length(size: int) -> int:
     return -(-_pair_count(size) // BITS_PER_BYTE)
 
 
-def _pairs(size: int) -> Iterator[tuple[int, int]]:
-    "The adjacency bits' pairs, in bit order."
+def _team_idx_pairs(size: int) -> Iterator[tuple[int, int]]:
+    "The team indices `(idx_lhs, idx_rhs)` that each adjacency bit stands for, in bit order."
     return itertools.combinations(range(size), 2)
 
 

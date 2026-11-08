@@ -23,7 +23,7 @@ SCHEDULED_COLOUR = (CHAMPION_WINS + 1) * ELIMINATION_LOSSES
 class BlissGraph:
     """
     A schedule as the vertex-coloured graph handed to BLISS. Teams are vertices
-    coloured by record, adjacent when they have past_pairings. Each scheduled pairing is one more
+    coloured by record, adjacent when they have met. Each scheduled pairing is one more
     vertex, in a colour no team has, adjacent to its two teams: colouring the paired
     teams alone would lose who is paired with whom.
     """
