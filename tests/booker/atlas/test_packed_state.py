@@ -11,7 +11,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 
-A, B, C = (Team(index=i) for i in range(3))
+TEAM_A, TEAM_B, TEAM_C = (Team(index=idx) for idx in range(3))
 ONE_ONE = Record(wins=1, losses=1)
 ZERO_ONE = Record(wins=0, losses=1)
 TWO_ZERO = Record(wins=2, losses=0)
@@ -22,14 +22,19 @@ def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
 
 
 def test_packs_to_the_documented_layout() -> None:
-    state = _state(ONE_ONE, ZERO_ONE, TWO_ZERO, past_pairings=(Pairing.of(A, B),))
+    state = _state(
+        ONE_ONE, ZERO_ONE, TWO_ZERO, past_pairings=(Pairing.of(TEAM_A, TEAM_B),)
+    )
 
     assert PackedState.of(state).data == bytes([3, 3, 1, 4, 0b001])
 
 
 def test_packs_each_met_pair_into_its_own_bit() -> None:
     state = _state(
-        ONE_ONE, ZERO_ONE, TWO_ZERO, past_pairings=(Pairing.of(A, C), Pairing.of(B, C))
+        ONE_ONE,
+        ZERO_ONE,
+        TWO_ZERO,
+        past_pairings=(Pairing.of(TEAM_A, TEAM_C), Pairing.of(TEAM_B, TEAM_C)),
     )
 
     assert PackedState.of(state).data[-1] == 0b110
@@ -44,11 +49,11 @@ def test_packs_the_start_without_any_meetings() -> None:
 
 
 def test_different_states_pack_differently() -> None:
-    first = _state(ONE_ONE, ZERO_ONE, past_pairings=(Pairing.of(A, B),))
+    first = _state(ONE_ONE, ZERO_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
 
     assert PackedState.of(first) != PackedState.of(_state(ONE_ONE, ZERO_ONE))
     assert PackedState.of(first) != PackedState.of(
-        _state(ZERO_ONE, ONE_ONE, past_pairings=(Pairing.of(A, B),))
+        _state(ZERO_ONE, ONE_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
     )
 
 

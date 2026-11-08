@@ -7,7 +7,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 
-team_a, team_b, team_c = (Team(index=idx) for idx in range(3))
+TEAM_A, TEAM_B, TEAM_C = (Team(index=idx) for idx in range(3))
 ONE_ONE = Record(wins=1, losses=1)
 TWO_ZERO = Record(wins=2, losses=0)
 
@@ -39,19 +39,19 @@ def test_decided_when_one_team_is_left() -> None:
 def test_knows_its_teams() -> None:
     state = _state(TWO_ZERO, ONE_ONE)
 
-    assert state.teams == ZVec([team_a, team_b])
-    assert team_b in state and team_c not in state
-    assert state.record(team_b) == ONE_ONE
+    assert state.teams == ZVec([TEAM_A, TEAM_B])
+    assert TEAM_B in state and TEAM_C not in state
+    assert state.record(TEAM_B) == ONE_ONE
 
 
 def test_counts_rematches_among_pairings() -> None:
     state = _state(
-        TWO_ZERO, ONE_ONE, ONE_ONE, past_pairings=(Pairing.of(team_a, team_b),)
+        TWO_ZERO, ONE_ONE, ONE_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_B),)
     )
 
-    assert state.has_met(Pairing.of(team_a, team_b))
+    assert state.has_met(Pairing.of(TEAM_A, TEAM_B))
     assert (
-        state.rematches(ZSet([Pairing.of(team_a, team_b), Pairing.of(team_b, team_c)]))
+        state.rematches(ZSet([Pairing.of(TEAM_A, TEAM_B), Pairing.of(TEAM_B, TEAM_C)]))
         == 1
     )
 
@@ -69,14 +69,14 @@ def test_rejects_eliminated_teams() -> None:
 
 def test_rejects_meetings_with_unknown_teams() -> None:
     with pytest.raises(ValueError, match="not one of"):
-        _state(TWO_ZERO, ONE_ONE, past_pairings=(Pairing.of(team_a, team_c),))
+        _state(TWO_ZERO, ONE_ONE, past_pairings=(Pairing.of(TEAM_A, TEAM_C),))
 
 
 def test_rejects_two_unbeaten_teams_having_met() -> None:
     with pytest.raises(ValueError, match="unbeaten"):
-        _state(TWO_ZERO, TWO_ZERO, past_pairings=(Pairing.of(team_a, team_b),))
+        _state(TWO_ZERO, TWO_ZERO, past_pairings=(Pairing.of(TEAM_A, TEAM_B),))
 
 
 def test_record_of_unknown_team_is_an_error() -> None:
     with pytest.raises(ValueError, match="not one of"):
-        _state(TWO_ZERO).record(team_b)
+        _state(TWO_ZERO).record(TEAM_B)

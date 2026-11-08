@@ -28,7 +28,7 @@ MAX_MATCHES = 24
 MAX_SCHEDULED = 3
 # Pairing only equal records below this many wins keeps every team under 6 wins.
 WIN_CEILING = 4
-A, B, C, D = (Team(index=i) for i in range(4))
+TEAM_A, TEAM_B, TEAM_C, TEAM_D = (Team(index=idx) for idx in range(4))
 WON = Record(wins=1, losses=0)
 ONE_LOSS = Record(wins=0, losses=1)
 
@@ -100,7 +100,11 @@ def test_distinguishes_a_path_from_a_star() -> None:
         ONE_LOSS,
         ONE_LOSS,
         ONE_LOSS,
-        past_pairings=(Pairing.of(A, B), Pairing.of(B, C), Pairing.of(C, D)),
+        past_pairings=(
+            Pairing.of(TEAM_A, TEAM_B),
+            Pairing.of(TEAM_B, TEAM_C),
+            Pairing.of(TEAM_C, TEAM_D),
+        ),
         pairings=(),
     )
     star = _schedule(
@@ -108,7 +112,11 @@ def test_distinguishes_a_path_from_a_star() -> None:
         ONE_LOSS,
         ONE_LOSS,
         ONE_LOSS,
-        past_pairings=(Pairing.of(A, B), Pairing.of(A, C), Pairing.of(A, D)),
+        past_pairings=(
+            Pairing.of(TEAM_A, TEAM_B),
+            Pairing.of(TEAM_A, TEAM_C),
+            Pairing.of(TEAM_A, TEAM_D),
+        ),
         pairings=(),
     )
 
@@ -116,7 +124,7 @@ def test_distinguishes_a_path_from_a_star() -> None:
 
 
 def test_distinguishes_records() -> None:
-    past_pairings = (Pairing.of(A, B),)
+    past_pairings = (Pairing.of(TEAM_A, TEAM_B),)
     one = _schedule(WON, ONE_LOSS, ONE_LOSS, past_pairings=past_pairings, pairings=())
     other = _schedule(ONE_LOSS, WON, ONE_LOSS, past_pairings=past_pairings, pairings=())
 
@@ -127,16 +135,22 @@ def test_distinguishes_records() -> None:
 
 
 def test_distinguishes_who_is_paired_with_whom() -> None:
-    past_pairings = (Pairing.of(A, B), Pairing.of(C, D))
+    past_pairings = (Pairing.of(TEAM_A, TEAM_B), Pairing.of(TEAM_C, TEAM_D))
     four = (ONE_LOSS,) * 4
     rematches = _schedule(
-        *four, past_pairings=past_pairings, pairings=(Pairing.of(A, B), Pairing.of(C, D))
+        *four,
+        past_pairings=past_pairings,
+        pairings=(Pairing.of(TEAM_A, TEAM_B), Pairing.of(TEAM_C, TEAM_D)),
     )
     fresh = _schedule(
-        *four, past_pairings=past_pairings, pairings=(Pairing.of(A, C), Pairing.of(B, D))
+        *four,
+        past_pairings=past_pairings,
+        pairings=(Pairing.of(TEAM_A, TEAM_C), Pairing.of(TEAM_B, TEAM_D)),
     )
     also_fresh = _schedule(
-        *four, past_pairings=past_pairings, pairings=(Pairing.of(A, D), Pairing.of(B, C))
+        *four,
+        past_pairings=past_pairings,
+        pairings=(Pairing.of(TEAM_A, TEAM_D), Pairing.of(TEAM_B, TEAM_C)),
     )
 
     assert CanonicalSchedule.of(rematches) != CanonicalSchedule.of(fresh)
