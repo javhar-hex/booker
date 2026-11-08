@@ -12,8 +12,8 @@ ONE_ONE = Record(wins=1, losses=1)
 TWO_ZERO = Record(wins=2, losses=0)
 
 
-def _state(*records: Record, met: tuple[Pairing, ...] = ()) -> State:
-    return State(records=ZVec(records), met=ZSet(met))
+def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
+    return State(records=ZVec(records), past_pairings=ZSet(past_pairings))
 
 
 def test_start_has_every_team_fresh_and_no_meetings() -> None:
@@ -21,7 +21,7 @@ def test_start_has_every_team_fresh_and_no_meetings() -> None:
 
     assert start.size == NUM_PARTICIPANTS
     assert set(start.records) == {Record.fresh()}
-    assert len(start.met) == 0
+    assert len(start.past_pairings) == 0
     assert start.matches_played == 0
 
 
@@ -45,7 +45,7 @@ def test_knows_its_teams() -> None:
 
 
 def test_counts_rematches_among_pairings() -> None:
-    state = _state(TWO_ZERO, ONE_ONE, ONE_ONE, met=(Pairing.of(A, B),))
+    state = _state(TWO_ZERO, ONE_ONE, ONE_ONE, past_pairings=(Pairing.of(A, B),))
 
     assert state.has_met(Pairing.of(A, B))
     assert state.rematches(ZSet([Pairing.of(A, B), Pairing.of(B, C)])) == 1
@@ -54,7 +54,7 @@ def test_counts_rematches_among_pairings() -> None:
 @pytest.mark.parametrize("size", [0, NUM_PARTICIPANTS + 1])
 def test_rejects_impossible_team_counts(size: int) -> None:
     with pytest.raises(ValueError, match="live teams"):
-        State(records=ZVec([Record.fresh()] * size), met=ZSet([]))
+        State(records=ZVec([Record.fresh()] * size), past_pairings=ZSet([]))
 
 
 def test_rejects_eliminated_teams() -> None:
@@ -64,12 +64,12 @@ def test_rejects_eliminated_teams() -> None:
 
 def test_rejects_meetings_with_unknown_teams() -> None:
     with pytest.raises(ValueError, match="not one of"):
-        _state(TWO_ZERO, ONE_ONE, met=(Pairing.of(A, C),))
+        _state(TWO_ZERO, ONE_ONE, past_pairings=(Pairing.of(A, C),))
 
 
 def test_rejects_two_unbeaten_teams_having_met() -> None:
     with pytest.raises(ValueError, match="unbeaten"):
-        _state(TWO_ZERO, TWO_ZERO, met=(Pairing.of(A, B),))
+        _state(TWO_ZERO, TWO_ZERO, past_pairings=(Pairing.of(A, B),))
 
 
 def test_record_of_unknown_team_is_an_error() -> None:

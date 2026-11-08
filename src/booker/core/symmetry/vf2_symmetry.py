@@ -40,7 +40,7 @@ class _LabelledGraph:
         "Teams labelled by record, adjacent when they have met."
         return cls(
             labels=ZVec(_Label(record, is_paired=False) for record in state.records),
-            edges=state.met,
+            edges=state.past_pairings,
         )
 
     @classmethod
@@ -51,7 +51,7 @@ class _LabelledGraph:
                 _Label(state.record(team), is_paired=pairing.involves(team))
                 for team in state.teams
             ),
-            edges=state.met,
+            edges=state.past_pairings,
         )
 
 

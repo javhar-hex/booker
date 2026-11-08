@@ -28,7 +28,7 @@ def pairing() -> Pairing:
 
 @pytest.fixture
 def champion_state() -> State:
-    return State(records=ZVec([Record(wins=6, losses=1)]), met=ZSet([]))
+    return State(records=ZVec([Record(wins=6, losses=1)]), past_pairings=ZSet([]))
 
 
 @pytest.fixture
@@ -37,7 +37,9 @@ def final_pair() -> Callable[[bool], State]:
 
     def build(met: bool) -> State:
         tied = Record(wins=5, losses=1)
-        return State(records=ZVec([tied, tied]), met=ZSet([PAIRING] if met else []))
+        return State(
+            records=ZVec([tied, tied]), past_pairings=ZSet([PAIRING] if met else [])
+        )
 
     return build
 

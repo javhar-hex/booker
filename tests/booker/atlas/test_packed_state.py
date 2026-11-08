@@ -17,18 +17,20 @@ ZERO_ONE = Record(wins=0, losses=1)
 TWO_ZERO = Record(wins=2, losses=0)
 
 
-def _state(*records: Record, met: tuple[Pairing, ...] = ()) -> State:
-    return State(records=ZVec(records), met=ZSet(met))
+def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
+    return State(records=ZVec(records), past_pairings=ZSet(past_pairings))
 
 
 def test_packs_to_the_documented_layout() -> None:
-    state = _state(ONE_ONE, ZERO_ONE, TWO_ZERO, met=(Pairing.of(A, B),))
+    state = _state(ONE_ONE, ZERO_ONE, TWO_ZERO, past_pairings=(Pairing.of(A, B),))
 
     assert PackedState.of(state).data == bytes([3, 3, 1, 4, 0b001])
 
 
 def test_packs_each_met_pair_into_its_own_bit() -> None:
-    state = _state(ONE_ONE, ZERO_ONE, TWO_ZERO, met=(Pairing.of(A, C), Pairing.of(B, C)))
+    state = _state(
+        ONE_ONE, ZERO_ONE, TWO_ZERO, past_pairings=(Pairing.of(A, C), Pairing.of(B, C))
+    )
 
     assert PackedState.of(state).data[-1] == 0b110
 
@@ -42,11 +44,11 @@ def test_packs_the_start_without_any_meetings() -> None:
 
 
 def test_different_states_pack_differently() -> None:
-    first = _state(ONE_ONE, ZERO_ONE, met=(Pairing.of(A, B),))
+    first = _state(ONE_ONE, ZERO_ONE, past_pairings=(Pairing.of(A, B),))
 
     assert PackedState.of(first) != PackedState.of(_state(ONE_ONE, ZERO_ONE))
     assert PackedState.of(first) != PackedState.of(
-        _state(ZERO_ONE, ONE_ONE, met=(Pairing.of(A, B),))
+        _state(ZERO_ONE, ONE_ONE, past_pairings=(Pairing.of(A, B),))
     )
 
 

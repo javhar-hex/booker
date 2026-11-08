@@ -44,7 +44,7 @@ class Relabelling:
         preimage = {image: team for team, image in self.images.items()}
         return State(
             records=ZVec(state.record(preimage[team]) for team in state.teams),
-            met=self.pairings(state.met),
+            past_pairings=self.pairings(state.past_pairings),
         )
 
     def pairings(self, pairings: ZSet[Pairing]) -> ZSet[Pairing]:

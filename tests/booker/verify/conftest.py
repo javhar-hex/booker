@@ -17,7 +17,7 @@ from booker.solve import solve
 
 ENDGAME = State(
     records=ZVec([Record(wins=4, losses=0)] + [Record(wins=3, losses=1)] * 4),
-    met=ZSet(Pairing.of(Team(index=a), Team(index=4)) for a in (0, 1, 2)),
+    past_pairings=ZSet(Pairing.of(Team(index=a), Team(index=4)) for a in (0, 1, 2)),
 )
 
 

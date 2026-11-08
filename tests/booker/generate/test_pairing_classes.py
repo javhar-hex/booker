@@ -27,8 +27,8 @@ def _classes(state: State) -> list[tuple[Pairing, int]]:
     return [(orbit.representative, orbit.size) for orbit in orbits]
 
 
-def _state(records: list[Record], met: list[Pairing]) -> State:
-    return State(records=ZVec(records), met=ZSet(met))
+def _state(records: list[Record], past_pairings: list[Pairing]) -> State:
+    return State(records=ZVec(records), past_pairings=ZSet(past_pairings))
 
 
 def test_all_first_round_pairings_are_one_class() -> None:

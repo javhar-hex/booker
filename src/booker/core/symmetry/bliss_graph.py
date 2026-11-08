@@ -23,7 +23,7 @@ SCHEDULED_COLOUR = (CHAMPION_WINS + 1) * ELIMINATION_LOSSES
 class BlissGraph:
     """
     A schedule as the vertex-coloured graph handed to BLISS. Teams are vertices
-    coloured by record, adjacent when they have met. Each scheduled pairing is one more
+    coloured by record, adjacent when they have past_pairings. Each scheduled pairing is one more
     vertex, in a colour no team has, adjacent to its two teams: colouring the paired
     teams alone would lose who is paired with whom.
     """
@@ -59,13 +59,15 @@ class BlissGraph:
     @property
     def _graph(self) -> ig.Graph:
         state = self.schedule.state
-        met = [(p.lhs.index, p.rhs.index) for p in state.met]
+        past_pairings = [(p.lhs.index, p.rhs.index) for p in state.past_pairings]
         gadgets = [
             (state.size + k, team.index)
             for k, pairing in enumerate(self._scheduled)
             for team in (pairing.lhs, pairing.rhs)
         ]
-        return ig.Graph(n=len(self._colours), edges=met + gadgets, directed=False)
+        return ig.Graph(
+            n=len(self._colours), edges=past_pairings + gadgets, directed=False
+        )
 
 
 def team_colour(record: Record) -> int:

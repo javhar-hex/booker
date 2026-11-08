@@ -40,8 +40,8 @@ def _same_record_pairings(state: State) -> ZSet[Pairing]:
     )
 
 
-def _state(*records: Record, met: tuple[Pairing, ...]) -> State:
-    return State(records=ZVec(records), met=ZSet(met))
+def _state(*records: Record, past_pairings: tuple[Pairing, ...]) -> State:
+    return State(records=ZVec(records), past_pairings=ZSet(past_pairings))
 
 
 def test_every_first_round_pairing_is_alike() -> None:
@@ -60,7 +60,7 @@ def test_two_played_matches_leave_three_orbits() -> None:
         lost,
         won,
         lost,
-        met=(pairing_of_indices(12, 13), pairing_of_indices(14, 15)),
+        past_pairings=(pairing_of_indices(12, 13), pairing_of_indices(14, 15)),
     )
 
     orbits = orbits_of_schedule(Schedule.empty(state), _same_record_pairings(state))
@@ -69,7 +69,9 @@ def test_two_played_matches_leave_three_orbits() -> None:
 
 
 def test_a_rematch_is_an_orbit_of_its_own() -> None:
-    state = _state(*[Record(wins=1, losses=1)] * 4, met=(pairing_of_indices(0, 1),))
+    state = _state(
+        *[Record(wins=1, losses=1)] * 4, past_pairings=(pairing_of_indices(0, 1),)
+    )
 
     orbits = orbits_of_schedule(Schedule.empty(state), _same_record_pairings(state))
 
@@ -114,7 +116,9 @@ def test_rejects_additions_already_booked() -> None:
 
 
 def test_the_symmetry_of_a_state_is_that_of_the_schedule_with_nothing_booked() -> None:
-    state = _state(*[Record(wins=1, losses=1)] * 4, met=(pairing_of_indices(0, 1),))
+    state = _state(
+        *[Record(wins=1, losses=1)] * 4, past_pairings=(pairing_of_indices(0, 1),)
+    )
     legal = _same_record_pairings(state)
 
     assert BlissSymmetry().orbits(state, legal) == orbits_of_schedule(

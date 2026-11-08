@@ -20,7 +20,7 @@ class State:
     """
 
     records: ZVec[Record]
-    met: ZSet[Pairing]
+    past_pairings: ZSet[Pairing]
 
     def __post_init__(self) -> None:
         if not 1 <= len(self.records) <= NUM_PARTICIPANTS:
@@ -29,12 +29,14 @@ class State:
             )
         if any(record.is_eliminated for record in self.records):
             raise ValueError("eliminated teams are not part of the state")
-        for pairing in self.met:
+        for pairing in self.past_pairings:
             self._require_meetable(pairing)
 
     @classmethod
     def start(cls) -> State:
-        return cls(records=ZVec([Record.fresh()] * NUM_PARTICIPANTS), met=ZSet([]))
+        return cls(
+            records=ZVec([Record.fresh()] * NUM_PARTICIPANTS), past_pairings=ZSet([])
+        )
 
     def __contains__(self, team: Team) -> bool:
         return team.index < self.size
@@ -68,7 +70,7 @@ class State:
             raise ValueError(f"{team} is not one of the {self.size} live teams")
 
     def has_met(self, pairing: Pairing) -> bool:
-        return pairing in self.met
+        return pairing in self.past_pairings
 
     def rematches(self, pairings: ZSet[Pairing]) -> int:
         return sum(self.has_met(pairing) for pairing in pairings)

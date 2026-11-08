@@ -39,7 +39,7 @@ PARENT, CHILD = 1, 2
 
 
 def _state(*records: Record, met: bool = False) -> State:
-    return State(records=ZVec(records), met=ZSet([PAIRING] if met else []))
+    return State(records=ZVec(records), past_pairings=ZSet([PAIRING] if met else []))
 
 
 def _build(

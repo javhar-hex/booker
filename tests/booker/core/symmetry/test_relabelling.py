@@ -12,7 +12,9 @@ A, B, C = (Team(index=i) for i in range(3))
 ROTATION = Relabelling.of([1, 2, 0])
 UNBEATEN = Record(wins=2, losses=0)
 ONE_LOSS = Record(wins=1, losses=1)
-STATE = State(records=ZVec([UNBEATEN, ONE_LOSS, ONE_LOSS]), met=ZSet([Pairing.of(A, B)]))
+STATE = State(
+    records=ZVec([UNBEATEN, ONE_LOSS, ONE_LOSS]), past_pairings=ZSet([Pairing.of(A, B)])
+)
 
 
 def test_rejects_two_teams_with_one_image() -> None:
@@ -34,7 +36,7 @@ def test_moves_each_record_with_its_team() -> None:
     relabelled = ROTATION.state(STATE)
 
     assert relabelled.record(B) == UNBEATEN
-    assert relabelled.met == ZSet([Pairing.of(B, C)])
+    assert relabelled.past_pairings == ZSet([Pairing.of(B, C)])
 
 
 def test_relabels_a_schedule_consistently() -> None:

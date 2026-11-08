@@ -11,12 +11,12 @@ ONE_ONE = Record(wins=1, losses=1)
 ZERO_ONE = Record(wins=0, losses=1)
 
 
-def _state(records: list[Record], *met: tuple[int, int]) -> State:
+def _state(records: list[Record], *past_pairings: tuple[int, int]) -> State:
     return State(
         records=ZVec(records),
-        met=ZSet(
+        past_pairings=ZSet(
             Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
-            for index_lhs, index_rhs in met
+            for index_lhs, index_rhs in past_pairings
         ),
     )
 

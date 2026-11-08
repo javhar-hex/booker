@@ -21,13 +21,14 @@ FRESH = Record.fresh()
 
 def _schedule(
     records: list[Record],
-    met: tuple[tuple[int, int], ...] = (),
+    past_pairings: tuple[tuple[int, int], ...] = (),
     booked: tuple[tuple[int, int], ...] = (),
 ) -> Schedule:
     state = State(
         records=ZVec(records),
-        met=ZSet(
-            pairing_of_indices(index_lhs, index_rhs) for index_lhs, index_rhs in met
+        past_pairings=ZSet(
+            pairing_of_indices(index_lhs, index_rhs)
+            for index_lhs, index_rhs in past_pairings
         ),
     )
     return Schedule(
@@ -56,7 +57,7 @@ def test_scheduled_pairings_are_a_colour_that_no_team_has() -> None:
 
 
 def test_the_canonical_relabelling_is_a_permutation_of_the_teams() -> None:
-    schedule = _schedule([ONE_ONE, WON, LOST, ONE_ONE], met=((0, 1), (2, 3)))
+    schedule = _schedule([ONE_ONE, WON, LOST, ONE_ONE], past_pairings=((0, 1), (2, 3)))
 
     relabelling = BlissGraph(schedule=schedule).canonical_relabelling
 
@@ -66,7 +67,7 @@ def test_the_canonical_relabelling_is_a_permutation_of_the_teams() -> None:
 
 def test_relabelled_schedules_are_relabelled_to_the_same_schedule() -> None:
     schedule = _schedule(
-        [ONE_ONE, WON, LOST, ONE_ONE], met=((0, 1), (2, 3)), booked=((0, 3),)
+        [ONE_ONE, WON, LOST, ONE_ONE], past_pairings=((0, 1), (2, 3)), booked=((0, 3),)
     )
     shuffled = Relabelling.of([2, 0, 3, 1]).schedule(schedule)
 
@@ -78,7 +79,7 @@ def test_relabelled_schedules_are_relabelled_to_the_same_schedule() -> None:
 
 
 def test_the_generators_leave_the_schedule_as_it_was() -> None:
-    schedule = _schedule([FRESH] * 4 + [WON, LOST], met=((4, 5),))
+    schedule = _schedule([FRESH] * 4 + [WON, LOST], past_pairings=((4, 5),))
 
     generators = BlissGraph(schedule=schedule).automorphism_generators
 

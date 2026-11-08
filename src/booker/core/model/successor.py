@@ -24,12 +24,15 @@ def successor(state: State, outcome: Outcome) -> State:
     ]
     survivors = [team for team in state.teams if not records[team.index].is_eliminated]
     renumbered = {old: Team(index=new) for new, old in enumerate(survivors)}
-    met = (
+    past_pairings = (
         Pairing.of(renumbered[pairing.lhs], renumbered[pairing.rhs])
-        for pairing in state.met | outcome.pairings
+        for pairing in state.past_pairings | outcome.pairings
         if pairing.lhs in renumbered and pairing.rhs in renumbered
     )
-    return State(records=ZVec(records[team.index] for team in survivors), met=ZSet(met))
+    return State(
+        records=ZVec(records[team.index] for team in survivors),
+        past_pairings=ZSet(past_pairings),
+    )
 
 
 def _require_known_teams(state: State, outcome: Outcome) -> None:

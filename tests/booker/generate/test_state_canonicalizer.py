@@ -19,8 +19,8 @@ def _met(*pairs: tuple[int, int]) -> ZSet[Pairing]:
     )
 
 
-def _state(records: list[Record], met: ZSet[Pairing]) -> State:
-    return State(records=ZVec(records), met=met)
+def _state(records: list[Record], past_pairings: ZSet[Pairing]) -> State:
+    return State(records=ZVec(records), past_pairings=past_pairings)
 
 
 def _six_teams(*edges: tuple[int, int]) -> State:

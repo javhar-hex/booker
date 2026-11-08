@@ -71,9 +71,9 @@ def _shuffled(schedule: Schedule, rng: random.Random) -> Schedule:
 
 
 def _schedule(
-    *records: Record, met: tuple[Pairing, ...], pairings: tuple[Pairing, ...]
+    *records: Record, past_pairings: tuple[Pairing, ...], pairings: tuple[Pairing, ...]
 ) -> Schedule:
-    state = State(records=ZVec(records), met=ZSet(met))
+    state = State(records=ZVec(records), past_pairings=ZSet(past_pairings))
     return Schedule(state=state, pairings=ZSet(pairings))
 
 
@@ -100,7 +100,7 @@ def test_distinguishes_a_path_from_a_star() -> None:
         ONE_LOSS,
         ONE_LOSS,
         ONE_LOSS,
-        met=(Pairing.of(A, B), Pairing.of(B, C), Pairing.of(C, D)),
+        past_pairings=(Pairing.of(A, B), Pairing.of(B, C), Pairing.of(C, D)),
         pairings=(),
     )
     star = _schedule(
@@ -108,7 +108,7 @@ def test_distinguishes_a_path_from_a_star() -> None:
         ONE_LOSS,
         ONE_LOSS,
         ONE_LOSS,
-        met=(Pairing.of(A, B), Pairing.of(A, C), Pairing.of(A, D)),
+        past_pairings=(Pairing.of(A, B), Pairing.of(A, C), Pairing.of(A, D)),
         pairings=(),
     )
 
@@ -116,22 +116,28 @@ def test_distinguishes_a_path_from_a_star() -> None:
 
 
 def test_distinguishes_records() -> None:
-    met = (Pairing.of(A, B),)
-    one = _schedule(WON, ONE_LOSS, ONE_LOSS, met=met, pairings=())
-    other = _schedule(ONE_LOSS, WON, ONE_LOSS, met=met, pairings=())
+    past_pairings = (Pairing.of(A, B),)
+    one = _schedule(WON, ONE_LOSS, ONE_LOSS, past_pairings=past_pairings, pairings=())
+    other = _schedule(ONE_LOSS, WON, ONE_LOSS, past_pairings=past_pairings, pairings=())
 
     assert CanonicalSchedule.of(one) == CanonicalSchedule.of(other)
     assert CanonicalSchedule.of(one) != CanonicalSchedule.of(
-        _schedule(ONE_LOSS, ONE_LOSS, ONE_LOSS, met=met, pairings=())
+        _schedule(ONE_LOSS, ONE_LOSS, ONE_LOSS, past_pairings=past_pairings, pairings=())
     )
 
 
 def test_distinguishes_who_is_paired_with_whom() -> None:
-    met = (Pairing.of(A, B), Pairing.of(C, D))
+    past_pairings = (Pairing.of(A, B), Pairing.of(C, D))
     four = (ONE_LOSS,) * 4
-    rematches = _schedule(*four, met=met, pairings=(Pairing.of(A, B), Pairing.of(C, D)))
-    fresh = _schedule(*four, met=met, pairings=(Pairing.of(A, C), Pairing.of(B, D)))
-    also_fresh = _schedule(*four, met=met, pairings=(Pairing.of(A, D), Pairing.of(B, C)))
+    rematches = _schedule(
+        *four, past_pairings=past_pairings, pairings=(Pairing.of(A, B), Pairing.of(C, D))
+    )
+    fresh = _schedule(
+        *four, past_pairings=past_pairings, pairings=(Pairing.of(A, C), Pairing.of(B, D))
+    )
+    also_fresh = _schedule(
+        *four, past_pairings=past_pairings, pairings=(Pairing.of(A, D), Pairing.of(B, C))
+    )
 
     assert CanonicalSchedule.of(rematches) != CanonicalSchedule.of(fresh)
     assert CanonicalSchedule.of(fresh) == CanonicalSchedule.of(also_fresh)
@@ -142,7 +148,7 @@ def _graph(state: State) -> nx.Graph[int]:
     graph.add_nodes_from(
         (team.index, {"record": state.record(team)}) for team in state.teams
     )
-    graph.add_edges_from((p.lhs.index, p.rhs.index) for p in state.met)
+    graph.add_edges_from((p.lhs.index, p.rhs.index) for p in state.past_pairings)
     return graph
 
 

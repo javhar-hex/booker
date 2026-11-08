@@ -4,7 +4,7 @@ The byte encoding of a `State`, used as the key of a position in the atlas.
 Layout: `[n, code_0 .. code_{n-1}, adjacency]`. `n` is the number of live teams, each
 `code_i` is `wins * ELIMINATION_LOSSES + losses` of team `i`, and `adjacency` is a
 little-endian bitset with one bit per pair `i < j` in lexicographic order, set when the
-two teams have met.
+two teams have past_pairings.
 """
 
 from __future__ import annotations
@@ -46,9 +46,11 @@ class PackedState:
 
     @classmethod
     def of(cls, state: State) -> PackedState:
-        met = {(p.lhs.index, p.rhs.index) for p in state.met}
+        past_pairings = {(p.lhs.index, p.rhs.index) for p in state.past_pairings}
         adjacency = sum(
-            1 << bit for bit, pair in enumerate(_pairs(state.size)) if pair in met
+            1 << bit
+            for bit, pair in enumerate(_pairs(state.size))
+            if pair in past_pairings
         )
         return cls(
             data=bytes([state.size])
@@ -62,12 +64,15 @@ class PackedState:
 
     @property
     def state(self) -> State:
-        met = (
+        past_pairings = (
             Pairing.of(Team(index=low), Team(index=high))
             for bit, (low, high) in enumerate(_pairs(self.size))
             if (self._adjacency >> bit) & 1
         )
-        return State(records=ZVec(_record(code) for code in self._codes), met=ZSet(met))
+        return State(
+            records=ZVec(_record(code) for code in self._codes),
+            past_pairings=ZSet(past_pairings),
+        )
 
     @property
     def _codes(self) -> bytes:

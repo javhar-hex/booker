@@ -30,11 +30,12 @@ GAMES = 10
 MOST_PAIRS_PER_GROUP = 15
 
 
-def _state(records: list[Record], *met: tuple[int, int]) -> State:
+def _state(records: list[Record], *past_pairings: tuple[int, int]) -> State:
     return State(
         records=ZVec(records),
-        met=ZSet(
-            pairing_of_indices(index_lhs, index_rhs) for index_lhs, index_rhs in met
+        past_pairings=ZSet(
+            pairing_of_indices(index_lhs, index_rhs)
+            for index_lhs, index_rhs in past_pairings
         ),
     )
 

@@ -21,7 +21,7 @@ CHAMPION_ONE_LOSS = Record(wins=6, losses=1)
 
 
 def _state(*records: Record) -> State:
-    return State(records=ZVec(records), met=ZSet([]))
+    return State(records=ZVec(records), past_pairings=ZSet([]))
 
 
 def _pairings(*pairs: tuple[Team, Team]) -> ZSet[Pairing]:

@@ -11,8 +11,8 @@ from booker.core.model.team import Team
 A, B, C, D = (Team(index=i) for i in range(4))
 
 
-def _state(*records: Record, met: tuple[Pairing, ...] = ()) -> State:
-    return State(records=ZVec(records), met=ZSet(met))
+def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
+    return State(records=ZVec(records), past_pairings=ZSet(past_pairings))
 
 
 def _outcome(winners: dict[Pairing, Team]) -> Outcome:
@@ -28,11 +28,15 @@ def test_updates_records_and_meetings() -> None:
 
     after = successor(state, _outcome({Pairing.of(A, B): B}))
 
-    assert after == _state(_record(1, 1), _record(2, 0), met=(Pairing.of(A, B),))
+    assert after == _state(
+        _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(A, B),)
+    )
 
 
 def test_drops_eliminated_teams_and_renumbers_survivors() -> None:
-    state = _state(_record(1, 1), _record(1, 1), _record(2, 0), met=(Pairing.of(A, C),))
+    state = _state(
+        _record(1, 1), _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(A, C),)
+    )
 
     after = successor(state, _outcome({Pairing.of(A, B): B}))
 
@@ -45,7 +49,7 @@ def test_meetings_among_survivors_are_renumbered() -> None:
     after = successor(state, _outcome({Pairing.of(A, B): B, Pairing.of(C, D): D}))
 
     assert after == _state(
-        _record(1, 1), _record(1, 1), _record(2, 0), met=(Pairing.of(B, C),)
+        _record(1, 1), _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(B, C),)
     )
 
 
@@ -54,11 +58,13 @@ def test_a_team_in_two_pairings_gets_both_results() -> None:
 
     after = successor(semifinal, _outcome({Pairing.of(A, B): A, Pairing.of(A, C): C}))
 
-    assert after == _state(_record(5, 1), _record(5, 1), met=(Pairing.of(A, B),))
+    assert after == _state(
+        _record(5, 1), _record(5, 1), past_pairings=(Pairing.of(A, B),)
+    )
 
 
 def test_champion_alone_remains() -> None:
-    final = _state(_record(5, 1), _record(5, 1), met=(Pairing.of(A, B),))
+    final = _state(_record(5, 1), _record(5, 1), past_pairings=(Pairing.of(A, B),))
 
     after = successor(final, _outcome({Pairing.of(A, B): B}))
 

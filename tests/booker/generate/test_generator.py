@@ -67,7 +67,7 @@ def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
     final = Record(wins=5, losses=1)
     last_match = State(
         records=ZVec([final, final]),
-        met=ZSet([Pairing.of(Team(index=0), Team(index=1))]),
+        past_pairings=ZSet([Pairing.of(Team(index=0), Team(index=1))]),
     )
 
     with Atlas.open(path) as atlas:
@@ -75,7 +75,7 @@ def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
 
         assert set(atlas.states()) == {
             last_match,
-            State(records=ZVec([Record(wins=6, losses=1)]), met=ZSet([])),
+            State(records=ZVec([Record(wins=6, losses=1)]), past_pairings=ZSet([])),
         }
         assert atlas.num_actions() == 1
         assert atlas.num_unexpanded() == 0
