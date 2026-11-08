@@ -108,7 +108,7 @@ def test_every_first_round_pairing_is_alike(kind: SymmetryKind) -> None:
 
     orbits = kind.symmetry.orbits(start, legal_pairings(start))
 
-    assert [(o.representative, o.size) for o in orbits] == [
+    assert [(orbit.representative, orbit.size) for orbit in orbits] == [
         (pairing_of_indices(0, 1), 120)
     ]
 
@@ -119,7 +119,7 @@ def test_a_rematch_is_an_orbit_of_its_own(kind: SymmetryKind) -> None:
 
     orbits = kind.symmetry.orbits(state, legal_pairings(state))
 
-    assert [(o.representative, o.size) for o in orbits] == [
+    assert [(orbit.representative, orbit.size) for orbit in orbits] == [
         (pairing_of_indices(0, 1), 1),
         (pairing_of_indices(0, 2), 4),
         (pairing_of_indices(2, 3), 1),
@@ -144,7 +144,9 @@ def test_every_implementation_finds_the_same_orbits(
     for state in _pool(play_game):
         pairings = legal_pairings(state)
 
-        _agree({k.value: k.symmetry.orbits(state, pairings) for k in KINDS}, state)
+        _agree(
+            {kind.value: kind.symmetry.orbits(state, pairings) for kind in KINDS}, state
+        )
 
 
 def test_every_implementation_knows_a_state_from_a_relabelling_of_it(
@@ -155,7 +157,9 @@ def test_every_implementation_knows_a_state_from_a_relabelling_of_it(
     for state in _pool(play_game):
         shuffled = _relabelled(state, rng)
 
-        assert all(k.symmetry.are_isomorphic(state, shuffled) for k in KINDS), state
+        assert all(kind.symmetry.are_isomorphic(state, shuffled) for kind in KINDS), (
+            state
+        )
 
 
 def _same_signature_pairs(states: list[State]) -> Iterator[tuple[State, State]]:
@@ -174,7 +178,9 @@ def test_every_implementation_agrees_about_states_that_look_alike(
     verdicts: list[bool] = []
 
     for first, second in _same_signature_pairs(_pool(play_game)):
-        answers = {k.value: k.symmetry.are_isomorphic(first, second) for k in KINDS}
+        answers = {
+            kind.value: kind.symmetry.are_isomorphic(first, second) for kind in KINDS
+        }
         _agree(answers, (first, second))
         verdicts.append(answers["bliss"])
 

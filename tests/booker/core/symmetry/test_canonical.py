@@ -162,7 +162,9 @@ def _graph(state: State) -> nx.Graph[int]:
     graph.add_nodes_from(
         (team.index, {"record": state.record(team)}) for team in state.teams
     )
-    graph.add_edges_from((p.lhs.index, p.rhs.index) for p in state.past_pairings)
+    graph.add_edges_from(
+        (pairing.lhs.index, pairing.rhs.index) for pairing in state.past_pairings
+    )
     return graph
 
 

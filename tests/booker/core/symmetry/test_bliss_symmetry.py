@@ -25,7 +25,10 @@ def _orbit(index_lhs: int, index_rhs: int, size: int) -> OrbitShape:
 
 
 def _shapes(orbits: PairingOrbits) -> list[OrbitShape]:
-    return [OrbitShape(representative=o.representative, size=o.size) for o in orbits]
+    return [
+        OrbitShape(representative=orbit.representative, size=orbit.size)
+        for orbit in orbits
+    ]
 
 
 ONE_BOOKED = Schedule(state=State.start(), pairings=ZSet([pairing_of_indices(0, 1)]))
@@ -80,7 +83,9 @@ def test_a_rematch_is_an_orbit_of_its_own() -> None:
 
 def test_scheduled_pairings_break_the_symmetry() -> None:
     unbooked = ZSet(
-        p for p in _same_record_pairings(State.start()) if p not in ONE_BOOKED.pairings
+        pairing
+        for pairing in _same_record_pairings(State.start())
+        if pairing not in ONE_BOOKED.pairings
     )
 
     orbits = orbits_of_schedule(ONE_BOOKED, unbooked)
@@ -90,7 +95,9 @@ def test_scheduled_pairings_break_the_symmetry() -> None:
 
 def test_orbits_partition_the_additions() -> None:
     additions = ZSet(
-        p for p in _same_record_pairings(State.start()) if p not in ONE_BOOKED.pairings
+        pairing
+        for pairing in _same_record_pairings(State.start())
+        if pairing not in ONE_BOOKED.pairings
     )
 
     orbits = orbits_of_schedule(ONE_BOOKED, additions)
