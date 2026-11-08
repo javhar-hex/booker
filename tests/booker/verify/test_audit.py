@@ -127,8 +127,8 @@ def test_accepts_a_rematch_that_costs_one(tmp_path: Path) -> None:
         ("UPDATE states SET value=5 WHERE id=1", EVERY_STATE, "best action is worth"),
         ("UPDATE actions SET value=3", EVERY_STATE, "Collider value"),
         ("UPDATE actions SET repeat_cost=1", EVERY_STATE, "wrong repeat cost"),
-        ("UPDATE actions SET a_wins=1", EVERY_STATE, "one match deeper"),
-        ("UPDATE actions SET a_wins=99", EVERY_STATE, "does not exist"),
+        ("UPDATE actions SET lhs_wins=1", EVERY_STATE, "one match deeper"),
+        ("UPDATE actions SET lhs_wins=99", EVERY_STATE, "does not exist"),
         ("UPDATE states SET expanded=0 WHERE id=1", EVERY_STATE, "unexpanded, with"),
         ("UPDATE states SET expanded=0 WHERE id=2", EVERY_STATE, "bad decided state"),
         ("UPDATE states SET value=1 WHERE id=2", IdRange(start=CHILD), "worth 0"),
@@ -277,12 +277,12 @@ ROOT = 1
 
 
 UNEQUAL_CHILDREN = (
-    "SELECT a.rowid FROM actions a JOIN states x ON x.id = a.a_wins "
-    "JOIN states y ON y.id = a.b_wins WHERE x.value != y.value LIMIT 1"
+    "SELECT action.rowid FROM actions action JOIN states x ON x.id = action.lhs_wins "
+    "JOIN states y ON y.id = action.rhs_wins WHERE x.value != y.value LIMIT 1"
 )
 COLLIDER_AS_MIN = (
     "UPDATE actions SET value = (SELECT MIN(x.value, y.value) FROM states x, states y "
-    f"WHERE x.id = actions.a_wins AND y.id = actions.b_wins) WHERE rowid = ({UNEQUAL_CHILDREN})"
+    f"WHERE x.id = actions.lhs_wins AND y.id = actions.rhs_wins) WHERE rowid = ({UNEQUAL_CHILDREN})"
 )
 ROOT_AS_MAX = (
     "UPDATE states SET value = (SELECT MAX(repeat_cost + value) FROM actions "
@@ -365,10 +365,12 @@ def test_the_strict_audit_asks_the_symmetry_for_the_orbits(endgame: Path) -> Non
         )
 
 
-SWAPPED_CHILDREN = "UPDATE actions SET a_wins = b_wins, b_wins = a_wins WHERE rowid = 1"
+SWAPPED_CHILDREN = (
+    "UPDATE actions SET lhs_wins = rhs_wins, rhs_wins = lhs_wins WHERE rowid = 1"
+)
 SWAPPED_SIZES = (
     f"UPDATE actions SET class_size = 3 - class_size WHERE parent = {ROOT} "
-    "AND (a, b) IN ((0, 1), (0, 3))"
+    "AND (lhs, rhs) IN ((0, 1), (0, 3))"
 )
 
 

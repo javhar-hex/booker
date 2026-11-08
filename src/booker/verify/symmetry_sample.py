@@ -72,8 +72,8 @@ class _Questions:
         isomorphisms = self._relabelled_copy(state, where)
         for row in self.db.actions(state_id):
             children = (
-                self.db.stored(row.low_wins).state,
-                self.db.stored(row.high_wins).state,
+                self.db.stored(row.lhs_wins).state,
+                self.db.stored(row.rhs_wins).state,
             )
             for winner, child in zip((row.pairing.lhs, row.pairing.rhs), children):
                 expected = successor(state, Outcome.single(row.pairing, winner))

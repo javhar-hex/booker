@@ -12,39 +12,39 @@ CREATE TABLE scheduler_flags (
 );
 CREATE TABLE collider_flags (
   parent INTEGER NOT NULL,
-  a INTEGER NOT NULL,
-  b INTEGER NOT NULL,
+  lhs INTEGER NOT NULL,
+  rhs INTEGER NOT NULL,
   equilibrium INTEGER NOT NULL CHECK(equilibrium IN (0, 1)),
   critical INTEGER NOT NULL CHECK(critical IN (0, 1) AND critical <= equilibrium),
   fewest_past_repeats INTEGER NOT NULL CHECK(fewest_past_repeats >= 0),
-  PRIMARY KEY(parent, a, b)
+  PRIMARY KEY(parent, lhs, rhs)
 );
 """
 
 COLLIDER_LAYER = """
 WITH layer AS (
-  SELECT c.parent, c.a, c.b,
+  SELECT c.parent, c.lhs, c.rhs,
          f.equilibrium AND c.repeat_cost + c.value = p.value AS optimal_pairing,
          MIN(wa.value, wb.value) < c.value AS has_mistake,
          f.fewest_past_repeats + c.repeat_cost AS repeats
   FROM atlas.states p
   JOIN atlas.actions c ON c.parent = p.id
   JOIN scheduler_flags f ON f.id = p.id
-  JOIN atlas.states wa ON wa.id = c.a_wins
-  JOIN atlas.states wb ON wb.id = c.b_wins
+  JOIN atlas.states wa ON wa.id = c.lhs_wins
+  JOIN atlas.states wb ON wb.id = c.rhs_wins
   WHERE p.depth = ?
 )
 INSERT INTO collider_flags
-SELECT parent, a, b, optimal_pairing, optimal_pairing AND has_mistake, repeats FROM layer
+SELECT parent, lhs, rhs, optimal_pairing, optimal_pairing AND has_mistake, repeats FROM layer
 """
 
 SCHEDULER_LAYER = """
 WITH edge AS (
-  SELECT CASE w.side WHEN 0 THEN c.a_wins ELSE c.b_wins END AS child,
+  SELECT CASE w.side WHEN 0 THEN c.lhs_wins ELSE c.rhs_wins END AS child,
          f.equilibrium, c.value AS collider_value, f.fewest_past_repeats
   FROM atlas.states p
   JOIN atlas.actions c ON c.parent = p.id
-  JOIN collider_flags f ON (f.parent, f.a, f.b) = (c.parent, c.a, c.b)
+  JOIN collider_flags f ON (f.parent, f.lhs, f.rhs) = (c.parent, c.lhs, c.rhs)
   CROSS JOIN (SELECT 0 AS side UNION ALL SELECT 1) w
   WHERE p.depth = ?
 )

@@ -32,7 +32,7 @@ class AtlasRetrogradeSolver:
             """
             UPDATE actions SET value=(
               SELECT MAX(c1.value,c2.value) FROM states c1, states c2
-              WHERE c1.id=actions.a_wins AND c2.id=actions.b_wins
+              WHERE c1.id=actions.lhs_wins AND c2.id=actions.rhs_wins
             ) WHERE parent IN (SELECT id FROM states WHERE depth=?)
             """,
             (depth,),

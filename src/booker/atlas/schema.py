@@ -8,9 +8,9 @@ whether its actions have been generated; `value`, the minimum guaranteed number 
 repeats, once solved.
 
 actions: one per Collider-to-move state up to isomorphism, from the position `parent`.
-(a, b) is the smallest legal pairing of its automorphism orbit, as team indices, and
+(lhs, rhs) is the smallest legal pairing of its automorphism orbit, as team indices, and
 `class_size` the size of that orbit. The Scheduler pays `repeat_cost`, 1 for a rematch, on
-choosing the pairing; `a_wins` and `b_wins` are the positions that follow each winner. A
+choosing the pairing; `lhs_wins` and `rhs_wins` are the positions that follow each winner. A
 Collider state's `value` is the larger of its two children's values, and a Scheduler
 state's the least, over its actions, of `repeat_cost` + `value`.
 
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from javhar_util.immutables import ZMap
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -42,18 +42,18 @@ CREATE TABLE IF NOT EXISTS states (
 CREATE INDEX IF NOT EXISTS ix_states_depth ON states(depth,expanded);
 CREATE TABLE IF NOT EXISTS actions (
   parent INTEGER NOT NULL REFERENCES states(id),
-  a INTEGER NOT NULL,
-  b INTEGER NOT NULL,
+  lhs INTEGER NOT NULL,
+  rhs INTEGER NOT NULL,
   repeat_cost INTEGER NOT NULL CHECK(repeat_cost IN (0,1)),
   class_size INTEGER NOT NULL CHECK(class_size >= 1),
-  a_wins INTEGER NOT NULL REFERENCES states(id),
-  b_wins INTEGER NOT NULL REFERENCES states(id),
+  lhs_wins INTEGER NOT NULL REFERENCES states(id),
+  rhs_wins INTEGER NOT NULL REFERENCES states(id),
   value INTEGER CHECK(value IS NULL OR value >= 0),
-  PRIMARY KEY(parent,a,b),
-  CHECK(a < b)
+  PRIMARY KEY(parent,lhs,rhs),
+  CHECK(lhs < rhs)
 );
-CREATE INDEX IF NOT EXISTS ix_actions_a ON actions(a_wins);
-CREATE INDEX IF NOT EXISTS ix_actions_b ON actions(b_wins);
+CREATE INDEX IF NOT EXISTS ix_actions_lhs_wins ON actions(lhs_wins);
+CREATE INDEX IF NOT EXISTS ix_actions_rhs_wins ON actions(rhs_wins);
 """
 
 META = ZMap(

@@ -25,8 +25,8 @@ def _contents(path: Path) -> list[tuple[object, ...]]:
     con = sqlite3.connect(path)
     rows = con.execute(
         "SELECT 's', id, key, depth, active, expanded FROM states "
-        "UNION ALL SELECT 'a', parent, a, b, repeat_cost, class_size || ',' || a_wins "
-        "|| ',' || b_wins FROM actions ORDER BY 1, 2, 3, 4"
+        "UNION ALL SELECT 'a', parent, lhs, rhs, repeat_cost, class_size || ',' || lhs_wins "
+        "|| ',' || rhs_wins FROM actions ORDER BY 1, 2, 3, 4"
     ).fetchall()
     con.close()
     return rows

@@ -83,8 +83,8 @@ class StateCheck:
                 f"wrong repeat cost {row.repeat_cost}"
             )
         for winner, child_id in (
-            (pairing.lhs, row.low_wins),
-            (pairing.rhs, row.high_wins),
+            (pairing.lhs, row.lhs_wins),
+            (pairing.rhs, row.rhs_wins),
         ):
             where = f"state {state_id.value}, pairing {pairing}, winner {winner.index}"
             expected = successor(stored.state, Outcome.single(pairing, winner))
@@ -115,14 +115,14 @@ class StateCheck:
 
     def _option(self, state_id: StateId, row: ActionRow) -> int:
         "What the Scheduler gets by choosing this action: its cost plus its value."
-        low = self.db.stored(row.low_wins).value
-        high = self.db.stored(row.high_wins).value
-        if low is None or high is None:
+        value_lhs = self.db.stored(row.lhs_wins).value
+        value_rhs = self.db.stored(row.rhs_wins).value
+        if value_lhs is None or value_rhs is None:
             raise AuditFailure(f"state {state_id.value}: a child is unsolved")
-        if row.value != max(low, high):
+        if row.value != max(value_lhs, value_rhs):
             raise AuditFailure(
                 f"state {state_id.value}, pairing {row.pairing}: Collider value "
-                f"{row.value}, but the children are worth {low} and {high}"
+                f"{row.value}, but the children are worth {value_lhs} and {value_rhs}"
             )
         return row.repeat_cost + row.value
 

@@ -29,20 +29,20 @@ VALUES = ZMap({R: 1, X: 1, Y: 0, Z: 1, W: 2, V: 1})
 
 @dataclass(frozen=True)
 class Collider:
-    a: int
-    b: int
+    lhs: int
+    rhs: int
     repeat_cost: int
-    a_wins: int
-    b_wins: int
+    lhs_wins: int
+    rhs_wins: int
     value: int
 
 
 COLLIDERS = ZVec(
     [
-        Collider(a=0, b=1, repeat_cost=0, a_wins=X, b_wins=Y, value=1),
-        Collider(a=0, b=2, repeat_cost=1, a_wins=Z, b_wins=Y, value=1),
-        Collider(a=0, b=3, repeat_cost=0, a_wins=W, b_wins=V, value=2),
-        Collider(a=1, b=2, repeat_cost=0, a_wins=X, b_wins=Z, value=1),
+        Collider(lhs=0, rhs=1, repeat_cost=0, lhs_wins=X, rhs_wins=Y, value=1),
+        Collider(lhs=0, rhs=2, repeat_cost=1, lhs_wins=Z, rhs_wins=Y, value=1),
+        Collider(lhs=0, rhs=3, repeat_cost=0, lhs_wins=W, rhs_wins=V, value=2),
+        Collider(lhs=1, rhs=2, repeat_cost=0, lhs_wins=X, rhs_wins=Z, value=1),
     ]
 )
 
@@ -67,9 +67,9 @@ def _tiny_atlas(path: Path) -> Path:
             )
         for c in COLLIDERS:
             con.execute(
-                "INSERT INTO actions (parent, a, b, repeat_cost, class_size, a_wins,"
-                " b_wins, value) VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
-                (R, c.a, c.b, c.repeat_cost, c.a_wins, c.b_wins, c.value),
+                "INSERT INTO actions (parent, lhs, rhs, repeat_cost, class_size, lhs_wins,"
+                " rhs_wins, value) VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
+                (R, c.lhs, c.rhs, c.repeat_cost, c.lhs_wins, c.rhs_wins, c.value),
             )
     con.close()
     return path
@@ -110,7 +110,9 @@ def test_scheduler_flags(flagged: Path) -> None:
 
 
 def test_collider_flags(flagged: Path) -> None:
-    sql = "SELECT a, b, equilibrium, critical, fewest_past_repeats FROM collider_flags"
+    sql = (
+        "SELECT lhs, rhs, equilibrium, critical, fewest_past_repeats FROM collider_flags"
+    )
     assert set(_query(flagged / "flags.db", sql)) == {
         (0, 1, 1, 1, 0),
         (0, 2, 0, 0, 1),

@@ -62,13 +62,13 @@ def _expand(
     state = parent.state
     for orbit in BlissSymmetry().orbits(state, legal_pairings(state)):
         pairing = orbit.representative
-        low_wins = successor(state, Outcome.single(pairing, pairing.lhs))
-        high_wins = successor(state, Outcome.single(pairing, pairing.rhs))
+        lhs_wins = successor(state, Outcome.single(pairing, pairing.lhs))
+        rhs_wins = successor(state, Outcome.single(pairing, pairing.rhs))
         writer.add_action(
             parent=parent.id,
             pairing=pairing,
             is_rematch=state.has_met(pairing),
             class_size=orbit.size,
-            low_wins=writer.add_state(canon(low_wins)),
-            high_wins=writer.add_state(canon(high_wins)),
+            lhs_wins=writer.add_state(canon(lhs_wins)),
+            rhs_wins=writer.add_state(canon(rhs_wins)),
         )

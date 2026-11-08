@@ -59,11 +59,11 @@ class AtlasExpansionWriter:
         pairing: Pairing,
         is_rematch: bool,
         class_size: int,
-        low_wins: StateId,
-        high_wins: StateId,
+        lhs_wins: StateId,
+        rhs_wins: StateId,
     ) -> None:
         self.connection.execute(
-            "INSERT INTO actions(parent,a,b,repeat_cost,class_size,a_wins,b_wins) "
+            "INSERT INTO actions(parent,lhs,rhs,repeat_cost,class_size,lhs_wins,rhs_wins) "
             "VALUES (?,?,?,?,?,?,?)",
             (
                 parent.value,
@@ -71,8 +71,8 @@ class AtlasExpansionWriter:
                 pairing.rhs.index,
                 int(is_rematch),
                 class_size,
-                low_wins.value,
-                high_wins.value,
+                lhs_wins.value,
+                rhs_wins.value,
             ),
         )
 

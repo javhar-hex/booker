@@ -45,8 +45,8 @@ class ActionRow:
 
     pairing: Pairing
     repeat_cost: int
-    low_wins: StateId
-    high_wins: StateId
+    lhs_wins: StateId
+    rhs_wins: StateId
     class_size: int
     value: int | None
 
@@ -81,20 +81,20 @@ class Database:
 
     def actions(self, parent: StateId) -> ZVec[ActionRow]:
         rows = self._con.execute(
-            "SELECT a,b,repeat_cost,a_wins,b_wins,class_size,value "
-            "FROM actions WHERE parent=? ORDER BY a,b",
+            "SELECT lhs,rhs,repeat_cost,lhs_wins,rhs_wins,class_size,value "
+            "FROM actions WHERE parent=? ORDER BY lhs,rhs",
             (parent.value,),
         )
         return ZVec(
             ActionRow(
-                pairing=Pairing.of(Team(index=a), Team(index=b)),
+                pairing=Pairing.of(Team(index=index_lhs), Team(index=index_rhs)),
                 repeat_cost=cost,
-                low_wins=StateId(value=low_wins),
-                high_wins=StateId(value=high_wins),
+                lhs_wins=StateId(value=lhs_wins),
+                rhs_wins=StateId(value=rhs_wins),
                 class_size=size,
                 value=value,
             )
-            for a, b, cost, low_wins, high_wins, size, value in rows
+            for index_lhs, index_rhs, cost, lhs_wins, rhs_wins, size, value in rows
         )
 
     def state_ids(self, start: int, stop: int | None) -> Iterator[StateId]:
@@ -138,7 +138,7 @@ class Database:
         row = self._con.execute(
             """
             SELECT s.id FROM states s WHERE s.id!=? AND NOT EXISTS (
-              SELECT 1 FROM actions a WHERE a.a_wins=s.id OR a.b_wins=s.id
+              SELECT 1 FROM actions action WHERE action.lhs_wins=s.id OR action.rhs_wins=s.id
             ) LIMIT 1
             """,
             (root.value,),

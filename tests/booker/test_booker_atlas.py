@@ -67,10 +67,10 @@ def _expanded_layers(db: Path, max_depth: int) -> ZVec[LayerCounts]:
     con = sqlite3.connect(db)
     rows = con.execute(
         """
-        SELECT s.depth, COUNT(DISTINCT s.id), COUNT(a.parent),
-               COALESCE(SUM(a.class_size), 0),
-               COALESCE(SUM(a.repeat_cost * a.class_size), 0)
-        FROM states s LEFT JOIN actions a ON a.parent = s.id
+        SELECT s.depth, COUNT(DISTINCT s.id), COUNT(action.parent),
+               COALESCE(SUM(action.class_size), 0),
+               COALESCE(SUM(action.repeat_cost * action.class_size), 0)
+        FROM states s LEFT JOIN actions action ON action.parent = s.id
         WHERE s.depth < ? GROUP BY s.depth ORDER BY s.depth
         """,
         (max_depth,),
@@ -158,13 +158,13 @@ WRONG_ROOT_CLASS_SIZE = (
 )
 SPLIT_ROOT_ORBIT = (
     "UPDATE actions SET class_size = class_size / 2 WHERE parent = {root};"
-    "INSERT INTO actions (parent, a, b, repeat_cost, class_size, a_wins, b_wins) "
-    "SELECT parent, a, b + 1, repeat_cost, class_size, a_wins, b_wins "
+    "INSERT INTO actions (parent, lhs, rhs, repeat_cost, class_size, lhs_wins, rhs_wins) "
+    "SELECT parent, lhs, rhs + 1, repeat_cost, class_size, lhs_wins, rhs_wins "
     "FROM actions WHERE parent = {root};"
 )
 DUPLICATE_ROOT_REPRESENTATIVE = (
-    "INSERT INTO actions (parent, a, b, repeat_cost, class_size, a_wins, b_wins) "
-    "SELECT parent, a, b + 1, repeat_cost, class_size, a_wins, b_wins "
+    "INSERT INTO actions (parent, lhs, rhs, repeat_cost, class_size, lhs_wins, rhs_wins) "
+    "SELECT parent, lhs, rhs + 1, repeat_cost, class_size, lhs_wins, rhs_wins "
     "FROM actions WHERE parent = {root}"
 )
 
