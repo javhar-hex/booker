@@ -84,8 +84,8 @@ class Atlas:
             (depth,),
         )
         return ZVec(
-            StoredState(id=StateId(value=sid), state=PackedState(data=data).state)
-            for sid, data in rows
+            StoredState(id=StateId(value=state_id), state=PackedState(data=data).state)
+            for state_id, data in rows
         )
 
     def num_states(self) -> int:
