@@ -13,10 +13,10 @@ from booker.core.model.team import Team
 from booker.core.symmetry.bliss_graph import SCHEDULED_COLOUR, BlissGraph, team_colour
 from booker.core.symmetry.relabelling import Relabelling
 
-ONE_ONE = Record(wins=1, losses=1)
-WON = Record(wins=1, losses=0)
-LOST = Record(wins=0, losses=1)
-FRESH = Record.fresh()
+RECORD_1_1 = Record(wins=1, losses=1)
+RECORD_1_0 = Record(wins=1, losses=0)
+RECORD_0_1 = Record(wins=0, losses=1)
+RECORD_0_0 = Record.fresh()
 
 
 def _schedule(
@@ -40,7 +40,9 @@ def _schedule(
 
 
 def test_every_live_record_has_a_colour_of_its_own() -> None:
-    records = [Record(wins=w, losses=loss) for w in range(7) for loss in range(2)]
+    records = [
+        Record(wins=wins, losses=losses) for wins in range(7) for losses in range(2)
+    ]
 
     assert len({team_colour(record) for record in records}) == len(records)
 
@@ -57,17 +59,21 @@ def test_scheduled_pairings_are_a_colour_that_no_team_has() -> None:
 
 
 def test_the_canonical_relabelling_is_a_permutation_of_the_teams() -> None:
-    schedule = _schedule([ONE_ONE, WON, LOST, ONE_ONE], past_pairings=((0, 1), (2, 3)))
+    schedule = _schedule(
+        [RECORD_1_1, RECORD_1_0, RECORD_0_1, RECORD_1_1], past_pairings=((0, 1), (2, 3))
+    )
 
     relabelling = BlissGraph(schedule=schedule).canonical_relabelling
 
     assert len(relabelling) == schedule.state.size
-    assert {relabelling.team(Team(index=i)).index for i in range(4)} == {0, 1, 2, 3}
+    assert {relabelling.team(Team(index=idx)).index for idx in range(4)} == {0, 1, 2, 3}
 
 
 def test_relabelled_schedules_are_relabelled_to_the_same_schedule() -> None:
     schedule = _schedule(
-        [ONE_ONE, WON, LOST, ONE_ONE], past_pairings=((0, 1), (2, 3)), booked=((0, 3),)
+        [RECORD_1_1, RECORD_1_0, RECORD_0_1, RECORD_1_1],
+        past_pairings=((0, 1), (2, 3)),
+        booked=((0, 3),),
     )
     shuffled = Relabelling.of([2, 0, 3, 1]).schedule(schedule)
 
@@ -79,7 +85,9 @@ def test_relabelled_schedules_are_relabelled_to_the_same_schedule() -> None:
 
 
 def test_the_generators_leave_the_schedule_as_it_was() -> None:
-    schedule = _schedule([FRESH] * 4 + [WON, LOST], past_pairings=((4, 5),))
+    schedule = _schedule(
+        [RECORD_0_0] * 4 + [RECORD_1_0, RECORD_0_1], past_pairings=((4, 5),)
+    )
 
     generators = BlissGraph(schedule=schedule).automorphism_generators
 
@@ -88,7 +96,7 @@ def test_the_generators_leave_the_schedule_as_it_was() -> None:
 
 
 def test_a_booked_pairing_leaves_only_the_symmetries_that_keep_it() -> None:
-    schedule = _schedule([FRESH] * 4, booked=((0, 1),))
+    schedule = _schedule([RECORD_0_0] * 4, booked=((0, 1),))
 
     generators = BlissGraph(schedule=schedule).automorphism_generators
 
@@ -101,13 +109,13 @@ def test_a_booked_pairing_leaves_only_the_symmetries_that_keep_it() -> None:
 
 
 def test_a_schedule_without_symmetry_has_no_generators() -> None:
-    schedule = _schedule([FRESH, WON, LOST, ONE_ONE])
+    schedule = _schedule([RECORD_0_0, RECORD_1_0, RECORD_0_1, RECORD_1_1])
 
     assert len(BlissGraph(schedule=schedule).automorphism_generators) == 0
 
 
 def test_what_is_worked_out_is_worked_out_once() -> None:
-    graph = BlissGraph(schedule=_schedule([FRESH] * 3))
+    graph = BlissGraph(schedule=_schedule([RECORD_0_0] * 3))
 
     assert graph.canonical_relabelling is graph.canonical_relabelling
     assert graph.automorphism_generators is graph.automorphism_generators
