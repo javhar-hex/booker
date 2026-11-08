@@ -5,29 +5,29 @@ from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
 from booker.core.model.team import Team
 
-A, B, C, D = (Team(index=i) for i in range(4))
-AB, CD = Pairing.of(A, B), Pairing.of(C, D)
-TWO_MATCHES = ZSet([AB, CD])
+team_a, team_b, team_c, team_d = (Team(index=idx) for idx in range(4))
+pairing_ab, pairing_cd = Pairing.of(team_a, team_b), Pairing.of(team_c, team_d)
+TWO_MATCHES = ZSet([pairing_ab, pairing_cd])
 
 
 def test_knows_winner_and_loser_of_each_pairing() -> None:
-    outcome = Outcome(winners=ZMap({AB: B, CD: C}))
+    outcome = Outcome(winners=ZMap({pairing_ab: team_b, pairing_cd: team_c}))
 
-    assert (outcome.winner(AB), outcome.loser(AB)) == (B, A)
-    assert (outcome.winner(CD), outcome.loser(CD)) == (C, D)
+    assert (outcome.winner(pairing_ab), outcome.loser(pairing_ab)) == (team_b, team_a)
+    assert (outcome.winner(pairing_cd), outcome.loser(pairing_cd)) == (team_c, team_d)
     assert outcome.pairings == TWO_MATCHES
 
 
 def test_rejects_a_winner_outside_the_pairing() -> None:
     with pytest.raises(ValueError, match="cannot win"):
-        Outcome(winners=ZMap({AB: C}))
+        Outcome(winners=ZMap({pairing_ab: team_c}))
 
 
 def test_a_single_match_has_one_winner() -> None:
-    outcome = Outcome.single(AB, B)
+    outcome = Outcome.single(pairing_ab, team_b)
 
-    assert outcome.pairings == ZSet([AB])
-    assert (outcome.winner(AB), outcome.loser(AB)) == (B, A)
+    assert outcome.pairings == ZSet([pairing_ab])
+    assert (outcome.winner(pairing_ab), outcome.loser(pairing_ab)) == (team_b, team_a)
 
 
 def test_every_outcome_of_k_pairings_is_one_of_2_to_the_k() -> None:
@@ -39,8 +39,13 @@ def test_every_outcome_of_k_pairings_is_one_of_2_to_the_k() -> None:
 
 def test_every_outcome_decides_each_pairing_both_ways() -> None:
     winners = {
-        (outcome.winner(AB), outcome.winner(CD))
+        (outcome.winner(pairing_ab), outcome.winner(pairing_cd))
         for outcome in Outcome.every(TWO_MATCHES)
     }
 
-    assert winners == {(A, C), (A, D), (B, C), (B, D)}
+    assert winners == {
+        (team_a, team_c),
+        (team_a, team_d),
+        (team_b, team_c),
+        (team_b, team_d),
+    }

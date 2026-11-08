@@ -8,7 +8,7 @@ from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.model.team import Team
 
-A, B, C, D = (Team(index=i) for i in range(4))
+team_a, team_b, team_c, team_d = (Team(index=idx) for idx in range(4))
 
 
 def _state(*records: Record, past_pairings: tuple[Pairing, ...] = ()) -> State:
@@ -26,19 +26,22 @@ def _record(wins: int, losses: int) -> Record:
 def test_updates_records_and_meetings() -> None:
     state = _state(_record(1, 0), _record(1, 0))
 
-    after = successor(state, _outcome({Pairing.of(A, B): B}))
+    after = successor(state, _outcome({Pairing.of(team_a, team_b): team_b}))
 
     assert after == _state(
-        _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(A, B),)
+        _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(team_a, team_b),)
     )
 
 
 def test_drops_eliminated_teams_and_renumbers_survivors() -> None:
     state = _state(
-        _record(1, 1), _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(A, C),)
+        _record(1, 1),
+        _record(1, 1),
+        _record(2, 0),
+        past_pairings=(Pairing.of(team_a, team_c),),
     )
 
-    after = successor(state, _outcome({Pairing.of(A, B): B}))
+    after = successor(state, _outcome({Pairing.of(team_a, team_b): team_b}))
 
     assert after == _state(_record(2, 1), _record(2, 0))
 
@@ -46,27 +49,42 @@ def test_drops_eliminated_teams_and_renumbers_survivors() -> None:
 def test_meetings_among_survivors_are_renumbered() -> None:
     state = _state(_record(0, 1), _record(0, 1), _record(1, 0), _record(1, 0))
 
-    after = successor(state, _outcome({Pairing.of(A, B): B, Pairing.of(C, D): D}))
+    after = successor(
+        state,
+        _outcome(
+            {Pairing.of(team_a, team_b): team_b, Pairing.of(team_c, team_d): team_d}
+        ),
+    )
 
     assert after == _state(
-        _record(1, 1), _record(1, 1), _record(2, 0), past_pairings=(Pairing.of(B, C),)
+        _record(1, 1),
+        _record(1, 1),
+        _record(2, 0),
+        past_pairings=(Pairing.of(team_b, team_c),),
     )
 
 
 def test_a_team_in_two_pairings_gets_both_results() -> None:
     semifinal = _state(_record(4, 0), _record(4, 1), _record(4, 1))
 
-    after = successor(semifinal, _outcome({Pairing.of(A, B): A, Pairing.of(A, C): C}))
+    after = successor(
+        semifinal,
+        _outcome(
+            {Pairing.of(team_a, team_b): team_a, Pairing.of(team_a, team_c): team_c}
+        ),
+    )
 
     assert after == _state(
-        _record(5, 1), _record(5, 1), past_pairings=(Pairing.of(A, B),)
+        _record(5, 1), _record(5, 1), past_pairings=(Pairing.of(team_a, team_b),)
     )
 
 
 def test_champion_alone_remains() -> None:
-    final = _state(_record(5, 1), _record(5, 1), past_pairings=(Pairing.of(A, B),))
+    final = _state(
+        _record(5, 1), _record(5, 1), past_pairings=(Pairing.of(team_a, team_b),)
+    )
 
-    after = successor(final, _outcome({Pairing.of(A, B): B}))
+    after = successor(final, _outcome({Pairing.of(team_a, team_b): team_b}))
 
     assert after == _state(_record(6, 1))
     assert after.is_decided
@@ -74,4 +92,7 @@ def test_champion_alone_remains() -> None:
 
 def test_rejects_results_for_teams_not_in_the_state() -> None:
     with pytest.raises(ValueError, match="not one of"):
-        successor(_state(_record(0, 0), _record(0, 0)), _outcome({Pairing.of(A, C): C}))
+        successor(
+            _state(_record(0, 0), _record(0, 0)),
+            _outcome({Pairing.of(team_a, team_c): team_c}),
+        )
