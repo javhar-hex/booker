@@ -20,7 +20,7 @@ from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.model.team import Team
-from booker.core.symmetry.canonical import CanonicalSchedule, canonical_state
+from booker.core.symmetry.canonical_schedule import CanonicalSchedule, canonical_state
 from booker.core.symmetry.relabelling import Relabelling
 
 SAMPLES = 200

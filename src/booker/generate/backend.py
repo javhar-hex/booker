@@ -6,7 +6,7 @@ import enum
 from collections.abc import Iterable
 
 from booker.core.model.state import State
-from booker.core.symmetry.canonical import canonical_state
+from booker.core.symmetry.canonical_schedule import canonical_state
 from booker.generate.canonicalizer import Canonicalizer
 from booker.generate.state_canonicalizer import StateCanonicalizer
 

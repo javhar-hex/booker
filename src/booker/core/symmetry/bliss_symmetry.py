@@ -8,7 +8,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.symmetry.bliss_graph import BlissGraph
-from booker.core.symmetry.canonical import canonical_state
+from booker.core.symmetry.canonical_schedule import canonical_state
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.symmetry import Symmetry
 
