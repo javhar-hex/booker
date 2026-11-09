@@ -317,6 +317,10 @@ def test_rejects_the_rest_of_a_real_game_valued_wrongly(
 class NeverIsomorphic(Symmetry):
     "Denies that any two states are alike, to show the verifier asks."
 
+    @property
+    def name(self) -> str:
+        return "never-isomorphic"
+
     def are_isomorphic(self, first: State, second: State) -> bool:
         return False
 
@@ -326,6 +330,10 @@ class NeverIsomorphic(Symmetry):
 
 class SplitsEveryOrbit(Symmetry):
     "Finds every pairing alone in its orbit, to show the verifier asks."
+
+    @property
+    def name(self) -> str:
+        return "splits-every-orbit"
 
     def are_isomorphic(self, first: State, second: State) -> bool:
         return True

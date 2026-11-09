@@ -55,8 +55,13 @@ class _LabelledGraph:
         )
 
 
+@dc.dataclass(frozen=True, slots=True)
 class Vf2Symmetry(Symmetry):
     "Isomorphism by VF2++, and orbits by comparing pairings with one another."
+
+    @property
+    def name(self) -> str:
+        return "vf2"
 
     def are_isomorphic(self, first: State, second: State) -> bool:
         if signature(first) != signature(second):

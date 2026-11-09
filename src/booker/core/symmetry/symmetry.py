@@ -24,6 +24,11 @@ class Symmetry(Protocol):
     error where the class is defined, not where it is first used.
     """
 
+    @property
+    def name(self) -> str:
+        "What command lines, checkpoint files and atlases call this implementation."
+        ...
+
     def are_isomorphic(self, first: State, second: State) -> bool:
         "Is there a relabelling of the teams that turns `first` into `second`?"
         ...

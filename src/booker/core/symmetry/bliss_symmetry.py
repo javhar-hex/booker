@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses as dc
+
 from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.pairing import Pairing
@@ -13,8 +15,13 @@ from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.symmetry import Symmetry
 
 
+@dc.dataclass(frozen=True, slots=True)
 class BlissSymmetry(Symmetry):
     "Canonical forms and the generators of the automorphism group, from BLISS."
+
+    @property
+    def name(self) -> str:
+        return "bliss"
 
     def are_isomorphic(self, first: State, second: State) -> bool:
         return canonical_state(first) == canonical_state(second)

@@ -23,6 +23,10 @@ ALL = ZMap({kind.value: kind.symmetry for kind in SymmetryKind})
 class NeverIsomorphic(Symmetry):
     "Wrong about isomorphism, right about orbits."
 
+    @property
+    def name(self) -> str:
+        return "never-isomorphic"
+
     def are_isomorphic(self, first: State, second: State) -> bool:
         return False
 
@@ -33,6 +37,10 @@ class NeverIsomorphic(Symmetry):
 class AlwaysIsomorphic(Symmetry):
     "Wrong about isomorphism, right about orbits."
 
+    @property
+    def name(self) -> str:
+        return "always-isomorphic"
+
     def are_isomorphic(self, first: State, second: State) -> bool:
         return True
 
@@ -42,6 +50,10 @@ class AlwaysIsomorphic(Symmetry):
 
 class NoSymmetry(Symmetry):
     "Right about isomorphism, but finds every pairing alone in its orbit."
+
+    @property
+    def name(self) -> str:
+        return "no-symmetry"
 
     def are_isomorphic(self, first: State, second: State) -> bool:
         return BlissSymmetry().are_isomorphic(first, second)
