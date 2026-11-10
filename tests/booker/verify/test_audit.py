@@ -19,10 +19,8 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
-from booker.core.symmetry.symmetries import BLISS
+from booker.core.symmetry.symmetries import BLISS, VF2
 from booker.core.symmetry.symmetry import Symmetry
-from booker.core.symmetry.symmetry_kind import BLISS as BLISS_KIND
-from booker.core.symmetry.symmetry_kind import VF2, SymmetryKind
 from booker.generate.generator import generate
 from booker.verify.audit import audit
 from booker.verify.database import Database, StateId
@@ -80,7 +78,7 @@ def _audit(
     expect_root: int | None = None,
     checkpoint: Path | None = None,
     log: list[str] | None = None,
-    strict: SymmetryKind | None = None,
+    strict: Symmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db=str(db),
@@ -344,11 +342,11 @@ class SplitsEveryOrbit(Symmetry):
         )
 
 
-@pytest.mark.parametrize("kind", [BLISS_KIND, VF2])
+@pytest.mark.parametrize("symmetry", [BLISS, VF2])
 def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementation(
-    endgame: Path, kind: SymmetryKind
+    endgame: Path, symmetry: Symmetry
 ) -> None:
-    assert _audit(endgame, strict=kind).states == ENDGAME_STATES
+    assert _audit(endgame, strict=symmetry).states == ENDGAME_STATES
 
 
 def test_the_strict_audit_asks_the_symmetry_whether_children_are_the_right_ones(
@@ -382,9 +380,9 @@ SWAPPED_SIZES = (
 )
 
 
-@pytest.mark.parametrize("strict", [None, BLISS_KIND, VF2])
+@pytest.mark.parametrize("strict", [None, BLISS, VF2])
 def test_rejects_children_of_the_right_depth_that_are_swapped(
-    endgame: Path, strict: SymmetryKind | None
+    endgame: Path, strict: Symmetry | None
 ) -> None:
     with pytest.raises(AuditFailure, match="wrong state"):
         _audit(_tamper(endgame, SWAPPED_CHILDREN), strict=strict)
@@ -397,6 +395,6 @@ def test_only_the_strict_audit_finds_orbit_sizes_that_add_up_but_are_swapped(
     tampered = _tamper(endgame, SWAPPED_SIZES)
 
     _audit(tampered)
-    for kind in (BLISS_KIND, VF2):
+    for symmetry in (BLISS, VF2):
         with pytest.raises(AuditFailure, match="orbit sizes"):
-            _audit(tampered, strict=kind)
+            _audit(tampered, strict=symmetry)

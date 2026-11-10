@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from booker.core.symmetry.symmetry_kind import VF2
+from booker.core.symmetry.symmetries import VF2
 from booker.verify.checkpoint import BEFORE_ANY_ID, Checkpoint, Progress, Scope
 from booker.verify.database import StateId
 from booker.verify.failure import AuditFailure

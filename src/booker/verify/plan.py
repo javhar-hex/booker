@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses as dc
 
-from booker.core.symmetry.symmetry_kind import SymmetryKind
+from booker.core.symmetry.symmetry import Symmetry
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -36,7 +36,7 @@ class AuditPlan:
 
     db: str
     ids: IdRange = IdRange()
-    strict: SymmetryKind | None = None
+    strict: Symmetry | None = None
     limit: int | None = None
     expect_root: int | None = None
     require_complete: bool = False
@@ -50,7 +50,7 @@ class AuditPlan:
 @dc.dataclass(frozen=True, slots=True)
 class AuditReport:
     ids: IdRange
-    strict: SymmetryKind | None
+    strict: Symmetry | None
     states: int
     actions: int
     pairings: int
@@ -61,7 +61,7 @@ class AuditReport:
         how = (
             "children and orbits not compared"
             if self.strict is None
-            else f"children and orbits compared by {self.strict.value}"
+            else f"children and orbits compared by {self.strict.name}"
         )
         return (
             f"PASS: ids {self.ids}: checked {self.states:,} states / {self.actions:,} "

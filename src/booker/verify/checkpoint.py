@@ -52,7 +52,7 @@ class Scope:
     def of(cls, plan: AuditPlan) -> Scope:
         return cls(
             db=os.path.abspath(plan.db),
-            mode=None if plan.strict is None else plan.strict.value,
+            mode=None if plan.strict is None else plan.strict.name,
             from_id=plan.ids.start,
             to_id=plan.ids.stop,
         )

@@ -17,8 +17,6 @@ from javhar_util.immutables import ZVec
 
 from booker.core.symmetry.symmetries import BLISS, VF2
 from booker.core.symmetry.symmetry import Symmetry
-from booker.core.symmetry.symmetry_kind import VF2 as VF2_KIND
-from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.generate.generator import generate
 from booker.solve import solve
 from booker.verify.audit import audit
@@ -132,7 +130,7 @@ def _audit(
     ids: IdRange | None = None,
     limit: int | None = None,
     checkpoint: Path | None = None,
-    strict: SymmetryKind | None = None,
+    strict: Symmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db=str(db),
@@ -190,12 +188,12 @@ def _tampered(atlas: Path, directory: Path, tampering: str) -> Path:
     return db
 
 
-@pytest.mark.parametrize("strict", [None, VF2_KIND])
+@pytest.mark.parametrize("strict", [None, VF2])
 @pytest.mark.parametrize(
     "tampering", [WRONG_ROOT_CLASS_SIZE, DUPLICATE_ROOT_REPRESENTATIVE]
 )
 def test_verifier_rejects_orbit_sizes_that_add_up_wrongly(
-    shallow_atlas: Path, tmp_path: Path, tampering: str, strict: SymmetryKind | None
+    shallow_atlas: Path, tmp_path: Path, tampering: str, strict: Symmetry | None
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, tampering)
 
@@ -211,7 +209,7 @@ def test_only_the_strict_verifier_finds_two_stored_pairings_in_one_orbit(
 
     _audit(db)
     with pytest.raises(AuditFailure, match="orbit representatives"):
-        _audit(db, strict=VF2_KIND)
+        _audit(db, strict=VF2)
 
 
 def test_verifier_range_checks_only_its_own_states(

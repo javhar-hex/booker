@@ -48,8 +48,7 @@ def _walk(
     progress = (checkpoint and checkpoint.load()) or Progress.start(plan.ids)
     if progress.states:
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")
-    symmetry = None if plan.strict is None else plan.strict.symmetry
-    check = StateCheck(db=db, symmetry=symmetry, is_solved=is_solved)
+    check = StateCheck(db=db, symmetry=plan.strict, is_solved=is_solved)
     for state_id in db.state_ids(progress.next_id, plan.ids.stop):
         tally = check.run(state_id)
         progress = progress.after(state_id, tally.actions, tally.pairings)

@@ -12,12 +12,12 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
+from booker.core.symmetry.symmetries import SYMMETRIES
 from booker.core.symmetry.symmetry import Symmetry
-from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.verify.failure import AuditFailure
 from booker.verify.symmetry_sample import compare_symmetries
 
-ALL = ZMap({kind.value: kind.symmetry for kind in SymmetryKind})
+ALL = SYMMETRIES
 
 
 class NeverIsomorphic(Symmetry):

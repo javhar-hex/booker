@@ -8,12 +8,9 @@ import argparse
 from collections.abc import Sequence
 from pathlib import Path
 
-from javhar_util.immutables import ZMap
-
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.symmetry.symmetries import BLISS, SYMMETRIES
-from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.equilibrium.flags import build, summary
 from booker.generate.generator import generate
 from booker.solve import solve
@@ -89,7 +86,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying.add_argument("db")
     verifying.add_argument(
         "--strict",
-        choices=[kind.value for kind in SymmetryKind],
+        choices=sorted(SYMMETRIES),
         help="also compare every child and orbit, using this implementation (slow)",
     )
     verifying.add_argument(
@@ -114,7 +111,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
 def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
         db=args.db,
-        strict=None if args.strict is None else SymmetryKind(args.strict),
+        strict=None if args.strict is None else SYMMETRIES[args.strict],
         ids=IdRange(start=args.from_id, stop=args.to_id),
         limit=args.limit or None,
         expect_root=args.expect_root,
@@ -125,8 +122,7 @@ def _verify(args: argparse.Namespace) -> None:
 
 
 def _compare_symmetry(args: argparse.Namespace) -> None:
-    implementations = ZMap({kind.value: kind.symmetry for kind in SymmetryKind})
-    print(compare_symmetries(args.db, implementations, args.samples, args.seed))
+    print(compare_symmetries(args.db, SYMMETRIES, args.samples, args.seed))
 
 
 def _equilibrium(args: argparse.Namespace) -> None:
