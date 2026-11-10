@@ -14,7 +14,7 @@ from booker.core.model.state import State
 @dc.dataclass(frozen=True, slots=True)
 class AtlasExpansionWriter:
     """
-    What records the expansion of an atlas, which the generator carries out: its backend,
+    What records the expansion of an atlas, which the generator carries out: its symmetry,
     root, positions and actions. Obtain one from `Atlas.expansion_writer`. Each write
     commits itself; writes that must stand or fall together are made inside
     `Atlas.transaction`.
@@ -22,15 +22,13 @@ class AtlasExpansionWriter:
 
     connection: sqlite3.Connection
 
-    def use_canonicalization(self, name: str) -> None:
-        "Record how states are canonicalized; an atlas is never resumed with another."
+    def use_symmetry(self, name: str) -> None:
+        "Record how symmetries are found; an atlas is never resumed with another."
         prior = self.connection.execute(
             "SELECT value FROM meta WHERE key='backend'"
         ).fetchone()
         if prior and prior[0] != name:
-            raise ValueError(
-                f"Cannot resume {prior[0]} atlas using {name} canonicalization"
-            )
+            raise ValueError(f"Cannot resume {prior[0]} atlas using {name}")
         self.connection.execute(
             "INSERT OR IGNORE INTO meta(key,value) VALUES ('backend',?)", (name,)
         )
