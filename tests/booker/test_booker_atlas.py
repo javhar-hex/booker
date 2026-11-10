@@ -1,7 +1,7 @@
 """Per-depth counts of the generated atlas, which are independent of the labelling.
 
 REFERENCE was produced by the BLISS generator. Depths 0-3 (states, pairings) and 0-2
-(Collider states) were also counted by hand, depths 0-5 agree with the VF2 backend,
+(Collider states) were also counted by hand, depths 0-5 agree with VF2,
 and the Collider-state counts are confirmed independently by the verifier.
 """
 
@@ -15,9 +15,10 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZVec
 
+from booker.core.symmetry.symmetries import BLISS, VF2
+from booker.core.symmetry.symmetry import Symmetry
 from booker.core.symmetry.symmetry_kind import VF2 as VF2_KIND
 from booker.core.symmetry.symmetry_kind import SymmetryKind
-from booker.generate.backend import BLISS, VF2, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
 from booker.verify.audit import audit
@@ -56,10 +57,10 @@ REFERENCE = ZVec(
 )
 
 
-def _generate(directory: Path, max_depth: int, backend: Backend) -> Path:
+def _generate(directory: Path, max_depth: int, symmetry: Symmetry) -> Path:
     directory.mkdir(exist_ok=True)
-    db = directory / f"{backend.value}-{max_depth}.db"
-    generate(str(db), max_depth=max_depth, backend=backend)
+    db = directory / f"{symmetry.name}-{max_depth}.db"
+    generate(str(db), max_depth=max_depth, symmetry=symmetry)
     return db
 
 
@@ -104,13 +105,13 @@ def test_layers_until_some_match_is_necessarily_outside_round_one(
     assert _expanded_layers(db, max_depth) == _reference_below(max_depth)
 
 
-def test_bliss_and_vf2_backends_agree(shallow_atlas: Path, tmp_path: Path) -> None:
+def test_bliss_and_vf2_agree(shallow_atlas: Path, tmp_path: Path) -> None:
     vf2_atlas = _generate(tmp_path, SHALLOW_DEPTH, VF2)
     expected = _expanded_layers(shallow_atlas, SHALLOW_DEPTH)
     assert _expanded_layers(vf2_atlas, SHALLOW_DEPTH) == expected
 
 
-def test_bliss_and_vf2_backends_agree_past_the_depth_they_were_first_trusted_to(
+def test_bliss_and_vf2_agree_past_the_depth_they_were_first_trusted_to(
     tmp_path: Path,
 ) -> None:
     depth = SHALLOW_DEPTH + 3

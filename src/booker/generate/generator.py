@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import dataclasses as dc
+from collections.abc import Iterable
+
 from booker.atlas.atlas import Atlas
 from booker.atlas.atlas_expansion_writer import AtlasExpansionWriter
 from booker.atlas.stored_state import StoredState
@@ -9,66 +12,90 @@ from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.bliss_symmetry import BlissSymmetry
+from booker.core.symmetry.canonical_schedule import canonical_state
+from booker.core.symmetry.symmetries import VF2
+from booker.core.symmetry.symmetry import Symmetry
 from booker.game.rules import legal_pairings
-from booker.generate.backend import Backend
-from booker.generate.canonicalizer import Canonicalizer
+from booker.generate.state_canonicalizer import StateCanonicalizer
+from booker.generate.vf2_state_canonicalizer import Vf2StateCanonicalizer
 
 
-def generate(path: str, max_depth: int, backend: Backend) -> None:
+def generate(path: str, max_depth: int, symmetry: Symmetry) -> None:
     "Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches."
     if not 0 <= max_depth <= MAX_MATCHES:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
-        atlas.expansion_writer().use_symmetry(backend.value)
-        canon = backend.canonicalizer(atlas.states())
-        expand(atlas, canon, State.start(), max_depth)
+        atlas.expansion_writer().use_symmetry(symmetry.name)
+        generator = Generator(
+            atlas=atlas,
+            symmetry=symmetry,
+            state_canonicalizer=state_canonicalizer_for(symmetry, atlas.states()),
+        )
+        generator.expand(State.start(), max_depth)
         print("states:", atlas.num_states(), "actions:", atlas.num_actions())
 
 
-def expand(atlas: Atlas, canon: Canonicalizer, root: State, max_depth: int) -> None:
+def state_canonicalizer_for(
+    symmetry: Symmetry, known: Iterable[State]
+) -> StateCanonicalizer:
     """
-    Expands `atlas` from `root` down to `max_depth` matches. The root is the start of the
-    tournament for the whole atlas; any state that can arise in play gives the atlas of
-    what remains of that game.
+    One that stays consistent with `known`, the states already in an atlas. Only BLISS
+    gives canonical forms; the others have to remember the states they have seen.
     """
-    writer = atlas.expansion_writer()
-    writer.record_root(writer.add_state(canon(root)))
-    for depth in range(max_depth):
-        _expand_depth(atlas, writer, canon, depth)
-    # A decided state is never expanded, even when every depth is.
-    writer.mark_decided_expanded()
+    if symmetry == VF2:
+        return Vf2StateCanonicalizer(known)
+    else:
+        return canonical_state
 
 
-def _expand_depth(
-    atlas: Atlas, writer: AtlasExpansionWriter, canon: Canonicalizer, depth: int
-) -> None:
-    unexpanded = atlas.unexpanded(depth)
-    if not unexpanded:
-        return
-    print(f"expanding depth {depth:02d}: {len(unexpanded):,} states", flush=True)
-    # One depth is atomic; interruption never leaves a half-expanded layer.
-    with atlas.transaction():
-        for parent in unexpanded:
-            if not parent.state.is_decided:
-                _expand(writer, canon, parent)
-            writer.mark_expanded(parent.id)
+@dc.dataclass(frozen=True, slots=True)
+class Generator:
+    """
+    Expands an atlas. Its `symmetry` finds the orbits of the legal pairings, and its
+    `state_canonicalizer` the representative of each position that results.
+    """
 
+    atlas: Atlas
+    symmetry: Symmetry
+    state_canonicalizer: StateCanonicalizer
 
-def _expand(
-    writer: AtlasExpansionWriter, canon: Canonicalizer, parent: StoredState
-) -> None:
-    "Book the Collider state of each pairing orbit of `parent` that can be scheduled."
-    state = parent.state
-    for orbit in BlissSymmetry().orbits(state, legal_pairings(state)):
-        pairing = orbit.representative
-        lhs_wins = successor(state, Outcome.single(pairing, pairing.lhs))
-        rhs_wins = successor(state, Outcome.single(pairing, pairing.rhs))
-        writer.add_action(
-            parent=parent.id,
-            pairing=pairing,
-            is_rematch=state.has_met(pairing),
-            class_size=orbit.size,
-            lhs_wins=writer.add_state(canon(lhs_wins)),
-            rhs_wins=writer.add_state(canon(rhs_wins)),
-        )
+    def expand(self, root: State, max_depth: int) -> None:
+        """
+        Expands the atlas from `root` down to `max_depth` matches. The root is the start
+        of the tournament for the whole atlas; any state that can arise in play gives
+        the atlas of what remains of that game.
+        """
+        writer = self.atlas.expansion_writer()
+        writer.record_root(writer.add_state(self.state_canonicalizer(root)))
+        for depth in range(max_depth):
+            self._expand_depth(writer, depth)
+        # A decided state is never expanded, even when every depth is.
+        writer.mark_decided_expanded()
+
+    def _expand_depth(self, writer: AtlasExpansionWriter, depth: int) -> None:
+        unexpanded = self.atlas.unexpanded(depth)
+        if not unexpanded:
+            return
+        print(f"expanding depth {depth:02d}: {len(unexpanded):,} states", flush=True)
+        # One depth is atomic; interruption never leaves a half-expanded layer.
+        with self.atlas.transaction():
+            for parent in unexpanded:
+                if not parent.state.is_decided:
+                    self._expand_parent(writer, parent)
+                writer.mark_expanded(parent.id)
+
+    def _expand_parent(self, writer: AtlasExpansionWriter, parent: StoredState) -> None:
+        "Book the Collider state of each pairing orbit of `parent` that can be scheduled."
+        state = parent.state
+        for orbit in self.symmetry.orbits(state, legal_pairings(state)):
+            pairing = orbit.representative
+            lhs_wins = successor(state, Outcome.single(pairing, pairing.lhs))
+            rhs_wins = successor(state, Outcome.single(pairing, pairing.rhs))
+            writer.add_action(
+                parent=parent.id,
+                pairing=pairing,
+                is_rematch=state.has_met(pairing),
+                class_size=orbit.size,
+                lhs_wins=writer.add_state(self.state_canonicalizer(lhs_wins)),
+                rhs_wins=writer.add_state(self.state_canonicalizer(rhs_wins)),
+            )

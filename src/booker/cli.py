@@ -12,9 +12,9 @@ from javhar_util.immutables import ZMap
 
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
+from booker.core.symmetry.symmetries import BLISS, SYMMETRIES
 from booker.core.symmetry.symmetry_kind import SymmetryKind
 from booker.equilibrium.flags import build, summary
-from booker.generate.backend import BLISS, Backend
 from booker.generate.generator import generate
 from booker.solve import solve
 from booker.verify.audit import audit
@@ -40,14 +40,14 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 
 def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    backend = Backend(args.backend)
-    if args.max_depth is None and backend is not BLISS:
+    symmetry = SYMMETRIES[args.symmetry]
+    if args.max_depth is None and symmetry != BLISS:
         parser.error(
-            f"--backend {backend.value} gets slower with every state it meets; "
+            f"--symmetry {symmetry.name} gets slower with every state it meets; "
             "say how far to go with --max-depth"
         )
     max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
-    generate(args.db, max_depth, backend)
+    generate(args.db, max_depth, symmetry)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -62,9 +62,7 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         help=f"matches to expand to (default {MAX_MATCHES}, the whole game, for bliss)",
     )
-    generating.add_argument(
-        "--backend", choices=[b.value for b in Backend], default=BLISS.value
-    )
+    generating.add_argument("--symmetry", choices=sorted(SYMMETRIES), default=BLISS.name)
     sub.add_parser("solve").add_argument("db")
     sub.add_parser("stats").add_argument("db")
     _add_verify(sub)
@@ -91,7 +89,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying.add_argument("db")
     verifying.add_argument(
         "--strict",
-        choices=[k.value for k in SymmetryKind],
+        choices=[kind.value for kind in SymmetryKind],
         help="also compare every child and orbit, using this implementation (slow)",
     )
     verifying.add_argument(

@@ -31,8 +31,8 @@ def test_generates_and_reports_each_depth(
     assert lines[1].split()[1:4] == ["1", "1", "120"]
 
 
-def test_generates_with_the_vf2_backend(path: str) -> None:
-    main(["generate", path, "--max-depth", "3", "--backend", "vf2"])
+def test_generates_with_the_vf2_symmetry(path: str) -> None:
+    main(["generate", path, "--max-depth", "3", "--symmetry", "vf2"])
 
 
 def test_refuses_to_solve_a_truncated_atlas(path: str) -> None:
@@ -42,19 +42,19 @@ def test_refuses_to_solve_a_truncated_atlas(path: str) -> None:
         main(["solve", path])
 
 
-def test_the_vf2_backend_must_be_told_how_far_to_go(
+def test_the_vf2_symmetry_must_be_told_how_far_to_go(
     path: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     with pytest.raises(SystemExit):
-        main(["generate", path, "--backend", "vf2"])
+        main(["generate", path, "--symmetry", "vf2"])
 
     assert "--max-depth" in capsys.readouterr().err
     assert not Path(path).exists()
 
 
-def test_rejects_an_unknown_backend(path: str) -> None:
+def test_rejects_an_unknown_symmetry(path: str) -> None:
     with pytest.raises(SystemExit):
-        main(["generate", path, "--backend", "bogus"])
+        main(["generate", path, "--symmetry", "bogus"])
 
 
 def test_needs_a_mode() -> None:
