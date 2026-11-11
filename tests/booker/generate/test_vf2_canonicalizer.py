@@ -6,7 +6,7 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.relabelling import Relabelling
 from booker.generate.state_canonicalizer import StateCanonicalizer
-from booker.generate.vf2_state_canonicalizer import Vf2StateCanonicalizer
+from booker.generate.vf2_canonicalizer import Vf2Canonicalizer
 
 RECORD_1_1 = Record(wins=1, losses=1)
 RECORD_1_0 = Record(wins=1, losses=0)
@@ -33,11 +33,11 @@ SIX_CYCLE = _six_teams((0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5))
 
 
 def test_the_first_state_of_its_kind_is_its_own_representative() -> None:
-    assert Vf2StateCanonicalizer([])(TWO_TRIANGLES) == TWO_TRIANGLES
+    assert Vf2Canonicalizer([])(TWO_TRIANGLES) == TWO_TRIANGLES
 
 
 def test_a_relabelled_state_maps_to_the_first_one_seen() -> None:
-    canonicalizer = Vf2StateCanonicalizer([])
+    canonicalizer = Vf2Canonicalizer([])
     relabelled = Relabelling.of([2, 0, 4, 1, 5, 3]).state(SIX_CYCLE)
 
     assert canonicalizer(SIX_CYCLE) == SIX_CYCLE
@@ -46,14 +46,14 @@ def test_a_relabelled_state_maps_to_the_first_one_seen() -> None:
 
 
 def test_states_alike_in_every_signature_but_not_isomorphic_stay_apart() -> None:
-    canonicalizer = Vf2StateCanonicalizer([])
+    canonicalizer = Vf2Canonicalizer([])
 
     assert canonicalizer(TWO_TRIANGLES) == TWO_TRIANGLES
     assert canonicalizer(SIX_CYCLE) == SIX_CYCLE
 
 
 def test_records_travel_with_their_teams() -> None:
-    canonicalizer = Vf2StateCanonicalizer([])
+    canonicalizer = Vf2Canonicalizer([])
     winner_first = _state([RECORD_1_0, RECORD_0_1], _met((0, 1)))
     winner_second = _state([RECORD_0_1, RECORD_1_0], _met((0, 1)))
 
@@ -62,7 +62,7 @@ def test_records_travel_with_their_teams() -> None:
 
 
 def test_states_with_different_records_stay_apart() -> None:
-    canonicalizer = Vf2StateCanonicalizer([])
+    canonicalizer = Vf2Canonicalizer([])
     mixed = _state([RECORD_1_1, RECORD_0_1], _met((0, 1)))
     alike = _state([RECORD_1_1, RECORD_1_1], _met((0, 1)))
 
@@ -71,7 +71,7 @@ def test_states_with_different_records_stay_apart() -> None:
 
 
 def test_states_of_different_sizes_stay_apart() -> None:
-    canonicalizer = Vf2StateCanonicalizer([])
+    canonicalizer = Vf2Canonicalizer([])
     small = _state([RECORD_1_1] * 2, _met())
 
     assert canonicalizer(small) == small
@@ -80,10 +80,10 @@ def test_states_of_different_sizes_stay_apart() -> None:
 
 def test_known_states_are_the_representatives() -> None:
     relabelled = Relabelling.of([2, 0, 4, 1, 5, 3]).state(SIX_CYCLE)
-    canonicalizer = Vf2StateCanonicalizer([SIX_CYCLE])
+    canonicalizer = Vf2Canonicalizer([SIX_CYCLE])
 
     assert canonicalizer(relabelled) == SIX_CYCLE
 
 
 def test_declares_that_it_implements_the_protocol() -> None:
-    assert StateCanonicalizer in Vf2StateCanonicalizer.__mro__
+    assert StateCanonicalizer in Vf2Canonicalizer.__mro__

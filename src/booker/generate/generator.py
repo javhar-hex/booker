@@ -17,7 +17,7 @@ from booker.core.symmetry.state_symmetries import VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
 from booker.generate.state_canonicalizer import StateCanonicalizer
-from booker.generate.vf2_state_canonicalizer import Vf2StateCanonicalizer
+from booker.generate.vf2_canonicalizer import Vf2Canonicalizer
 
 
 def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
@@ -43,7 +43,7 @@ def state_canonicalizer_for(
     gives canonical forms; the others have to remember the states they have seen.
     """
     if symmetry == VF2:
-        return Vf2StateCanonicalizer(known)
+        return Vf2Canonicalizer(known)
     else:
         return canonical_state
 

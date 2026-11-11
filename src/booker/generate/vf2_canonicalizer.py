@@ -15,7 +15,7 @@ from booker.generate.state_canonicalizer import StateCanonicalizer
 Signature = ZVec[TeamSignature]
 
 
-class Vf2StateCanonicalizer(StateCanonicalizer):
+class Vf2Canonicalizer(StateCanonicalizer):
     """
     Maps a state to a representative of its isomorphism class: isomorphic states get the
     same one. Which state represents a class depends on what the canonicalizer has been
