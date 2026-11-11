@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from javhar_util.immutables import ZSet, ZVec
+from support.logs import discard
 
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
@@ -37,6 +38,7 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
             atlas=atlas,
             symmetry=BLISS,
             state_canonicalizer=StateCanonicalizer(symmetry=BLISS, known=[]),
+            log=discard,
         ).expand(ENDGAME, MAX_MATCHES)
     solve(str(path))
     return path

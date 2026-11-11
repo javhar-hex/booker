@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 from javhar_util.immutables import ZSet, ZVec
+from support.logs import discard
 
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
@@ -202,7 +203,7 @@ def test_rejects_a_dead_end(tmp_path: Path) -> None:
 @pytest.fixture(scope="module")
 def generated(tmp_path_factory: pytest.TempPathFactory) -> Path:
     path = tmp_path_factory.mktemp("generated") / "atlas.db"
-    expand_atlas(str(path), 4, BLISS)
+    expand_atlas(str(path), 4, BLISS, log=discard)
     return path
 
 

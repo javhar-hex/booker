@@ -5,6 +5,7 @@ Command line: `python -m booker.cli generate|solve|stats|verify|equilibrium ...`
 from __future__ import annotations
 
 import argparse
+import functools
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -17,6 +18,8 @@ from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.plan import AuditPlan, IdRange
 from booker.verify.symmetry_sample import compare_symmetries
+
+_LOG = functools.partial(print, flush=True)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -44,7 +47,8 @@ def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             "say how far to go with --max-depth"
         )
     max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
-    expand_atlas(args.db, max_depth, symmetry)
+    expanded = expand_atlas(args.db, max_depth, symmetry, log=_LOG)
+    print("states:", expanded.num_states, "actions:", expanded.num_actions)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -120,7 +124,7 @@ def _verify(args: argparse.Namespace) -> None:
         require_complete=args.require_complete,
         checkpoint=args.checkpoint,
     )
-    print(audit(plan, lambda message: print(message, flush=True)))
+    print(audit(plan, _LOG))
 
 
 def _compare_symmetry(args: argparse.Namespace) -> None:

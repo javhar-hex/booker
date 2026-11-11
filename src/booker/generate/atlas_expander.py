@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
+from collections.abc import Callable
 
 from booker.atlas.atlas import Atlas
 from booker.atlas.atlas_expansion_writer import AtlasExpansionWriter
@@ -13,11 +14,17 @@ from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
+from booker.generate.expansion_summary import ExpansionSummary
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
-def expand_atlas(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
-    "Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches."
+def expand_atlas(
+    path: str, max_depth: int, symmetry: StateSymmetry, log: Callable[[str], None]
+) -> ExpansionSummary:
+    """
+    Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches. `log`
+    hears of the progress.
+    """
     if not 0 <= max_depth <= MAX_MATCHES:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
@@ -28,9 +35,12 @@ def expand_atlas(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
             state_canonicalizer=StateCanonicalizer(
                 symmetry=symmetry, known=atlas.states()
             ),
+            log=log,
         )
         expander.expand(State.start(), max_depth)
-        print("states:", atlas.num_states(), "actions:", atlas.num_actions())
+        return ExpansionSummary(
+            num_states=atlas.num_states(), num_actions=atlas.num_actions()
+        )
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -43,6 +53,7 @@ class AtlasExpander:
     atlas: Atlas
     symmetry: StateSymmetry
     state_canonicalizer: StateCanonicalizer
+    log: Callable[[str], None]
 
     def expand(self, root: State, max_depth: int) -> None:
         """
@@ -61,7 +72,7 @@ class AtlasExpander:
         unexpanded = self.atlas.unexpanded(depth)
         if not unexpanded:
             return
-        print(f"expanding depth {depth:02d}: {len(unexpanded):,} states", flush=True)
+        self.log(f"expanding depth {depth:02d}: {len(unexpanded):,} states")
         # One depth is atomic; interruption never leaves a half-expanded layer.
         with self.atlas.transaction():
             for parent in unexpanded:
