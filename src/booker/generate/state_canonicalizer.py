@@ -2,16 +2,29 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Iterable
 
 from booker.core.model.state import State
+from booker.core.symmetry.state_symmetries import BLISS
+from booker.core.symmetry.state_symmetry import StateSymmetry
+from booker.generate.bliss_canonicalizer import BlissCanonicalizer
+from booker.generate.memo_canonicalizer import MemoCanonicalizer
 
 
-class StateCanonicalizer(Protocol):
+class StateCanonicalizer:
     """
-    Maps a state to the representative of its isomorphism class. An implementation names
-    this protocol as a base class, so that a method that is missing or has drifted is an
-    error where the class is defined.
+    Maps a state to the representative of its isomorphism class, as `symmetry` allows.
+    Only BLISS gives canonical forms; for any other symmetry the representative is the
+    first state of its class that has been shown, starting with `known`, the states
+    already in an atlas. That memory is mutable, and it is the one thing here that is.
     """
 
-    def __call__(self, state: State) -> State: ...
+    def __init__(self, symmetry: StateSymmetry, known: Iterable[State]) -> None:
+        self._canonicalizer: BlissCanonicalizer | MemoCanonicalizer = (
+            BlissCanonicalizer()
+            if symmetry == BLISS
+            else MemoCanonicalizer(symmetry=symmetry, known=known)
+        )
+
+    def __call__(self, state: State) -> State:
+        return self._canonicalizer(state)

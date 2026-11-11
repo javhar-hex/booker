@@ -10,23 +10,11 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.core.symmetry.bliss_symmetry import BlissSymmetry
-from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetries import BLISS, VF2
-from booker.generate.bliss_canonicalizer import BlissCanonicalizer
-from booker.generate.generator import Generator, generate, state_canonicalizer_for
-from booker.generate.memo_canonicalizer import MemoCanonicalizer
+from booker.generate.generator import Generator, generate
+from booker.generate.state_canonicalizer import StateCanonicalizer
 
 DEPTH = 5
-RECORD_1_1 = Record(wins=1, losses=1)
-PATH = State(
-    records=ZVec([RECORD_1_1] * 4),
-    past_pairings=ZSet(
-        Pairing.of(Team(index=index_lhs), Team(index=index_rhs))
-        for index_lhs, index_rhs in [(0, 1), (1, 2), (2, 3)]
-    ),
-)
-SHUFFLED_PATH = Relabelling.of([2, 0, 3, 1]).state(PATH)
 
 
 @pytest.fixture
@@ -86,8 +74,8 @@ def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
     with Atlas.open(path) as atlas:
         Generator(
             atlas=atlas,
-            symmetry=BlissSymmetry(),
-            state_canonicalizer=BlissCanonicalizer(),
+            symmetry=BLISS,
+            state_canonicalizer=StateCanonicalizer(symmetry=BLISS, known=[]),
         ).expand(last_match, MAX_MATCHES)
 
         assert set(atlas.states()) == {
@@ -96,24 +84,3 @@ def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
         }
         assert atlas.num_actions() == 1
         assert atlas.num_unexpanded() == 0
-
-
-def test_bliss_maps_isomorphic_states_to_one_state() -> None:
-    canonicalizer = state_canonicalizer_for(BLISS, [])
-
-    assert SHUFFLED_PATH != PATH
-    assert canonicalizer(SHUFFLED_PATH) == canonicalizer(PATH)
-
-
-def test_bliss_ignores_the_known_states() -> None:
-    known = state_canonicalizer_for(BLISS, [PATH])
-    assert known(SHUFFLED_PATH) == state_canonicalizer_for(BLISS, [])(PATH)
-
-
-def test_vf2_stays_consistent_with_the_known_states() -> None:
-    assert state_canonicalizer_for(VF2, [PATH])(SHUFFLED_PATH) == PATH
-
-
-def test_bliss_gets_its_own_canonicalizer_and_the_others_a_memo_one() -> None:
-    assert isinstance(state_canonicalizer_for(BLISS, []), BlissCanonicalizer)
-    assert isinstance(state_canonicalizer_for(VF2, []), MemoCanonicalizer)

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dataclasses as dc
-from collections.abc import Iterable
 
 from booker.atlas.atlas import Atlas
 from booker.atlas.atlas_expansion_writer import AtlasExpansionWriter
@@ -12,11 +11,8 @@ from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.state_symmetries import BLISS
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
-from booker.generate.bliss_canonicalizer import BlissCanonicalizer
-from booker.generate.memo_canonicalizer import MemoCanonicalizer
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
@@ -29,23 +25,12 @@ def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
         generator = Generator(
             atlas=atlas,
             symmetry=symmetry,
-            state_canonicalizer=state_canonicalizer_for(symmetry, atlas.states()),
+            state_canonicalizer=StateCanonicalizer(
+                symmetry=symmetry, known=atlas.states()
+            ),
         )
         generator.expand(State.start(), max_depth)
         print("states:", atlas.num_states(), "actions:", atlas.num_actions())
-
-
-def state_canonicalizer_for(
-    symmetry: StateSymmetry, known: Iterable[State]
-) -> StateCanonicalizer:
-    """
-    One that stays consistent with `known`, the states already in an atlas. Only BLISS
-    gives canonical forms; the others have to remember the states they have seen.
-    """
-    if symmetry == BLISS:
-        return BlissCanonicalizer()
-    else:
-        return MemoCanonicalizer(symmetry=symmetry, known=known)
 
 
 @dc.dataclass(frozen=True, slots=True)

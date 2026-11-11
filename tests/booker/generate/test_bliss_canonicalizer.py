@@ -10,7 +10,6 @@ import networkx as nx
 from booker.core.model.state import State
 from booker.core.symmetry.relabelling import Relabelling
 from booker.generate.bliss_canonicalizer import BlissCanonicalizer
-from booker.generate.state_canonicalizer import StateCanonicalizer
 
 CANONICALIZER = BlissCanonicalizer()
 
@@ -24,10 +23,6 @@ def _graph(state: State) -> nx.Graph[int]:
         (pairing.lhs.index, pairing.rhs.index) for pairing in state.past_pairings
     )
     return graph
-
-
-def test_declares_that_it_implements_the_protocol() -> None:
-    assert StateCanonicalizer in BlissCanonicalizer.__mro__
 
 
 def test_is_isomorphic_to_the_original_by_networkx(

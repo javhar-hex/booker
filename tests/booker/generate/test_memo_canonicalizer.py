@@ -9,7 +9,6 @@ from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetries import STATE_SYMMETRIES
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.generate.memo_canonicalizer import MemoCanonicalizer
-from booker.generate.state_canonicalizer import StateCanonicalizer
 
 IMPLEMENTATIONS = list(STATE_SYMMETRIES.values())
 RECORD_1_1 = Record(wins=1, losses=1)
@@ -98,7 +97,3 @@ def test_known_states_are_the_representatives(symmetry: StateSymmetry) -> None:
     canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[SIX_CYCLE])
 
     assert canonicalizer(relabelled) == SIX_CYCLE
-
-
-def test_declares_that_it_implements_the_protocol() -> None:
-    assert StateCanonicalizer in MemoCanonicalizer.__mro__
