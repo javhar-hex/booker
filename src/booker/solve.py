@@ -6,8 +6,11 @@ from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 
 
-def solve(path: str) -> None:
-    "Backs up the values of the atlas at `path`, which must be fully generated."
+def solve(path: str) -> int:
+    """
+    Backs up the values of the atlas at `path`, which must be fully generated, and returns
+    the value of its root.
+    """
     with Atlas.open(path) as atlas:
         if unexpanded := atlas.num_unexpanded():
             raise RuntimeError(
@@ -23,4 +26,4 @@ def solve(path: str) -> None:
                     f"Bellman backup missing {missing} values at depth {depth}"
                 )
         solver.mark_solved()
-        print(f"root minimax value: {solver.root_value()}")
+        return solver.root_value()

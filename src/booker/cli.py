@@ -28,7 +28,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.command == "generate":
         _generate(args, parser)
     elif args.command == "solve":
-        solve(args.db)
+        print(f"root minimax value: {solve(args.db)}")
     elif args.command == "verify":
         _verify(args)
     elif args.command == "equilibrium":
