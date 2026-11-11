@@ -14,7 +14,7 @@ choosing the pairing; `lhs_wins` and `rhs_wins` are the positions that follow ea
 Collider state's `value` is the larger of its two children's values, and a Scheduler
 state's the least, over its actions, of `repeat_cost` + `value`.
 
-meta: the game and its value convention, the symmetry implementation (`backend`), the id of the
+meta: the game and its value convention, the `state_symmetry` implementation, the id of the
 root position, and whether the atlas is solved. The schema version is SQLite's own
 `PRAGMA user_version`.
 """
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from javhar_util.immutables import ZMap
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);

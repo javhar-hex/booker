@@ -8,14 +8,24 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 
 
-def test_the_symmetry_cannot_change(path: Path) -> None:
+def test_the_state_symmetry_is_recorded_in_the_meta_table(path: Path) -> None:
+    with Atlas.open(path) as atlas:
+        atlas.expansion_writer().use_state_symmetry("vf2")
+
+        row = atlas.connection.execute(
+            "SELECT value FROM meta WHERE key='state_symmetry'"
+        ).fetchone()
+        assert row == ("vf2",)
+
+
+def test_the_state_symmetry_cannot_change(path: Path) -> None:
     with Atlas.open(path) as atlas:
         writer = atlas.expansion_writer()
-        writer.use_symmetry("bliss")
-        writer.use_symmetry("bliss")
+        writer.use_state_symmetry("bliss")
+        writer.use_state_symmetry("bliss")
 
         with pytest.raises(ValueError, match="Cannot resume bliss atlas using vf2"):
-            writer.use_symmetry("vf2")
+            writer.use_state_symmetry("vf2")
 
 
 def test_the_root_is_recorded_once(

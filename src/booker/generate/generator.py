@@ -25,7 +25,7 @@ def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
     if not 0 <= max_depth <= MAX_MATCHES:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
-        atlas.expansion_writer().use_symmetry(symmetry.name)
+        atlas.expansion_writer().use_state_symmetry(symmetry.name)
         generator = Generator(
             atlas=atlas,
             symmetry=symmetry,

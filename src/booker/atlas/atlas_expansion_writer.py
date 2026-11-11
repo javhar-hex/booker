@@ -22,15 +22,15 @@ class AtlasExpansionWriter:
 
     connection: sqlite3.Connection
 
-    def use_symmetry(self, name: str) -> None:
+    def use_state_symmetry(self, name: str) -> None:
         "Record how symmetries are found; an atlas is never resumed with another."
         prior = self.connection.execute(
-            "SELECT value FROM meta WHERE key='backend'"
+            "SELECT value FROM meta WHERE key='state_symmetry'"
         ).fetchone()
         if prior and prior[0] != name:
             raise ValueError(f"Cannot resume {prior[0]} atlas using {name}")
         self.connection.execute(
-            "INSERT OR IGNORE INTO meta(key,value) VALUES ('backend',?)", (name,)
+            "INSERT OR IGNORE INTO meta(key,value) VALUES ('state_symmetry',?)", (name,)
         )
 
     def record_root(self, root: StateId) -> None:
