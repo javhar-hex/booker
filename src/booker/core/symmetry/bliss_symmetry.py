@@ -10,21 +10,22 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.schedule import Schedule
 from booker.core.model.state import State
 from booker.core.symmetry.bliss_graph import BlissGraph
-from booker.core.symmetry.canonical_schedule import canonical_state
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.state_symmetry import StateSymmetry
 
 
 @dc.dataclass(frozen=True, slots=True)
 class BlissSymmetry(StateSymmetry):
-    "Canonical forms and the generators of the automorphism group, from BLISS."
+    "Isomorphism, and the generators of the automorphism group, from BLISS."
 
     @property
     def name(self) -> str:
         return "bliss"
 
     def are_isomorphic(self, first: State, second: State) -> bool:
-        return canonical_state(first) == canonical_state(second)
+        return BlissGraph(schedule=Schedule.empty(first)).is_isomorphic_to(
+            BlissGraph(schedule=Schedule.empty(second))
+        )
 
     def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
         return orbits_of_schedule(Schedule.empty(state), pairings)

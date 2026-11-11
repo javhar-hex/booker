@@ -119,3 +119,33 @@ def test_what_is_worked_out_is_worked_out_once() -> None:
 
     assert graph.canonical_relabelling is graph.canonical_relabelling
     assert graph.automorphism_generators is graph.automorphism_generators
+
+
+def test_a_relabelled_schedule_is_isomorphic_to_the_original() -> None:
+    schedule = _schedule(
+        [RECORD_1_1, RECORD_1_0, RECORD_0_1, RECORD_1_1],
+        past_pairings=((0, 1), (2, 3)),
+        booked=((0, 3),),
+    )
+    shuffled = Relabelling.of([2, 0, 3, 1]).schedule(schedule)
+
+    assert shuffled != schedule
+    assert BlissGraph(schedule=shuffled).is_isomorphic_to(BlissGraph(schedule=schedule))
+
+
+def test_schedules_of_different_sizes_are_not_isomorphic() -> None:
+    small = BlissGraph(schedule=_schedule([RECORD_0_0] * 2))
+    large = BlissGraph(schedule=_schedule([RECORD_0_0] * 3))
+
+    assert not small.is_isomorphic_to(large)
+    assert not large.is_isomorphic_to(small)
+
+
+def test_records_and_booked_pairings_tell_schedules_apart() -> None:
+    records = [RECORD_0_0, RECORD_0_0, RECORD_1_0, RECORD_1_0]
+    schedule = BlissGraph(schedule=_schedule(records, booked=((0, 1),)))
+
+    assert not schedule.is_isomorphic_to(
+        BlissGraph(schedule=_schedule(records, booked=((0, 2),)))
+    )
+    assert not schedule.is_isomorphic_to(BlissGraph(schedule=_schedule(records)))

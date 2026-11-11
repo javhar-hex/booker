@@ -50,6 +50,14 @@ class BlissGraph:
             for generator in generators
         )
 
+    def is_isomorphic_to(self, other: BlissGraph) -> bool:
+        "Is there a relabelling of the teams that turns this schedule into `other`'s?"
+        return bool(
+            self._graph.isomorphic_bliss(
+                other._graph, color1=self._colours, color2=other._colours
+            )
+        )
+
     @property
     def _scheduled(self) -> list[Pairing]:
         return sorted(self.schedule.pairings)
