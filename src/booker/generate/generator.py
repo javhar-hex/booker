@@ -12,12 +12,12 @@ from booker.core.model.invariants import MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.canonical_schedule import canonical_state
-from booker.core.symmetry.state_symmetries import VF2
+from booker.core.symmetry.state_symmetries import BLISS
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
+from booker.generate.bliss_canonicalizer import BlissCanonicalizer
+from booker.generate.memo_canonicalizer import MemoCanonicalizer
 from booker.generate.state_canonicalizer import StateCanonicalizer
-from booker.generate.vf2_canonicalizer import Vf2Canonicalizer
 
 
 def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
@@ -42,10 +42,10 @@ def state_canonicalizer_for(
     One that stays consistent with `known`, the states already in an atlas. Only BLISS
     gives canonical forms; the others have to remember the states they have seen.
     """
-    if symmetry == VF2:
-        return Vf2Canonicalizer(known)
+    if symmetry == BLISS:
+        return BlissCanonicalizer()
     else:
-        return canonical_state
+        return MemoCanonicalizer(symmetry=symmetry, known=known)
 
 
 @dc.dataclass(frozen=True, slots=True)
