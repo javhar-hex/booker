@@ -37,10 +37,10 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 
 def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    symmetry = STATE_SYMMETRIES[args.symmetry]
+    symmetry = STATE_SYMMETRIES[args.state_symmetry]
     if args.max_depth is None and symmetry != BLISS:
         parser.error(
-            f"--symmetry {symmetry.name} gets slower with every state it meets; "
+            f"--state-symmetry {symmetry.name} gets slower with every state it meets; "
             "say how far to go with --max-depth"
         )
     max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
@@ -60,7 +60,7 @@ def _parser() -> argparse.ArgumentParser:
         help=f"matches to expand to (default {MAX_MATCHES}, the whole game, for bliss)",
     )
     generating.add_argument(
-        "--symmetry", choices=sorted(STATE_SYMMETRIES), default=BLISS.name
+        "--state-symmetry", choices=sorted(STATE_SYMMETRIES), default=BLISS.name
     )
     sub.add_parser("solve").add_argument("db")
     sub.add_parser("stats").add_argument("db")
