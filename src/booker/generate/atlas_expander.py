@@ -36,11 +36,13 @@ def expand_atlas(
         )
 
 
-@dc.dataclass(frozen=True, slots=True)
+@dc.dataclass(slots=True)
 class AtlasExpander:
     """
     Expands an atlas. Its `symmetry` finds the orbits of the legal pairings, and its
-    `state_canonicalizer` the representative of each position that results.
+    `state_canonicalizer` the representative of each position that results. It is not
+    immutable: the atlas is written to, and the canonicalizer may remember what it has
+    seen.
     """
 
     atlas: Atlas
