@@ -10,8 +10,6 @@ from javhar_util.immutables import ZVec
 from booker.core.model.state import State
 from booker.core.symmetry.state_symmetry import StateSymmetry, TeamSignature, signature
 
-Signature = ZVec[TeamSignature]
-
 
 class MemoCanonicalizer:
     """
@@ -26,7 +24,9 @@ class MemoCanonicalizer:
 
     def __init__(self, symmetry: StateSymmetry, known: Iterable[State]) -> None:
         self._symmetry = symmetry
-        self._representatives: defaultdict[Signature, list[State]] = defaultdict(list)
+        self._representatives: defaultdict[ZVec[TeamSignature], list[State]] = (
+            defaultdict(list)
+        )
         for state in known:
             self._representatives[signature(state)].append(state)
 
