@@ -17,7 +17,7 @@ from javhar_util.immutables import ZVec
 
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.generator import generate
+from booker.generate.atlas_expander import generate
 from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.failure import AuditFailure

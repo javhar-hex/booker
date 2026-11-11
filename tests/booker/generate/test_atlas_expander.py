@@ -11,7 +11,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS, VF2
-from booker.generate.generator import Generator, generate
+from booker.generate.atlas_expander import AtlasExpander, generate
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 DEPTH = 5
@@ -72,7 +72,7 @@ def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
     )
 
     with Atlas.open(path) as atlas:
-        Generator(
+        AtlasExpander(
             atlas=atlas,
             symmetry=BLISS,
             state_canonicalizer=StateCanonicalizer(symmetry=BLISS, known=[]),

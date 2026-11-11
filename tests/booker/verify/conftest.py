@@ -12,7 +12,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS
-from booker.generate.generator import Generator
+from booker.generate.atlas_expander import AtlasExpander
 from booker.generate.state_canonicalizer import StateCanonicalizer
 from booker.solve import solve
 
@@ -33,7 +33,7 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """
     path = tmp_path_factory.mktemp("endgame") / "atlas.db"
     with Atlas.open(path) as atlas:
-        Generator(
+        AtlasExpander(
             atlas=atlas,
             symmetry=BLISS,
             state_canonicalizer=StateCanonicalizer(symmetry=BLISS, known=[]),

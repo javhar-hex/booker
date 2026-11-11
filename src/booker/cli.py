@@ -12,7 +12,7 @@ from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
 from booker.equilibrium.flags import build, summary
-from booker.generate.generator import generate
+from booker.generate.atlas_expander import generate
 from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.plan import AuditPlan, IdRange

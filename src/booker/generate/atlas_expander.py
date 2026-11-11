@@ -1,4 +1,4 @@
-"""The generator of the atlas. No verifier code is imported."""
+"""The expansion of an atlas, forward from a root. No verifier code is imported."""
 
 from __future__ import annotations
 
@@ -22,19 +22,19 @@ def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
         atlas.expansion_writer().use_state_symmetry(symmetry.name)
-        generator = Generator(
+        expander = AtlasExpander(
             atlas=atlas,
             symmetry=symmetry,
             state_canonicalizer=StateCanonicalizer(
                 symmetry=symmetry, known=atlas.states()
             ),
         )
-        generator.expand(State.start(), max_depth)
+        expander.expand(State.start(), max_depth)
         print("states:", atlas.num_states(), "actions:", atlas.num_actions())
 
 
 @dc.dataclass(frozen=True, slots=True)
-class Generator:
+class AtlasExpander:
     """
     Expands an atlas. Its `symmetry` finds the orbits of the legal pairings, and its
     `state_canonicalizer` the representative of each position that results.

@@ -1,4 +1,4 @@
-"""What the generator asks of the way states are canonicalized."""
+"""What the atlas expander asks of the way states are canonicalized."""
 
 from __future__ import annotations
 
