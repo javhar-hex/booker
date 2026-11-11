@@ -11,9 +11,12 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
+from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetries import BLISS, VF2
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.generate.atlas_expander import AtlasExpander, expand_atlas
 from booker.generate.expansion_summary import ExpansionSummary
+from booker.generate.state_canonicalizer import StateCanonicalizer
 
 DEPTH = 5
 
@@ -24,13 +27,13 @@ def path(tmp_path: Path) -> Path:
 
 
 def _contents(path: Path) -> list[tuple[object, ...]]:
-    con = sqlite3.connect(path)
-    rows = con.execute(
+    connection = sqlite3.connect(path)
+    rows = connection.execute(
         "SELECT 's', id, key, depth, active, expanded FROM states "
         "UNION ALL SELECT 'a', parent, lhs, rhs, repeat_cost, class_size || ',' || lhs_wins "
         "|| ',' || rhs_wins FROM actions ORDER BY 1, 2, 3, 4"
     ).fetchall()
-    con.close()
+    connection.close()
     return rows
 
 
@@ -123,3 +126,67 @@ def test_a_resumed_vf2_expansion_knows_the_states_already_stored(
     expand_atlas(str(tmp_path / "direct.db"), 3, VF2, log=discard)
 
     assert _contents(path) == _contents(tmp_path / "direct.db")
+
+
+class _Interrupted(Exception):
+    pass
+
+
+class _InterruptingSymmetry(StateSymmetry):
+    "Finds orbits like `symmetry` does, until it has found them `after` times."
+
+    def __init__(self, symmetry: StateSymmetry, after: int) -> None:
+        self._symmetry = symmetry
+        self._remaining = after
+
+    @property
+    def name(self) -> str:
+        return self._symmetry.name
+
+    def are_isomorphic(self, first: State, second: State) -> bool:
+        return self._symmetry.are_isomorphic(first, second)
+
+    def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
+        if self._remaining == 0:
+            raise _Interrupted()
+        self._remaining -= 1
+        return self._symmetry.orbits(state, pairings)
+
+
+@pytest.mark.parametrize("symmetry", [BLISS, VF2])
+def test_an_interrupted_expansion_resumes_as_if_it_had_not_been(
+    path: Path, tmp_path: Path, symmetry: StateSymmetry
+) -> None:
+    with Atlas.open(path) as atlas:
+        atlas.expansion_writer().use_state_symmetry(symmetry.name)
+        expander = AtlasExpander(
+            atlas=atlas,
+            symmetry=_InterruptingSymmetry(symmetry, after=5),
+            state_canonicalizer=StateCanonicalizer(
+                symmetry=symmetry, known_states=atlas.states()
+            ),
+            log=discard,
+        )
+        with pytest.raises(_Interrupted):
+            expander.expand(State.start(), DEPTH)
+
+    assert _depth_of_the_deepest_state(path) == _depth_of_the_first_unexpanded(path)
+    expand_atlas(str(path), DEPTH, symmetry, log=discard)
+    expand_atlas(str(tmp_path / "direct.db"), DEPTH, symmetry, log=discard)
+
+    assert _contents(path) == _contents(tmp_path / "direct.db")
+
+
+def _depth_of_the_deepest_state(path: Path) -> int:
+    return _one_number(path, "SELECT MAX(depth) FROM states")
+
+
+def _depth_of_the_first_unexpanded(path: Path) -> int:
+    return _one_number(path, "SELECT MIN(depth) FROM states WHERE expanded=0")
+
+
+def _one_number(path: Path, sql: str) -> int:
+    connection = sqlite3.connect(path)
+    (number,) = connection.execute(sql).fetchone()
+    connection.close()
+    return int(number)
