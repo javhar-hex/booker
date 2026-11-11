@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from javhar_util.immutables import ZVec
 
 from booker.core.model.state import State
-from booker.core.symmetry.symmetry import TeamSignature, signature
+from booker.core.symmetry.state_symmetry import TeamSignature, signature
 from booker.core.symmetry.vf2_symmetry import Vf2Symmetry
 from booker.generate.state_canonicalizer import StateCanonicalizer
 

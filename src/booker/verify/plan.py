@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses as dc
 
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetry import StateSymmetry
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -36,7 +36,7 @@ class AuditPlan:
 
     db: str
     ids: IdRange = IdRange()
-    strict: Symmetry | None = None
+    strict: StateSymmetry | None = None
     limit: int | None = None
     expect_root: int | None = None
     require_complete: bool = False
@@ -50,7 +50,7 @@ class AuditPlan:
 @dc.dataclass(frozen=True, slots=True)
 class AuditReport:
     ids: IdRange
-    strict: Symmetry | None
+    strict: StateSymmetry | None
     states: int
     actions: int
     pairings: int

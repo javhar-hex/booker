@@ -13,7 +13,7 @@ from booker.core.model.state import State
 from booker.core.symmetry.orbits import PairingOrbits
 
 
-class Symmetry(Protocol):
+class StateSymmetry(Protocol):
     """
     Decisions about the symmetries of states. The generator needs canonical forms, which
     only BLISS gives at scale; these are the questions that any graph library can answer,
@@ -43,7 +43,7 @@ class Symmetry(Protocol):
 
 def signature(state: State) -> ZVec[TeamSignature]:
     """
-    A cheap necessary condition for `Symmetry.are_isomorphic`: each team's record and
+    A cheap necessary condition for `StateSymmetry.are_isomorphic`: each team's record and
     number of previous opponents, sorted. States that are isomorphic have equal
     signatures; the converse does not hold, so equal signatures are not an answer, but
     different ones are.

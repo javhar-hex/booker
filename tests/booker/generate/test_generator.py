@@ -13,7 +13,7 @@ from booker.core.model.team import Team
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.canonical_schedule import canonical_state
 from booker.core.symmetry.relabelling import Relabelling
-from booker.core.symmetry.symmetries import BLISS, VF2
+from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.generate.generator import Generator, generate, state_canonicalizer_for
 
 DEPTH = 5

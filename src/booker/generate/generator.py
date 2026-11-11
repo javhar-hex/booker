@@ -13,14 +13,14 @@ from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.canonical_schedule import canonical_state
-from booker.core.symmetry.symmetries import VF2
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetries import VF2
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
 from booker.generate.state_canonicalizer import StateCanonicalizer
 from booker.generate.vf2_state_canonicalizer import Vf2StateCanonicalizer
 
 
-def generate(path: str, max_depth: int, symmetry: Symmetry) -> None:
+def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
     "Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches."
     if not 0 <= max_depth <= MAX_MATCHES:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
@@ -36,7 +36,7 @@ def generate(path: str, max_depth: int, symmetry: Symmetry) -> None:
 
 
 def state_canonicalizer_for(
-    symmetry: Symmetry, known: Iterable[State]
+    symmetry: StateSymmetry, known: Iterable[State]
 ) -> StateCanonicalizer:
     """
     One that stays consistent with `known`, the states already in an atlas. Only BLISS
@@ -56,7 +56,7 @@ class Generator:
     """
 
     atlas: Atlas
-    symmetry: Symmetry
+    symmetry: StateSymmetry
     state_canonicalizer: StateCanonicalizer
 
     def expand(self, root: State, max_depth: int) -> None:

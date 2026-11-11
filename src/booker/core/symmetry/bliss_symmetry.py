@@ -12,11 +12,11 @@ from booker.core.model.state import State
 from booker.core.symmetry.bliss_graph import BlissGraph
 from booker.core.symmetry.canonical_schedule import canonical_state
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetry import StateSymmetry
 
 
 @dc.dataclass(frozen=True, slots=True)
-class BlissSymmetry(Symmetry):
+class BlissSymmetry(StateSymmetry):
     "Canonical forms and the generators of the automorphism group, from BLISS."
 
     @property

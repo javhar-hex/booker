@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 from javhar_util.immutables import ZVec
 
-from booker.core.symmetry.symmetries import BLISS, VF2
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetries import BLISS, VF2
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.generate.generator import generate
 from booker.solve import solve
 from booker.verify.audit import audit
@@ -55,7 +55,7 @@ REFERENCE = ZVec(
 )
 
 
-def _generate(directory: Path, max_depth: int, symmetry: Symmetry) -> Path:
+def _generate(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
     directory.mkdir(exist_ok=True)
     db = directory / f"{symmetry.name}-{max_depth}.db"
     generate(str(db), max_depth=max_depth, symmetry=symmetry)
@@ -130,7 +130,7 @@ def _audit(
     ids: IdRange | None = None,
     limit: int | None = None,
     checkpoint: Path | None = None,
-    strict: Symmetry | None = None,
+    strict: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db=str(db),
@@ -193,7 +193,7 @@ def _tampered(atlas: Path, directory: Path, tampering: str) -> Path:
     "tampering", [WRONG_ROOT_CLASS_SIZE, DUPLICATE_ROOT_REPRESENTATIVE]
 )
 def test_verifier_rejects_orbit_sizes_that_add_up_wrongly(
-    shallow_atlas: Path, tmp_path: Path, tampering: str, strict: Symmetry | None
+    shallow_atlas: Path, tmp_path: Path, tampering: str, strict: StateSymmetry | None
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, tampering)
 

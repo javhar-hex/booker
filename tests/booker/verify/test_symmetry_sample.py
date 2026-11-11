@@ -12,15 +12,15 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
-from booker.core.symmetry.symmetries import SYMMETRIES
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetries import STATE_SYMMETRIES
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.verify.failure import AuditFailure
 from booker.verify.symmetry_sample import compare_symmetries
 
-ALL = SYMMETRIES
+ALL = STATE_SYMMETRIES
 
 
-class NeverIsomorphic(Symmetry):
+class NeverIsomorphic(StateSymmetry):
     "Wrong about isomorphism, right about orbits."
 
     @property
@@ -34,7 +34,7 @@ class NeverIsomorphic(Symmetry):
         return BlissSymmetry().orbits(state, pairings)
 
 
-class AlwaysIsomorphic(Symmetry):
+class AlwaysIsomorphic(StateSymmetry):
     "Wrong about isomorphism, right about orbits."
 
     @property
@@ -48,7 +48,7 @@ class AlwaysIsomorphic(Symmetry):
         return BlissSymmetry().orbits(state, pairings)
 
 
-class NoSymmetry(Symmetry):
+class NoSymmetry(StateSymmetry):
     "Right about isomorphism, but finds every pairing alone in its orbit."
 
     @property
@@ -85,7 +85,7 @@ def test_a_sample_cannot_be_larger_than_the_atlas(endgame: Path) -> None:
     assert compare_symmetries(str(endgame), ALL, samples=10_000, seed=0).states == 29
 
 
-def _with(wrong: Symmetry) -> ZMap[str, Symmetry]:
+def _with(wrong: StateSymmetry) -> ZMap[str, StateSymmetry]:
     return ZMap({"bliss": BlissSymmetry(), "wrong": wrong})
 
 

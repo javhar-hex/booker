@@ -12,7 +12,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.orbits import PairingOrbits
-from booker.core.symmetry.symmetry import Symmetry, signature
+from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
 from booker.verify.database import ActionRow, Database, StateId, StoredState
 from booker.verify.failure import AuditFailure
@@ -34,7 +34,7 @@ class StateCheck:
     """
 
     db: Database
-    symmetry: Symmetry | None
+    symmetry: StateSymmetry | None
     is_solved: bool
 
     def run(self, state_id: StateId) -> Tally:

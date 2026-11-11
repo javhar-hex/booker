@@ -5,7 +5,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.relabelling import Relabelling
-from booker.core.symmetry.symmetry import TeamSignature, signature
+from booker.core.symmetry.state_symmetry import TeamSignature, signature
 
 RECORD_1_1 = Record(wins=1, losses=1)
 RECORD_0_1 = Record(wins=0, losses=1)

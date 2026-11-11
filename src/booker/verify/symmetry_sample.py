@@ -1,5 +1,5 @@
 """
-Do the implementations of `Symmetry` agree, on states picked at random from an atlas?
+Do the implementations of `StateSymmetry` agree, on states picked at random from an atlas?
 
 The atlas holds every state the game can reach, so a sample from it is a sample from the
 whole graph, to every depth. Each sampled state is put to every implementation in the
@@ -21,7 +21,7 @@ from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.relabelling import Relabelling
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
 from booker.verify.database import Database, StateId
 from booker.verify.failure import AuditFailure
@@ -41,7 +41,7 @@ class SampleReport:
 
 
 def compare_symmetries(
-    path: str, implementations: ZMap[str, Symmetry], samples: int, seed: int
+    path: str, implementations: ZMap[str, StateSymmetry], samples: int, seed: int
 ) -> SampleReport:
     "Raises `AuditFailure` at the first question that the implementations answer wrongly."
     rng = random.Random(seed)
@@ -61,7 +61,7 @@ def compare_symmetries(
 @dc.dataclass(frozen=True, slots=True)
 class _Questions:
     db: Database
-    implementations: ZMap[str, Symmetry]
+    implementations: ZMap[str, StateSymmetry]
     rng: random.Random
 
     def about(self, state_id: StateId) -> tuple[int, int]:

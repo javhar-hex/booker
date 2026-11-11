@@ -1,5 +1,5 @@
 """
-Each implementation of `Symmetry` on cases whose answers are known, and all of them
+Each implementation of `StateSymmetry` on cases whose answers are known, and all of them
 against one another on states from games played at random, to every depth. They are
 different algorithms on different libraries, so an answer on which they agree is not
 a shared mistake.
@@ -18,11 +18,11 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.relabelling import Relabelling
-from booker.core.symmetry.symmetries import SYMMETRIES, VF2
-from booker.core.symmetry.symmetry import Symmetry, signature
+from booker.core.symmetry.state_symmetries import STATE_SYMMETRIES, VF2
+from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
 
-IMPLEMENTATIONS = list(SYMMETRIES.values())
+IMPLEMENTATIONS = list(STATE_SYMMETRIES.values())
 RECORD_1_1 = Record(wins=1, losses=1)
 RECORD_1_0 = Record(wins=1, losses=0)
 RECORD_0_1 = Record(wins=0, losses=1)
@@ -55,13 +55,13 @@ def _pool(
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
 def test_every_implementation_declares_that_it_implements_the_protocol(
-    symmetry: Symmetry,
+    symmetry: StateSymmetry,
 ) -> None:
-    assert Symmetry in type(symmetry).__mro__
+    assert StateSymmetry in type(symmetry).__mro__
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_relabelled_states_are_isomorphic(symmetry: Symmetry) -> None:
+def test_relabelled_states_are_isomorphic(symmetry: StateSymmetry) -> None:
     path = _state([RECORD_1_1] * 4, (0, 1), (1, 2), (2, 3))
     shuffled = _state([RECORD_1_1] * 4, (0, 2), (0, 3), (1, 3))
 
@@ -69,7 +69,7 @@ def test_relabelled_states_are_isomorphic(symmetry: Symmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_a_path_is_not_a_star(symmetry: Symmetry) -> None:
+def test_a_path_is_not_a_star(symmetry: StateSymmetry) -> None:
     path = _state([RECORD_1_1] * 4, (0, 1), (1, 2), (2, 3))
     star = _state([RECORD_1_1] * 4, (0, 1), (0, 2), (0, 3))
 
@@ -77,7 +77,7 @@ def test_a_path_is_not_a_star(symmetry: Symmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_two_triangles_are_not_a_six_cycle(symmetry: Symmetry) -> None:
+def test_two_triangles_are_not_a_six_cycle(symmetry: StateSymmetry) -> None:
     "The same signature, so only the algorithm can tell them apart."
     triangles = _state([RECORD_1_1] * 6, (0, 1), (1, 2), (0, 2), (3, 4), (4, 5), (3, 5))
     cycle = _state([RECORD_1_1] * 6, (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5))
@@ -87,7 +87,7 @@ def test_two_triangles_are_not_a_six_cycle(symmetry: Symmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_records_must_match(symmetry: Symmetry) -> None:
+def test_records_must_match(symmetry: StateSymmetry) -> None:
     winner_at_the_end = _state([RECORD_1_0, RECORD_0_1, RECORD_0_1], (0, 1), (1, 2))
     winner_in_the_middle = _state([RECORD_0_1, RECORD_1_0, RECORD_0_1], (0, 1), (1, 2))
 
@@ -98,14 +98,14 @@ def test_records_must_match(symmetry: Symmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_states_of_different_sizes_are_not_isomorphic(symmetry: Symmetry) -> None:
+def test_states_of_different_sizes_are_not_isomorphic(symmetry: StateSymmetry) -> None:
     assert not symmetry.are_isomorphic(
         _state([RECORD_1_1] * 2), _state([RECORD_1_1] * 3)
     )
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_every_first_round_pairing_is_alike(symmetry: Symmetry) -> None:
+def test_every_first_round_pairing_is_alike(symmetry: StateSymmetry) -> None:
     start = State.start()
 
     orbits = symmetry.orbits(start, legal_pairings(start))
@@ -116,7 +116,7 @@ def test_every_first_round_pairing_is_alike(symmetry: Symmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_a_rematch_is_an_orbit_of_its_own(symmetry: Symmetry) -> None:
+def test_a_rematch_is_an_orbit_of_its_own(symmetry: StateSymmetry) -> None:
     state = _state([RECORD_1_1] * 4, (0, 1))
 
     orbits = symmetry.orbits(state, legal_pairings(state))
@@ -129,7 +129,7 @@ def test_a_rematch_is_an_orbit_of_its_own(symmetry: Symmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_a_decided_state_has_no_orbits(symmetry: Symmetry) -> None:
+def test_a_decided_state_has_no_orbits(symmetry: StateSymmetry) -> None:
     decided = _state([Record(wins=6, losses=1)])
 
     assert len(symmetry.orbits(decided, legal_pairings(decided))) == 0
@@ -200,7 +200,7 @@ def test_orbits_are_a_partition_of_the_pairings(
 ) -> None:
     for state in _pool(play_game):
         pairings = legal_pairings(state)
-        symmetry: Symmetry = VF2
+        symmetry: StateSymmetry = VF2
 
         orbits: PairingOrbits = symmetry.orbits(state, pairings)
 

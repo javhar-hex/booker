@@ -10,7 +10,7 @@ from pathlib import Path
 
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
-from booker.core.symmetry.symmetries import BLISS, SYMMETRIES
+from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
 from booker.equilibrium.flags import build, summary
 from booker.generate.generator import generate
 from booker.solve import solve
@@ -37,7 +37,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 
 def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    symmetry = SYMMETRIES[args.symmetry]
+    symmetry = STATE_SYMMETRIES[args.symmetry]
     if args.max_depth is None and symmetry != BLISS:
         parser.error(
             f"--symmetry {symmetry.name} gets slower with every state it meets; "
@@ -59,7 +59,9 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         help=f"matches to expand to (default {MAX_MATCHES}, the whole game, for bliss)",
     )
-    generating.add_argument("--symmetry", choices=sorted(SYMMETRIES), default=BLISS.name)
+    generating.add_argument(
+        "--symmetry", choices=sorted(STATE_SYMMETRIES), default=BLISS.name
+    )
     sub.add_parser("solve").add_argument("db")
     sub.add_parser("stats").add_argument("db")
     _add_verify(sub)
@@ -86,7 +88,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying.add_argument("db")
     verifying.add_argument(
         "--strict",
-        choices=sorted(SYMMETRIES),
+        choices=sorted(STATE_SYMMETRIES),
         help="also compare every child and orbit, using this implementation (slow)",
     )
     verifying.add_argument(
@@ -111,7 +113,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
 def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
         db=args.db,
-        strict=None if args.strict is None else SYMMETRIES[args.strict],
+        strict=None if args.strict is None else STATE_SYMMETRIES[args.strict],
         ids=IdRange(start=args.from_id, stop=args.to_id),
         limit=args.limit or None,
         expect_root=args.expect_root,
@@ -122,7 +124,7 @@ def _verify(args: argparse.Namespace) -> None:
 
 
 def _compare_symmetry(args: argparse.Namespace) -> None:
-    print(compare_symmetries(args.db, SYMMETRIES, args.samples, args.seed))
+    print(compare_symmetries(args.db, STATE_SYMMETRIES, args.samples, args.seed))
 
 
 def _equilibrium(args: argparse.Namespace) -> None:

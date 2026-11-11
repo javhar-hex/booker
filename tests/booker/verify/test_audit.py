@@ -19,8 +19,8 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
-from booker.core.symmetry.symmetries import BLISS, VF2
-from booker.core.symmetry.symmetry import Symmetry
+from booker.core.symmetry.state_symmetries import BLISS, VF2
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.generate.generator import generate
 from booker.verify.audit import audit
 from booker.verify.database import Database, StateId
@@ -78,7 +78,7 @@ def _audit(
     expect_root: int | None = None,
     checkpoint: Path | None = None,
     log: list[str] | None = None,
-    strict: Symmetry | None = None,
+    strict: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db=str(db),
@@ -312,7 +312,7 @@ def test_rejects_the_rest_of_a_real_game_valued_wrongly(
         _audit(_tamper(endgame, sql))
 
 
-class NeverIsomorphic(Symmetry):
+class NeverIsomorphic(StateSymmetry):
     "Denies that any two states are alike, to show the verifier asks."
 
     @property
@@ -326,7 +326,7 @@ class NeverIsomorphic(Symmetry):
         return BlissSymmetry().orbits(state, pairings)
 
 
-class SplitsEveryOrbit(Symmetry):
+class SplitsEveryOrbit(StateSymmetry):
     "Finds every pairing alone in its orbit, to show the verifier asks."
 
     @property
@@ -344,7 +344,7 @@ class SplitsEveryOrbit(Symmetry):
 
 @pytest.mark.parametrize("symmetry", [BLISS, VF2])
 def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementation(
-    endgame: Path, symmetry: Symmetry
+    endgame: Path, symmetry: StateSymmetry
 ) -> None:
     assert _audit(endgame, strict=symmetry).states == ENDGAME_STATES
 
@@ -382,7 +382,7 @@ SWAPPED_SIZES = (
 
 @pytest.mark.parametrize("strict", [None, BLISS, VF2])
 def test_rejects_children_of_the_right_depth_that_are_swapped(
-    endgame: Path, strict: Symmetry | None
+    endgame: Path, strict: StateSymmetry | None
 ) -> None:
     with pytest.raises(AuditFailure, match="wrong state"):
         _audit(_tamper(endgame, SWAPPED_CHILDREN), strict=strict)

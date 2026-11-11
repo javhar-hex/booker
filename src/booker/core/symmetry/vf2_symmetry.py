@@ -19,7 +19,7 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
-from booker.core.symmetry.symmetry import Symmetry, signature
+from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -56,7 +56,7 @@ class _LabelledGraph:
 
 
 @dc.dataclass(frozen=True, slots=True)
-class Vf2Symmetry(Symmetry):
+class Vf2Symmetry(StateSymmetry):
     "Isomorphism by VF2++, and orbits by comparing pairings with one another."
 
     @property

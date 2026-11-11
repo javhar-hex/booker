@@ -1,4 +1,4 @@
-from booker.core.symmetry.symmetries import VF2
+from booker.core.symmetry.state_symmetries import VF2
 from booker.verify.plan import AuditPlan, AuditReport, IdRange
 
 
