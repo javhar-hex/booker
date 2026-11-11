@@ -10,7 +10,6 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS
 from booker.generate.atlas_expander import AtlasExpander
-from booker.generate.state_canonicalizer import StateCanonicalizer
 from booker.solve import solve
 
 RECORD_5_1 = Record(wins=5, losses=1)
@@ -27,11 +26,8 @@ def test_returns_the_root_value_of_the_last_match(
         past_pairings=ZSet([FINAL_PAIRING] if have_met else []),
     )
     with Atlas.open(path) as atlas:
-        AtlasExpander(
-            atlas=atlas,
-            symmetry=BLISS,
-            state_canonicalizer=StateCanonicalizer(symmetry=BLISS, known=[]),
-            log=discard,
-        ).expand(final, MAX_MATCHES)
+        AtlasExpander.of(atlas=atlas, symmetry=BLISS, log=discard).expand(
+            final, MAX_MATCHES
+        )
 
     assert solve(str(path)) == int(have_met)

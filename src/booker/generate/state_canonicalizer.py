@@ -15,15 +15,15 @@ class StateCanonicalizer:
     """
     Maps a state to the representative of its isomorphism class, as `symmetry` allows.
     Only BLISS gives canonical forms; for any other symmetry the representative is the
-    first state of its class that has been shown, starting with `known`, the states
+    first state of its class that has been shown, starting with `known_states`, the states
     already in an atlas. That memory is mutable, and it is the one thing here that is.
     """
 
-    def __init__(self, symmetry: StateSymmetry, known: Iterable[State]) -> None:
+    def __init__(self, symmetry: StateSymmetry, known_states: Iterable[State]) -> None:
         self._canonicalizer: BlissCanonicalizer | MemoCanonicalizer = (
             BlissCanonicalizer()
             if symmetry == BLISS
-            else MemoCanonicalizer(symmetry=symmetry, known=known)
+            else MemoCanonicalizer(symmetry=symmetry, known_states=known_states)
         )
 
     def __call__(self, state: State) -> State:

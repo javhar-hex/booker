@@ -14,7 +14,6 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS
 from booker.generate.atlas_expander import AtlasExpander
-from booker.generate.state_canonicalizer import StateCanonicalizer
 from booker.solve import solve
 
 ENDGAME = State(
@@ -34,11 +33,8 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """
     path = tmp_path_factory.mktemp("endgame") / "atlas.db"
     with Atlas.open(path) as atlas:
-        AtlasExpander(
-            atlas=atlas,
-            symmetry=BLISS,
-            state_canonicalizer=StateCanonicalizer(symmetry=BLISS, known=[]),
-            log=discard,
-        ).expand(ENDGAME, MAX_MATCHES)
+        AtlasExpander.of(atlas=atlas, symmetry=BLISS, log=discard).expand(
+            ENDGAME, MAX_MATCHES
+        )
     solve(str(path))
     return path

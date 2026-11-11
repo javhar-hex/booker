@@ -29,14 +29,7 @@ def expand_atlas(
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
     with Atlas.open(path) as atlas:
         atlas.expansion_writer().use_state_symmetry(symmetry.name)
-        expander = AtlasExpander(
-            atlas=atlas,
-            symmetry=symmetry,
-            state_canonicalizer=StateCanonicalizer(
-                symmetry=symmetry, known=atlas.states()
-            ),
-            log=log,
-        )
+        expander = AtlasExpander.of(atlas=atlas, symmetry=symmetry, log=log)
         expander.expand(State.start(), max_depth)
         return ExpansionSummary(
             num_states=atlas.num_states(), num_actions=atlas.num_actions()
@@ -54,6 +47,20 @@ class AtlasExpander:
     symmetry: StateSymmetry
     state_canonicalizer: StateCanonicalizer
     log: Callable[[str], None]
+
+    @classmethod
+    def of(
+        cls, atlas: Atlas, symmetry: StateSymmetry, log: Callable[[str], None]
+    ) -> AtlasExpander:
+        "One whose canonicalizer is consistent with the states that `atlas` holds."
+        return cls(
+            atlas=atlas,
+            symmetry=symmetry,
+            state_canonicalizer=StateCanonicalizer(
+                symmetry=symmetry, known_states=atlas.states()
+            ),
+            log=log,
+        )
 
     def expand(self, root: State, max_depth: int) -> None:
         """

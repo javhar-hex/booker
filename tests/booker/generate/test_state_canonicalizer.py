@@ -23,17 +23,19 @@ SHUFFLED_PATH = Relabelling.of([2, 0, 3, 1]).state(PATH)
 
 @pytest.mark.parametrize("symmetry", list(STATE_SYMMETRIES.values()))
 def test_maps_isomorphic_states_to_one_state(symmetry: StateSymmetry) -> None:
-    canonicalizer = StateCanonicalizer(symmetry=symmetry, known=[])
+    canonicalizer = StateCanonicalizer(symmetry=symmetry, known_states=[])
 
     assert SHUFFLED_PATH != PATH
     assert canonicalizer(SHUFFLED_PATH) == canonicalizer(PATH)
 
 
 def test_bliss_ignores_the_known_states() -> None:
-    known = StateCanonicalizer(symmetry=BLISS, known=[PATH])
+    with_known_states = StateCanonicalizer(symmetry=BLISS, known_states=[PATH])
 
-    assert known(SHUFFLED_PATH) == StateCanonicalizer(symmetry=BLISS, known=[])(PATH)
+    assert with_known_states(SHUFFLED_PATH) == StateCanonicalizer(
+        symmetry=BLISS, known_states=[]
+    )(PATH)
 
 
 def test_vf2_stays_consistent_with_the_known_states() -> None:
-    assert StateCanonicalizer(symmetry=VF2, known=[PATH])(SHUFFLED_PATH) == PATH
+    assert StateCanonicalizer(symmetry=VF2, known_states=[PATH])(SHUFFLED_PATH) == PATH

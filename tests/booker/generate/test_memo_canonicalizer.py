@@ -39,12 +39,15 @@ SIX_CYCLE = _six_teams((0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5))
 def test_the_first_state_of_its_kind_is_its_own_representative(
     symmetry: StateSymmetry,
 ) -> None:
-    assert MemoCanonicalizer(symmetry=symmetry, known=[])(TWO_TRIANGLES) == TWO_TRIANGLES
+    assert (
+        MemoCanonicalizer(symmetry=symmetry, known_states=[])(TWO_TRIANGLES)
+        == TWO_TRIANGLES
+    )
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
 def test_a_relabelled_state_maps_to_the_first_one_seen(symmetry: StateSymmetry) -> None:
-    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[])
+    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known_states=[])
     relabelled = Relabelling.of([2, 0, 4, 1, 5, 3]).state(SIX_CYCLE)
 
     assert canonicalizer(SIX_CYCLE) == SIX_CYCLE
@@ -56,7 +59,7 @@ def test_a_relabelled_state_maps_to_the_first_one_seen(symmetry: StateSymmetry) 
 def test_states_alike_in_every_signature_but_not_isomorphic_stay_apart(
     symmetry: StateSymmetry,
 ) -> None:
-    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[])
+    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known_states=[])
 
     assert canonicalizer(TWO_TRIANGLES) == TWO_TRIANGLES
     assert canonicalizer(SIX_CYCLE) == SIX_CYCLE
@@ -64,7 +67,7 @@ def test_states_alike_in_every_signature_but_not_isomorphic_stay_apart(
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
 def test_records_travel_with_their_teams(symmetry: StateSymmetry) -> None:
-    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[])
+    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known_states=[])
     winner_first = _state([RECORD_1_0, RECORD_0_1], _met((0, 1)))
     winner_second = _state([RECORD_0_1, RECORD_1_0], _met((0, 1)))
 
@@ -74,7 +77,7 @@ def test_records_travel_with_their_teams(symmetry: StateSymmetry) -> None:
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
 def test_states_with_different_records_stay_apart(symmetry: StateSymmetry) -> None:
-    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[])
+    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known_states=[])
     mixed = _state([RECORD_1_1, RECORD_0_1], _met((0, 1)))
     alike = _state([RECORD_1_1, RECORD_1_1], _met((0, 1)))
 
@@ -84,7 +87,7 @@ def test_states_with_different_records_stay_apart(symmetry: StateSymmetry) -> No
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
 def test_states_of_different_sizes_stay_apart(symmetry: StateSymmetry) -> None:
-    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[])
+    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known_states=[])
     small = _state([RECORD_1_1] * 2, _met())
 
     assert canonicalizer(small) == small
@@ -94,6 +97,6 @@ def test_states_of_different_sizes_stay_apart(symmetry: StateSymmetry) -> None:
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
 def test_known_states_are_the_representatives(symmetry: StateSymmetry) -> None:
     relabelled = Relabelling.of([2, 0, 4, 1, 5, 3]).state(SIX_CYCLE)
-    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known=[SIX_CYCLE])
+    canonicalizer = MemoCanonicalizer(symmetry=symmetry, known_states=[SIX_CYCLE])
 
     assert canonicalizer(relabelled) == SIX_CYCLE
