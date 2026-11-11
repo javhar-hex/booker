@@ -11,7 +11,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS, VF2
-from booker.generate.atlas_expander import AtlasExpander, generate
+from booker.generate.atlas_expander import AtlasExpander, expand_atlas
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 DEPTH = 5
@@ -36,32 +36,32 @@ def _contents(path: Path) -> list[tuple[object, ...]]:
 @pytest.mark.parametrize("depth", [-1, MAX_MATCHES + 1])
 def test_rejects_a_depth_outside_the_game(path: Path, depth: int) -> None:
     with pytest.raises(ValueError, match="between 0 and"):
-        generate(str(path), depth, BLISS)
+        expand_atlas(str(path), depth, BLISS)
 
 
 def test_resumed_generation_matches_generation_in_one_go(
     path: Path, tmp_path: Path
 ) -> None:
-    generate(str(path), 2, BLISS)
-    generate(str(path), DEPTH, BLISS)
-    generate(str(tmp_path / "direct.db"), DEPTH, BLISS)
+    expand_atlas(str(path), 2, BLISS)
+    expand_atlas(str(path), DEPTH, BLISS)
+    expand_atlas(str(tmp_path / "direct.db"), DEPTH, BLISS)
 
     assert _contents(path) == _contents(tmp_path / "direct.db")
 
 
 def test_generating_again_changes_nothing(path: Path) -> None:
-    generate(str(path), DEPTH, BLISS)
+    expand_atlas(str(path), DEPTH, BLISS)
     before = _contents(path)
-    generate(str(path), DEPTH, BLISS)
+    expand_atlas(str(path), DEPTH, BLISS)
 
     assert _contents(path) == before
 
 
 def test_an_atlas_is_not_resumed_with_another_symmetry(path: Path) -> None:
-    generate(str(path), 2, BLISS)
+    expand_atlas(str(path), 2, BLISS)
 
     with pytest.raises(ValueError, match="Cannot resume bliss atlas using vf2"):
-        generate(str(path), 2, VF2)
+        expand_atlas(str(path), 2, VF2)
 
 
 def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:

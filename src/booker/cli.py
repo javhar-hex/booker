@@ -12,7 +12,7 @@ from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
 from booker.equilibrium.flags import build, summary
-from booker.generate.atlas_expander import generate
+from booker.generate.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.plan import AuditPlan, IdRange
@@ -44,7 +44,7 @@ def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             "say how far to go with --max-depth"
         )
     max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
-    generate(args.db, max_depth, symmetry)
+    expand_atlas(args.db, max_depth, symmetry)
 
 
 def _parser() -> argparse.ArgumentParser:

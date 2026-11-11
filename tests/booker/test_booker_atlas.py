@@ -17,7 +17,7 @@ from javhar_util.immutables import ZVec
 
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.atlas_expander import generate
+from booker.generate.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.failure import AuditFailure
@@ -58,7 +58,7 @@ REFERENCE = ZVec(
 def _generate(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
     directory.mkdir(exist_ok=True)
     db = directory / f"{symmetry.name}-{max_depth}.db"
-    generate(str(db), max_depth=max_depth, symmetry=symmetry)
+    expand_atlas(str(db), max_depth=max_depth, symmetry=symmetry)
     return db
 
 

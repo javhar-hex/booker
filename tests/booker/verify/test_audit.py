@@ -21,7 +21,7 @@ from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.atlas_expander import generate
+from booker.generate.atlas_expander import expand_atlas
 from booker.verify.audit import audit
 from booker.verify.database import Database, StateId
 from booker.verify.failure import AuditFailure
@@ -202,7 +202,7 @@ def test_rejects_a_dead_end(tmp_path: Path) -> None:
 @pytest.fixture(scope="module")
 def generated(tmp_path_factory: pytest.TempPathFactory) -> Path:
     path = tmp_path_factory.mktemp("generated") / "atlas.db"
-    generate(str(path), 4, BLISS)
+    expand_atlas(str(path), 4, BLISS)
     return path
 
 

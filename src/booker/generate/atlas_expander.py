@@ -16,7 +16,7 @@ from booker.game.rules import legal_pairings
 from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
-def generate(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
+def expand_atlas(path: str, max_depth: int, symmetry: StateSymmetry) -> None:
     "Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches."
     if not 0 <= max_depth <= MAX_MATCHES:
         raise ValueError(f"depth must be between 0 and {MAX_MATCHES}, not {max_depth}")
