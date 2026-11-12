@@ -6,33 +6,14 @@ import pytest
 from booker.core.symmetry.state_symmetries import VF2
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
-from booker.verify.checkpoint import BEFORE_ANY_ID, Checkpoint, Progress, Scope
+from booker.verify.checkpoint import Checkpoint
 from booker.verify.id_range import IdRange
-from booker.verify.state_id import StateId
+from booker.verify.progress import Progress
 
 
-def _scope(path: Path, ids: IdRange | None = None) -> Scope:
+def _scope(path: Path, ids: IdRange | None = None) -> Checkpoint.Scope:
     ids = IdRange() if ids is None else ids
-    return Scope.of(AuditPlan(db=str(path / "atlas.db"), strict=VF2, ids=ids))
-
-
-def test_a_whole_audit_starts_before_every_id() -> None:
-    assert Progress.start(IdRange()) == Progress(
-        next_id=BEFORE_ANY_ID, states=0, actions=0, pairings=0
-    )
-
-
-def test_a_ranged_audit_starts_at_its_range() -> None:
-    assert Progress.start(IdRange(start=7)).next_id == 7
-
-
-def test_progress_counts_what_each_state_brought() -> None:
-    progress = Progress.start(IdRange()).after(StateId(value=4), actions=3, pairings=5)
-
-    assert progress == Progress(next_id=5, states=1, actions=3, pairings=5)
-    assert progress.after(StateId(value=9), 1, 1) == Progress(
-        next_id=10, states=2, actions=4, pairings=6
-    )
+    return Checkpoint.Scope.of(AuditPlan(db=str(path / "atlas.db"), strict=VF2, ids=ids))
 
 
 def test_a_missing_file_means_no_progress(tmp_path: Path) -> None:
@@ -82,3 +63,20 @@ def test_progress_of_another_scope_is_refused(tmp_path: Path) -> None:
 
     with pytest.raises(AuditFailure, match="another run"):
         Checkpoint(path, _scope(tmp_path, IdRange(start=5))).load()
+
+
+def test_a_plan_without_a_checkpoint_has_none(tmp_path: Path) -> None:
+    assert Checkpoint.of(AuditPlan(db=str(tmp_path / "atlas.db"))) is None
+
+
+def test_a_plan_with_a_checkpoint_has_it_for_its_own_scope(tmp_path: Path) -> None:
+    plan = AuditPlan(
+        db=str(tmp_path / "atlas.db"),
+        strict=VF2,
+        ids=IdRange(start=3),
+        checkpoint=str(tmp_path / "p.json"),
+    )
+
+    assert Checkpoint.of(plan) == Checkpoint(
+        str(tmp_path / "p.json"), _scope(tmp_path, IdRange(start=3))
+    )

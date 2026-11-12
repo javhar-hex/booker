@@ -6,8 +6,9 @@ from collections.abc import Callable
 
 from booker.verify.audit_plan import AuditPlan
 from booker.verify.audit_report import AuditReport
-from booker.verify.checkpoint import CHECKPOINT_EVERY, Checkpoint, Progress, Scope
+from booker.verify.checkpoint import CHECKPOINT_EVERY, Checkpoint
 from booker.verify.database import Database
+from booker.verify.progress import Progress
 from booker.verify.state_checks import StateCheck
 from booker.verify.whole_database import (
     check_metadata,
@@ -43,9 +44,7 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
 def _walk(
     db: Database, plan: AuditPlan, is_solved: bool, log: Callable[[str], None]
 ) -> Progress:
-    checkpoint = (
-        None if plan.checkpoint is None else Checkpoint(plan.checkpoint, Scope.of(plan))
-    )
+    checkpoint = Checkpoint.of(plan)
     progress = (checkpoint and checkpoint.load()) or Progress.start(plan.ids)
     if progress.states:
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")

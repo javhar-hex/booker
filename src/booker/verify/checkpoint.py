@@ -1,4 +1,4 @@
-"""Progress through an audit, saved so that an interrupted audit can resume."""
+"""A progress file, saved so that an interrupted audit can resume."""
 
 from __future__ import annotations
 
@@ -10,61 +10,42 @@ from typing import Any
 
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
-from booker.verify.id_range import IdRange
-from booker.verify.state_id import StateId
+from booker.verify.progress import Progress
 
 CHECKPOINT_EVERY = 1000
-BEFORE_ANY_ID = -1
-
-
-@dc.dataclass(frozen=True, slots=True)
-class Progress:
-    "How far an audit has got, and what it has counted on the way."
-
-    next_id: int
-    states: int
-    actions: int
-    pairings: int
-
-    @classmethod
-    def start(cls, ids: IdRange) -> Progress:
-        first = BEFORE_ANY_ID if ids.start is None else ids.start
-        return cls(next_id=first, states=0, actions=0, pairings=0)
-
-    def after(self, state: StateId, actions: int, pairings: int) -> Progress:
-        return Progress(
-            next_id=state.value + 1,
-            states=self.states + 1,
-            actions=self.actions + actions,
-            pairings=self.pairings + pairings,
-        )
-
-
-@dc.dataclass(frozen=True, slots=True)
-class Scope:
-    "What an audit covers; progress saved for one scope means nothing for another."
-
-    db: str
-    mode: str | None
-    from_id: int | None
-    to_id: int | None
-
-    @classmethod
-    def of(cls, plan: AuditPlan) -> Scope:
-        return cls(
-            db=os.path.abspath(plan.db),
-            mode=None if plan.strict is None else plan.strict.name,
-            from_id=plan.ids.start,
-            to_id=plan.ids.stop,
-        )
 
 
 @dc.dataclass(frozen=True, slots=True)
 class Checkpoint:
     "A progress file for the audit of one scope."
 
+    @dc.dataclass(frozen=True, slots=True)
+    class Scope:
+        "What an audit covers; progress saved for one scope means nothing for another."
+
+        db: str
+        mode: str | None
+        from_id: int | None
+        to_id: int | None
+
+        @classmethod
+        def of(cls, plan: AuditPlan) -> Checkpoint.Scope:
+            return cls(
+                db=os.path.abspath(plan.db),
+                mode=None if plan.strict is None else plan.strict.name,
+                from_id=plan.ids.start,
+                to_id=plan.ids.stop,
+            )
+
     path: str
     scope: Scope
+
+    @classmethod
+    def of(cls, plan: AuditPlan) -> Checkpoint | None:
+        "The checkpoint that `plan` asks for, if it asks for one."
+        if plan.checkpoint is None:
+            return None
+        return cls(path=plan.checkpoint, scope=cls.Scope.of(plan))
 
     def load(self) -> Progress | None:
         "The progress an earlier audit of the same scope saved, if any."
