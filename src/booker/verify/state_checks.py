@@ -14,8 +14,8 @@ from booker.core.model.successor import successor
 from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
+from booker.verify.audit_failure import AuditFailure
 from booker.verify.database import ActionRow, Database, StateId, StoredState
-from booker.verify.failure import AuditFailure
 
 
 @dc.dataclass(frozen=True, slots=True)

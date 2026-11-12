@@ -8,8 +8,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from booker.verify.audit_failure import AuditFailure
 from booker.verify.database import StateId
-from booker.verify.failure import AuditFailure
 from booker.verify.plan import AuditPlan, IdRange
 
 CHECKPOINT_EVERY = 1000

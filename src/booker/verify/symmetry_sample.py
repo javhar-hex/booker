@@ -23,8 +23,8 @@ from booker.core.model.successor import successor
 from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
+from booker.verify.audit_failure import AuditFailure
 from booker.verify.database import Database, StateId
-from booker.verify.failure import AuditFailure
 
 
 @dc.dataclass(frozen=True, slots=True)

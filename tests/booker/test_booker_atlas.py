@@ -21,7 +21,7 @@ from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit import audit
-from booker.verify.failure import AuditFailure
+from booker.verify.audit_failure import AuditFailure
 from booker.verify.plan import AuditPlan, AuditReport, IdRange
 
 FIRST_ROUND_MATCHES = 8

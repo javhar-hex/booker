@@ -24,8 +24,8 @@ from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
 from booker.verify.audit import audit
+from booker.verify.audit_failure import AuditFailure
 from booker.verify.database import Database, StateId
-from booker.verify.failure import AuditFailure
 from booker.verify.plan import AuditPlan, AuditReport, IdRange
 from booker.verify.state_checks import StateCheck
 

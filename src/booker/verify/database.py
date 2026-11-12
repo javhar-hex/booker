@@ -18,7 +18,7 @@ from booker.atlas.packed_state import PackedState
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.team import Team
-from booker.verify.failure import AuditFailure
+from booker.verify.audit_failure import AuditFailure
 
 POSITION_CACHE_SIZE = 65536
 
