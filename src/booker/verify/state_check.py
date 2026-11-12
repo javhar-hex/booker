@@ -20,12 +20,6 @@ from booker.verify.state_id import StateId
 
 
 @dc.dataclass(frozen=True, slots=True)
-class Tally:
-    actions: int
-    pairings: int
-
-
-@dc.dataclass(frozen=True, slots=True)
 class StateCheck:
     """
     Checks a position as the atlas stores it, and when it is solved the Bellman
@@ -34,11 +28,16 @@ class StateCheck:
     worth. Children and orbits are checked cheaply, and with a `symmetry` thoroughly.
     """
 
+    @dc.dataclass(frozen=True, slots=True)
+    class Tally:
+        actions: int
+        pairings: int
+
     db: Database
     symmetry: StateSymmetry | None
     is_solved: bool
 
-    def run(self, state_id: StateId) -> Tally:
+    def run(self, state_id: StateId) -> StateCheck.Tally:
         stored = self.db.stored(state_id)
         _check_standings(state_id, stored)
         rows = self.db.actions(state_id)
@@ -47,7 +46,9 @@ class StateCheck:
             self._check_children(state_id, stored, row)
         if self.is_solved:
             self._check_values(state_id, stored, rows)
-        return Tally(actions=len(rows), pairings=sum(row.class_size for row in rows))
+        return StateCheck.Tally(
+            actions=len(rows), pairings=sum(row.class_size for row in rows)
+        )
 
     def _check_pairings(
         self,

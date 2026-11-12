@@ -9,7 +9,7 @@ from booker.verify.audit_report import AuditReport
 from booker.verify.checkpoint import CHECKPOINT_EVERY, Checkpoint
 from booker.verify.database import Database
 from booker.verify.progress import Progress
-from booker.verify.state_checks import StateCheck
+from booker.verify.state_check import StateCheck
 from booker.verify.whole_database import (
     check_metadata,
     check_root_value,

@@ -29,7 +29,7 @@ from booker.verify.audit_plan import AuditPlan
 from booker.verify.audit_report import AuditReport
 from booker.verify.database import Database
 from booker.verify.id_range import IdRange
-from booker.verify.state_checks import StateCheck
+from booker.verify.state_check import StateCheck
 from booker.verify.state_id import StateId
 
 PAIRING = Pairing.of(Team(index=0), Team(index=1))
