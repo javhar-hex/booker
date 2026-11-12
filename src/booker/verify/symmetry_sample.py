@@ -25,20 +25,8 @@ from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.database import Database
+from booker.verify.sample_report import SampleReport
 from booker.verify.state_id import StateId
-
-
-@dc.dataclass(frozen=True, slots=True)
-class SampleReport:
-    states: int
-    orbit_questions: int
-    isomorphism_questions: int
-
-    def __str__(self) -> str:
-        return (
-            f"AGREE: {self.states:,} states, {self.orbit_questions:,} orbit questions, "
-            f"{self.isomorphism_questions:,} isomorphism questions"
-        )
 
 
 def compare_symmetries(
