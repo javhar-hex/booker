@@ -118,15 +118,20 @@ class StateCheck:
             raise AuditFailure.of(state_id, "unsolved")
         if state_row.state.is_decided and state_row.value != 0:
             raise AuditFailure.of(state_id, "a decided state is worth 0")
-        options = [self._option(state_id, action_row) for action_row in action_rows]
+        options = [
+            self._checked_option(state_id, action_row) for action_row in action_rows
+        ]
         if options and state_row.value != min(options):
             raise AuditFailure.of(
                 state_id,
                 f"value {state_row.value}, but its best action is worth {min(options)}",
             )
 
-    def _option(self, state_id: StateId, action_row: ActionRow) -> int:
-        "What the Scheduler gets by choosing this action: its cost plus its value."
+    def _checked_option(self, state_id: StateId, action_row: ActionRow) -> int:
+        """
+        What the Scheduler gets by choosing this action: its cost plus its GTV, once the
+        Collider's GTV is checked to be the larger of its children's.
+        """
         value_lhs = self.db.state_row(action_row.lhs_wins).value
         value_rhs = self.db.state_row(action_row.rhs_wins).value
         if value_lhs is None or value_rhs is None:
