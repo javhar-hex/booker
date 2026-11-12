@@ -6,14 +6,15 @@ import pytest
 from booker.core.symmetry.state_symmetries import VF2
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
+from booker.verify.audit_scope import AuditScope
 from booker.verify.checkpoint import Checkpoint
 from booker.verify.id_range import IdRange
 from booker.verify.progress import Progress
 
 
-def _scope(path: Path, ids: IdRange | None = None) -> Checkpoint.Scope:
+def _scope(path: Path, ids: IdRange | None = None) -> AuditScope:
     ids = IdRange() if ids is None else ids
-    return Checkpoint.Scope.of(AuditPlan(db=str(path / "atlas.db"), strict=VF2, ids=ids))
+    return AuditScope.of(AuditPlan(db=str(path / "atlas.db"), strict=VF2, ids=ids))
 
 
 def test_a_missing_file_means_no_progress(tmp_path: Path) -> None:

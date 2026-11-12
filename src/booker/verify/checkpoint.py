@@ -10,6 +10,7 @@ from typing import Any
 
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
+from booker.verify.audit_scope import AuditScope
 from booker.verify.progress import Progress
 
 CHECKPOINT_EVERY = 1000
@@ -19,33 +20,15 @@ CHECKPOINT_EVERY = 1000
 class Checkpoint:
     "A progress file for the audit of one scope."
 
-    @dc.dataclass(frozen=True, slots=True)
-    class Scope:
-        "What an audit covers; progress saved for one scope means nothing for another."
-
-        db: str
-        mode: str | None
-        from_id: int | None
-        to_id: int | None
-
-        @classmethod
-        def of(cls, plan: AuditPlan) -> Checkpoint.Scope:
-            return cls(
-                db=os.path.abspath(plan.db),
-                mode=None if plan.strict is None else plan.strict.name,
-                from_id=plan.ids.start,
-                to_id=plan.ids.stop,
-            )
-
     path: str
-    scope: Scope
+    scope: AuditScope
 
     @classmethod
     def of(cls, plan: AuditPlan) -> Checkpoint | None:
         "The checkpoint that `plan` asks for, if it asks for one."
         if plan.checkpoint is None:
             return None
-        return cls(path=plan.checkpoint, scope=cls.Scope.of(plan))
+        return cls(path=plan.checkpoint, scope=AuditScope.of(plan))
 
     def load(self) -> Progress | None:
         "The progress an earlier audit of the same scope saved, if any."
