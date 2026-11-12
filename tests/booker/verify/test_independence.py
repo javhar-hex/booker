@@ -31,7 +31,7 @@ def _imports(subpackage: str = "") -> set[str]:
 
 
 def test_the_verifier_reads_the_atlas_with_its_own_code() -> None:
-    assert "booker.verify.spot_check.database" in _imports()
+    assert "booker.verify.spot_check.atlas_reader" in _imports()
 
 
 def test_the_verifier_imports_nothing_that_generates_the_atlas() -> None:

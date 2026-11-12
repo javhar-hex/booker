@@ -13,7 +13,7 @@ from booker.verify.audit.whole_database import (
     check_root_value,
     check_whole_database,
 )
-from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.state_check import StateCheck
 
 REPORT_EVERY = 10000
@@ -21,7 +21,7 @@ REPORT_EVERY = 10000
 
 def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
     "Raises `AuditFailure` at the first thing wrong; `log` hears of progress."
-    with Database.open(plan.db) as db:
+    with AtlasReader.open(plan.db) as db:
         root = check_metadata(db)
         unexpanded = db.num_unexpanded()
         is_solved = db.num_unvalued() == 0
@@ -34,7 +34,7 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
 
 
 def _walk(
-    db: Database, plan: AuditPlan, is_solved: bool, log: Callable[[str], None]
+    db: AtlasReader, plan: AuditPlan, is_solved: bool, log: Callable[[str], None]
 ) -> Progress:
     checkpoint = Checkpoint.of(plan)
     progress = (checkpoint and checkpoint.load()) or Progress.start(plan.ids)

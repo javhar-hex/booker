@@ -27,8 +27,8 @@ from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.audit.id_range import IdRange
+from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.audit_failure import AuditFailure
-from booker.verify.spot_check.database import Database
 from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_check import StateCheck
 from booker.verify.spot_check.state_id import StateId
@@ -358,7 +358,7 @@ def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementatio
 def test_the_strict_audit_asks_the_symmetry_whether_children_are_the_right_ones(
     endgame: Path,
 ) -> None:
-    with Database.open(str(endgame)) as db:
+    with AtlasReader.open(str(endgame)) as db:
         StateCheck(db=db, symmetry=None, is_solved=True).run(StateId(value=ROOT))
 
         with pytest.raises(AuditFailure, match="wrong state"):
@@ -369,7 +369,7 @@ def test_the_strict_audit_asks_the_symmetry_whether_children_are_the_right_ones(
 
 def test_the_strict_audit_asks_the_symmetry_for_the_orbits(endgame: Path) -> None:
     with (
-        Database.open(str(endgame)) as db,
+        AtlasReader.open(str(endgame)) as db,
         pytest.raises(AuditFailure, match="orbit (sizes|representatives)"),
     ):
         StateCheck(db=db, symmetry=SplitsEveryOrbit(), is_solved=True).run(

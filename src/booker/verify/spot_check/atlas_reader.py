@@ -21,13 +21,15 @@ from booker.verify.spot_check.state_row import StateRow
 POSITION_CACHE_SIZE = 65536
 
 
-class Database:
+class AtlasReader:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
-        self._load = functools.lru_cache(maxsize=POSITION_CACHE_SIZE)(self._read)
+        self._read_cached = functools.lru_cache(maxsize=POSITION_CACHE_SIZE)(
+            self._read_uncached
+        )
 
     @classmethod
-    def open(cls, path: str) -> Database:
+    def open(cls, path: str) -> AtlasReader:
         connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         connection.execute("PRAGMA foreign_keys=ON")
         return cls(connection)
@@ -47,7 +49,7 @@ class Database:
         return ZMap(dict(self._connection.execute("SELECT key,value FROM meta")))
 
     def stored(self, state_id: StateId) -> StateRow:
-        return self._load(state_id)
+        return self._read_cached(state_id)
 
     def actions(self, parent: StateId) -> ZVec[ActionRow]:
         rows = self._connection.execute(
@@ -106,7 +108,7 @@ class Database:
         ).fetchone()
         return None if row is None else StateId(value=row[0])
 
-    def _read(self, state_id: StateId) -> StateRow:
+    def _read_uncached(self, state_id: StateId) -> StateRow:
         row = self._connection.execute(
             f"SELECT {StateRow.COLUMNS} FROM states WHERE id=?", (state_id.value,)
         ).fetchone()

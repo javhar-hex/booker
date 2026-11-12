@@ -12,12 +12,12 @@ from booker.core.model.invariants import (
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.audit_failure import AuditFailure
-from booker.verify.spot_check.database import Database
 from booker.verify.spot_check.state_id import StateId
 
 
-def check_metadata(db: Database) -> StateId:
+def check_metadata(db: AtlasReader) -> StateId:
     "The atlas is of this game and schema; returns the id of its root."
     metadata = db.metadata()
     if db.schema_version() != SCHEMA_VERSION:
@@ -30,7 +30,7 @@ def check_metadata(db: Database) -> StateId:
     return StateId(value=int(root))
 
 
-def check_whole_database(db: Database, plan: AuditPlan, root: StateId) -> None:
+def check_whole_database(db: AtlasReader, plan: AuditPlan, root: StateId) -> None:
     if plan.require_complete:
         _check_complete(db)
     _check_opening(db, root)
@@ -40,13 +40,13 @@ def check_whole_database(db: Database, plan: AuditPlan, root: StateId) -> None:
         raise AuditFailure(f"orphan state {orphan.value}: no action leads to it")
 
 
-def check_root_value(db: Database, root: StateId, expected: int) -> None:
+def check_root_value(db: AtlasReader, root: StateId, expected: int) -> None:
     value = db.stored(root).value
     if value != expected:
         raise AuditFailure(f"root value is {value}, expected {expected}")
 
 
-def _check_complete(db: Database) -> None:
+def _check_complete(db: AtlasReader) -> None:
     unexpanded, unvalued = db.num_unexpanded(), db.num_unvalued()
     if unexpanded or unvalued:
         raise AuditFailure(
@@ -71,7 +71,7 @@ def _both_endings() -> set[tuple[Record, int]]:
     }
 
 
-def _check_opening(db: Database, root: StateId) -> None:
+def _check_opening(db: AtlasReader, root: StateId) -> None:
     if db.stored(root).state != State.start():
         raise AuditFailure("wrong initial position")
     if db.num_at_depth(0) != 1:

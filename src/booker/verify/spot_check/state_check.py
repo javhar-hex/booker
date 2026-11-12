@@ -15,8 +15,8 @@ from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
 from booker.verify.spot_check.action_row import ActionRow
+from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.audit_failure import AuditFailure
-from booker.verify.spot_check.database import Database
 from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_row import StateRow
@@ -31,7 +31,7 @@ class StateCheck:
     worth. Children and orbits are checked cheaply, and with a `symmetry` thoroughly.
     """
 
-    db: Database
+    db: AtlasReader
     symmetry: StateSymmetry | None
     is_solved: bool
 
