@@ -90,23 +90,3 @@ def test_verify_fails_loudly_on_a_bad_atlas(path: str) -> None:
 
     with pytest.raises(AuditFailure, match="not complete"):
         main(["verify", path, "--require-complete"])
-
-
-def test_compares_the_symmetry_implementations_on_sampled_states(
-    path: str, capsys: pytest.CaptureFixture[str]
-) -> None:
-    main(["expand", path, "--max-depth", "4"])
-    capsys.readouterr()
-    main(["compare-symmetry", path, "--samples", "5", "--seed", "3"])
-
-    assert capsys.readouterr().out.startswith("AGREE: 5 states, 5 orbit questions, ")
-
-
-def test_there_can_be_no_more_samples_than_states(
-    path: str, capsys: pytest.CaptureFixture[str]
-) -> None:
-    main(["expand", path, "--max-depth", "3"])
-    capsys.readouterr()
-    main(["compare-symmetry", path, "--samples", "500"])
-
-    assert capsys.readouterr().out.startswith("AGREE: 6 states, ")

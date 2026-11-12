@@ -18,7 +18,6 @@ from booker.solve import solve
 from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.id_range import IdRange
-from booker.verify.symmetry_sample.symmetry_sample import compare_symmetries
 
 _LOG = functools.partial(print, flush=True)
 
@@ -34,8 +33,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         _verify(args)
     elif args.command == "equilibrium":
         _equilibrium(args)
-    elif args.command == "compare-symmetry":
-        _compare_symmetry(args)
     else:
         _print_stats(args.db)
 
@@ -70,13 +67,6 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("solve").add_argument("db")
     sub.add_parser("stats").add_argument("db")
     _add_verify(sub)
-    comparing = sub.add_parser(
-        "compare-symmetry",
-        help="do the symmetry implementations agree on states sampled from an atlas?",
-    )
-    comparing.add_argument("db")
-    comparing.add_argument("--samples", type=int, default=300)
-    comparing.add_argument("--seed", type=int, default=0)
     equilibrium = sub.add_parser(
         "equilibrium", help="analyze which positions optimal play can reach"
     )
@@ -126,10 +116,6 @@ def _verify(args: argparse.Namespace) -> None:
         checkpoint=args.checkpoint,
     )
     print(audit(plan, _LOG))
-
-
-def _compare_symmetry(args: argparse.Namespace) -> None:
-    print(compare_symmetries(args.db, STATE_SYMMETRIES, args.samples, args.seed))
 
 
 def _equilibrium(args: argparse.Namespace) -> None:

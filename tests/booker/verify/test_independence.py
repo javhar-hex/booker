@@ -48,11 +48,3 @@ def test_the_spot_check_knows_nothing_of_the_audit_that_runs_it() -> None:
 
     assert inside
     assert all(name.startswith("booker.verify.spot_check") for name in inside), inside
-
-
-def test_the_symmetry_sample_knows_nothing_of_the_audit() -> None:
-    inside = {
-        name for name in _imports("symmetry_sample") if name.startswith("booker.verify")
-    }
-
-    assert not any(name.startswith("booker.verify.audit") for name in inside), inside
