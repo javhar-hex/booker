@@ -5,7 +5,6 @@ through the `Atlas` that wrote it.
 
 from __future__ import annotations
 
-import dataclasses as dc
 import functools
 import sqlite3
 from collections.abc import Iterator
@@ -14,36 +13,15 @@ from typing import Self
 
 from javhar_util.immutables import ZMap, ZVec
 
-from booker.atlas.packed_state import PackedState
-from booker.core.model.pairing import Pairing
-from booker.core.model.state import State
-from booker.core.model.team import Team
+from booker.verify.action_row import ActionRow
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.state_id import StateId
+from booker.verify.state_row import StateRow
 
 POSITION_CACHE_SIZE = 65536
 
 
 class Database:
-    @dc.dataclass(frozen=True, slots=True)
-    class StoredState:
-        state: State
-        depth: int
-        num_teams: int
-        value: int | None
-        is_expanded: bool
-
-    @dc.dataclass(frozen=True, slots=True)
-    class ActionRow:
-        "The Scheduler's pairing from a position, and where each winner leads."
-
-        pairing: Pairing
-        repeat_cost: int
-        lhs_wins: StateId
-        rhs_wins: StateId
-        class_size: int
-        value: int | None
-
     def __init__(self, con: sqlite3.Connection) -> None:
         self._con = con
         self._load = functools.lru_cache(maxsize=POSITION_CACHE_SIZE)(self._read)
@@ -68,26 +46,15 @@ class Database:
     def metadata(self) -> ZMap[str, str]:
         return ZMap(dict(self._con.execute("SELECT key,value FROM meta")))
 
-    def stored(self, state_id: StateId) -> StoredState:
+    def stored(self, state_id: StateId) -> StateRow:
         return self._load(state_id)
 
     def actions(self, parent: StateId) -> ZVec[ActionRow]:
         rows = self._con.execute(
-            "SELECT lhs,rhs,repeat_cost,lhs_wins,rhs_wins,class_size,value "
-            "FROM actions WHERE parent=? ORDER BY lhs,rhs",
+            f"SELECT {ActionRow.COLUMNS} FROM actions WHERE parent=? ORDER BY lhs,rhs",
             (parent.value,),
         )
-        return ZVec(
-            Database.ActionRow(
-                pairing=Pairing.of(Team(index=index_lhs), Team(index=index_rhs)),
-                repeat_cost=cost,
-                lhs_wins=StateId(value=lhs_wins),
-                rhs_wins=StateId(value=rhs_wins),
-                class_size=size,
-                value=value,
-            )
-            for index_lhs, index_rhs, cost, lhs_wins, rhs_wins, size, value in rows
-        )
+        return ZVec(ActionRow.of(row) for row in rows)
 
     def state_ids(self, start: int, stop: int | None) -> Iterator[StateId]:
         "The ids from `start` up to, not including, `stop`, in order."
@@ -137,27 +104,13 @@ class Database:
         ).fetchone()
         return None if row is None else StateId(value=row[0])
 
-    def _read(self, state_id: StateId) -> StoredState:
+    def _read(self, state_id: StateId) -> StateRow:
         row = self._con.execute(
-            "SELECT key,depth,active,value,expanded FROM states WHERE id=?",
-            (state_id.value,),
+            f"SELECT {StateRow.COLUMNS} FROM states WHERE id=?", (state_id.value,)
         ).fetchone()
         if row is None:
             raise AuditFailure(f"state {state_id.value} does not exist")
-        key, depth, num_teams, value, expanded = row
-        try:
-            state = PackedState(data=key).state
-        except ValueError as error:
-            raise AuditFailure(
-                f"state {state_id.value}: invalid position: {error}"
-            ) from error
-        return Database.StoredState(
-            state=state,
-            depth=depth,
-            num_teams=num_teams,
-            value=value,
-            is_expanded=bool(expanded),
-        )
+        return StateRow.of(state_id, row)
 
     def _count(self, sql: str, params: tuple[int, ...] = ()) -> int:
         count: int = self._con.execute(sql, params).fetchone()[0]
