@@ -40,14 +40,14 @@ class StateCheck:
         state_row = self.db.state_row(state_id)
         _check_standings(state_id, state_row)
         action_rows = self.db.action_rows(state_id)
-        self._check_pairings(state_id, state_row, action_rows)
+        self._check_actions_are_legal(state_id, state_row, action_rows)
         for action_row in action_rows:
-            self._check_children(state_id, state_row, action_row)
+            self._check_transitions(state_id, state_row, action_row)
         if self.is_solved:
-            self._check_values(state_id, state_row, action_rows)
+            self._check_gtv(state_id, state_row, action_rows)
         return PairingCount.of(action_rows)
 
-    def _check_pairings(
+    def _check_actions_are_legal(
         self,
         state_id: StateId,
         state_row: StateRow,
@@ -63,9 +63,9 @@ class StateCheck:
         legal = legal_pairings(state_row.state)
         if illegal := pairings - legal:
             raise AuditFailure.of(state_id, f"illegal pairings {illegal}")
-        self._check_pairings_covered(state_id, state_row, action_rows, legal)
+        self._check_actions_are_complete(state_id, state_row, action_rows, legal)
 
-    def _check_pairings_covered(
+    def _check_actions_are_complete(
         self,
         state_id: StateId,
         state_row: StateRow,
@@ -86,7 +86,7 @@ class StateCheck:
                 state_id, self.symmetry.orbits(state_row.state, legal), action_rows
             )
 
-    def _check_children(
+    def _check_transitions(
         self, state_id: StateId, state_row: StateRow, action_row: ActionRow
     ) -> None:
         pairing = action_row.pairing
@@ -118,7 +118,7 @@ class StateCheck:
             expected, stored_state
         )
 
-    def _check_values(
+    def _check_gtv(
         self,
         state_id: StateId,
         state_row: StateRow,
