@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
+from collections.abc import Iterable
 
 from javhar_util.immutables import ZSet, ZVec
 
@@ -149,10 +150,16 @@ def _check_orbits(
     for orbit in orbits:
         representatives = [pairing for pairing in sizes if pairing in orbit.members]
         if len(representatives) != 1:
+
+            def names(pairings: Iterable[Pairing]) -> list[tuple[int, int]]:
+                return sorted(
+                    (pairing.lhs.index, pairing.rhs.index) for pairing in pairings
+                )
+
             raise AuditFailure.of(
                 state_id,
-                f"orbit representatives: "
-                f"{_names(representatives)} stored for the orbit of {_names(orbit.members)}",
+                f"orbit representatives: {names(representatives)} stored "
+                f"for the orbit of {names(orbit.members)}",
             )
         if sizes[representatives[0]] != orbit.size:
             raise AuditFailure.of(
@@ -160,10 +167,6 @@ def _check_orbits(
                 f"orbit sizes: {representatives[0]} is stored "
                 f"as {sizes[representatives[0]]}, but its orbit has {orbit.size}",
             )
-
-
-def _names(pairings: ZSet[Pairing] | list[Pairing]) -> list[tuple[int, int]]:
-    return sorted((pairing.lhs.index, pairing.rhs.index) for pairing in pairings)
 
 
 def _check_standings(state_id: StateId, state_row: StateRow) -> None:
