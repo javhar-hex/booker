@@ -32,9 +32,7 @@ class StateRow:
         try:
             state = PackedState(data=key).state
         except ValueError as error:
-            raise AuditFailure(
-                f"state {state_id.value}: invalid position: {error}"
-            ) from error
+            raise AuditFailure.of(state_id, f"invalid position: {error}") from error
         return cls(
             state=state,
             depth=depth,

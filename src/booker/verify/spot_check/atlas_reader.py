@@ -115,7 +115,7 @@ class AtlasReader:
             f"SELECT {StateRow.COLUMNS} FROM states WHERE id=?", (state_id.value,)
         ).fetchone()
         if row is None:
-            raise AuditFailure(f"state {state_id.value} does not exist")
+            raise AuditFailure.of(state_id, "does not exist")
         return StateRow.of(state_id, row)
 
     def _count(self, sql: str, params: tuple[int, ...] = ()) -> int:
