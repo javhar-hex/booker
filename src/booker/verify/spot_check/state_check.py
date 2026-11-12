@@ -25,10 +25,11 @@ from booker.verify.spot_check.state_row import StateRow
 @dc.dataclass(frozen=True, slots=True)
 class StateCheck:
     """
-    Checks a position as the atlas stores it, and when it is solved the Bellman
-    equations too: a Collider position is worth the larger of its two children, and a
-    Scheduler position the least, over its actions, of what the action costs and is
-    worth. Children and orbits are checked cheaply, and with a `symmetry` thoroughly.
+    Checks a position as the atlas stores it and, when the atlas is solved, its
+    game-theoretical value (GTV) too. The GTV of a Collider position is the larger of the
+    GTVs of its two children. The GTV of a Scheduler position is the least, over its
+    children, of the action's cost plus the GTV of the child. Children and orbits are
+    checked cheaply, and with a `symmetry` thoroughly.
     """
 
     db: AtlasReader
