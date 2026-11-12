@@ -19,21 +19,21 @@ from booker.equilibrium.sql import COLLIDER_LAYER, SCHEDULER_LAYER, SCHEMA, SUMM
 class FlagsDatabase:
     "Obtain one with `FlagsDatabase.open`."
 
-    def __init__(self, con: sqlite3.Connection) -> None:
-        self._con = con
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
 
     @classmethod
     def open(cls, atlas: Path, flags: Path) -> FlagsDatabase:
         "`flags` is created if it is new; `atlas` is never written to, nor its schema guessed."
         # URIs, not paths, so that `mode=ro` is honoured whichever way SQLite was built.
-        con = sqlite3.connect(flags.resolve().as_uri(), uri=True)
+        connection = sqlite3.connect(flags.resolve().as_uri(), uri=True)
         try:
             attached = f"{atlas.resolve().as_uri()}?mode=ro"
-            con.execute("ATTACH DATABASE ? AS atlas", (attached,))
-            database = cls(con)
+            connection.execute("ATTACH DATABASE ? AS atlas", (attached,))
+            database = cls(connection)
             database._require_this_schema()
         except BaseException:
-            con.close()
+            connection.close()
             raise
         return database
 
@@ -46,18 +46,18 @@ class FlagsDatabase:
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        self._con.close()
+        self._connection.close()
 
     @contextlib.contextmanager
     def transaction(self) -> Iterator[None]:
-        with self._con:
+        with self._connection:
             yield
 
     def require_solved(self) -> None:
-        solved = self._con.execute(
+        solved = self._connection.execute(
             "SELECT value FROM atlas.meta WHERE key='solved'"
         ).fetchone()
-        unvalued = self._con.execute(
+        unvalued = self._connection.execute(
             "SELECT (SELECT COUNT(*) FROM atlas.states WHERE value IS NULL)"
             " + (SELECT COUNT(*) FROM atlas.actions WHERE value IS NULL)"
         ).fetchone()[0]
@@ -69,26 +69,26 @@ class FlagsDatabase:
             )
 
     def create_flag_tables(self) -> None:
-        self._con.executescript(SCHEMA)
+        self._connection.executescript(SCHEMA)
 
     def flag_root(self) -> None:
-        self._con.execute(
+        self._connection.execute(
             "INSERT INTO scheduler_flags VALUES (?, 1, 0)", (self._root_id(),)
         )
 
     def flag_depth(self, depth: int) -> None:
         "Flags the Collider positions under the Scheduler's at `depth`, then their children."
-        self._con.execute(COLLIDER_LAYER, (depth,))
-        self._con.execute(SCHEDULER_LAYER, (depth,))
+        self._connection.execute(COLLIDER_LAYER, (depth,))
+        self._connection.execute(SCHEDULER_LAYER, (depth,))
 
     def max_depth(self) -> int:
-        depth: int = self._con.execute("SELECT MAX(depth) FROM atlas.states").fetchone()[
-            0
-        ]
+        depth: int = self._connection.execute(
+            "SELECT MAX(depth) FROM atlas.states"
+        ).fetchone()[0]
         return depth
 
     def require_every_state_flagged(self) -> None:
-        missing = self._con.execute(
+        missing = self._connection.execute(
             "SELECT COUNT(*) FROM atlas.states s"
             " WHERE NOT EXISTS (SELECT 1 FROM scheduler_flags f WHERE f.id = s.id)"
         ).fetchone()[0]
@@ -96,7 +96,7 @@ class FlagsDatabase:
             raise RuntimeError(f"{missing:,} states were never reached from the root")
 
     def layers(self) -> ZVec[LayerSummary]:
-        rows = self._con.execute(SUMMARY, (self._root_value(),)).fetchall()
+        rows = self._connection.execute(SUMMARY, (self._root_value(),)).fetchall()
         return ZVec(
             LayerSummary(
                 depth=depth,
@@ -119,7 +119,7 @@ class FlagsDatabase:
         )
 
     def _require_this_schema(self) -> None:
-        version = self._con.execute("PRAGMA atlas.user_version").fetchone()[0]
+        version = self._connection.execute("PRAGMA atlas.user_version").fetchone()[0]
         if version != SCHEMA_VERSION:
             raise ValueError(
                 f"Atlas has schema v{version}, "
@@ -127,13 +127,13 @@ class FlagsDatabase:
             )
 
     def _root_id(self) -> int:
-        row = self._con.execute(
+        row = self._connection.execute(
             "SELECT value FROM atlas.meta WHERE key='root_id'"
         ).fetchone()
         return int(row[0])
 
     def _root_value(self) -> int:
-        row = self._con.execute(
+        row = self._connection.execute(
             "SELECT value FROM atlas.states WHERE id = ?", (self._root_id(),)
         ).fetchone()
         return int(row[0])

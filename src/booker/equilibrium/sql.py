@@ -23,16 +23,17 @@ CREATE TABLE collider_flags (
 
 COLLIDER_LAYER = """
 WITH layer AS (
-  SELECT c.parent, c.lhs, c.rhs,
-         f.equilibrium AND c.repeat_cost + c.value = p.value AS optimal_pairing,
-         MIN(wa.value, wb.value) < c.value AS has_mistake,
-         f.fewest_past_repeats + c.repeat_cost AS repeats
-  FROM atlas.states p
-  JOIN atlas.actions c ON c.parent = p.id
-  JOIN scheduler_flags f ON f.id = p.id
-  JOIN atlas.states wa ON wa.id = c.lhs_wins
-  JOIN atlas.states wb ON wb.id = c.rhs_wins
-  WHERE p.depth = ?
+  SELECT action.parent, action.lhs, action.rhs,
+         parent_flags.equilibrium
+           AND action.repeat_cost + action.value = parent_state.value AS optimal_pairing,
+         MIN(lhs_child.value, rhs_child.value) < action.value AS has_mistake,
+         parent_flags.fewest_past_repeats + action.repeat_cost AS repeats
+  FROM atlas.states parent_state
+  JOIN atlas.actions action ON action.parent = parent_state.id
+  JOIN scheduler_flags parent_flags ON parent_flags.id = parent_state.id
+  JOIN atlas.states lhs_child ON lhs_child.id = action.lhs_wins
+  JOIN atlas.states rhs_child ON rhs_child.id = action.rhs_wins
+  WHERE parent_state.depth = ?
 )
 INSERT INTO collider_flags
 SELECT parent, lhs, rhs, optimal_pairing, optimal_pairing AND has_mistake, repeats FROM layer
@@ -40,31 +41,41 @@ SELECT parent, lhs, rhs, optimal_pairing, optimal_pairing AND has_mistake, repea
 
 SCHEDULER_LAYER = """
 WITH edge AS (
-  SELECT CASE w.side WHEN 0 THEN c.lhs_wins ELSE c.rhs_wins END AS child,
-         f.equilibrium, c.value AS collider_value, f.fewest_past_repeats
-  FROM atlas.states p
-  JOIN atlas.actions c ON c.parent = p.id
-  JOIN collider_flags f ON (f.parent, f.lhs, f.rhs) = (c.parent, c.lhs, c.rhs)
-  CROSS JOIN (SELECT 0 AS side UNION ALL SELECT 1) w
-  WHERE p.depth = ?
+  SELECT CASE winner.side WHEN 0 THEN action.lhs_wins ELSE action.rhs_wins END AS child,
+         action_flags.equilibrium, action.value AS collider_value,
+         action_flags.fewest_past_repeats
+  FROM atlas.states parent_state
+  JOIN atlas.actions action ON action.parent = parent_state.id
+  JOIN collider_flags action_flags
+    ON (action_flags.parent, action_flags.lhs, action_flags.rhs)
+     = (action.parent, action.lhs, action.rhs)
+  CROSS JOIN (SELECT 0 AS side UNION ALL SELECT 1) winner
+  WHERE parent_state.depth = ?
 )
 INSERT INTO scheduler_flags
-SELECT e.child, MAX(e.equilibrium AND s.value = e.collider_value),
-       MIN(e.fewest_past_repeats)
-FROM edge e JOIN atlas.states s ON s.id = e.child
-GROUP BY e.child
+SELECT edge.child,
+       MAX(edge.equilibrium AND child_state.value = edge.collider_value),
+       MIN(edge.fewest_past_repeats)
+FROM edge JOIN atlas.states child_state ON child_state.id = edge.child
+GROUP BY edge.child
 """
 
 SUMMARY = """
-WITH s AS (
-  SELECT st.depth, COUNT(*) AS n, SUM(f.equilibrium) AS eq,
-         SUM(NOT f.equilibrium AND f.fewest_past_repeats + st.value = ?) AS balanced_off
-  FROM atlas.states st JOIN scheduler_flags f ON f.id = st.id GROUP BY st.depth
-), c AS (
-  SELECT p.depth, COUNT(*) AS n, SUM(f.equilibrium) AS eq, SUM(f.critical) AS critical
-  FROM collider_flags f JOIN atlas.states p ON p.id = f.parent GROUP BY p.depth
+WITH scheduler AS (
+  SELECT state.depth, COUNT(*) AS num_positions, SUM(flags.equilibrium) AS num_equilibrium,
+         SUM(NOT flags.equilibrium AND flags.fewest_past_repeats + state.value = ?)
+           AS num_balanced_off
+  FROM atlas.states state JOIN scheduler_flags flags ON flags.id = state.id
+  GROUP BY state.depth
+), collider AS (
+  SELECT parent_state.depth, COUNT(*) AS num_positions,
+         SUM(flags.equilibrium) AS num_equilibrium, SUM(flags.critical) AS num_critical
+  FROM collider_flags flags JOIN atlas.states parent_state ON parent_state.id = flags.parent
+  GROUP BY parent_state.depth
 )
-SELECT s.depth, s.n, s.eq, s.balanced_off,
-       COALESCE(c.n, 0), COALESCE(c.eq, 0), COALESCE(c.critical, 0)
-FROM s LEFT JOIN c ON c.depth = s.depth ORDER BY s.depth
+SELECT scheduler.depth, scheduler.num_positions, scheduler.num_equilibrium,
+       scheduler.num_balanced_off, COALESCE(collider.num_positions, 0),
+       COALESCE(collider.num_equilibrium, 0), COALESCE(collider.num_critical, 0)
+FROM scheduler LEFT JOIN collider ON collider.depth = scheduler.depth
+ORDER BY scheduler.depth
 """

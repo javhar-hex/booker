@@ -1,6 +1,7 @@
 """Equilibrium pass on a hand-built solved atlas whose flags can be read off by hand.
 
-Root R (value 1) has four Collider children (pairing: repeat cost, winners, value):
+Root R (value 1; the state ids are STATE_ID_ROOT, STATE_ID_X, and so on) has four
+Collider children (pairing: repeat cost, winners, value):
   C1 (0,1): cost 0, X=1 / Y=0, value 1  -> equilibrium, critical
   C2 (0,2): cost 1, Z=1 / Y=0, value 1  -> off: 1 + 1 > 1
   C3 (0,3): cost 0, W=2 / V=1, value 2  -> off: 0 + 2 > 1
@@ -23,8 +24,24 @@ from booker.cli import main
 from booker.equilibrium.flags import build, summary
 from booker.equilibrium.layers import LayerSummary
 
-R, X, Y, Z, W, V = 1, 2, 3, 4, 5, 6
-VALUES = ZMap({R: 1, X: 1, Y: 0, Z: 1, W: 2, V: 1})
+STATE_ID_ROOT, STATE_ID_X, STATE_ID_Y, STATE_ID_Z, STATE_ID_W, STATE_ID_V = (
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+)
+VALUES = ZMap(
+    {
+        STATE_ID_ROOT: 1,
+        STATE_ID_X: 1,
+        STATE_ID_Y: 0,
+        STATE_ID_Z: 1,
+        STATE_ID_W: 2,
+        STATE_ID_V: 1,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -39,10 +56,38 @@ class Collider:
 
 COLLIDERS = ZVec(
     [
-        Collider(lhs=0, rhs=1, repeat_cost=0, lhs_wins=X, rhs_wins=Y, value=1),
-        Collider(lhs=0, rhs=2, repeat_cost=1, lhs_wins=Z, rhs_wins=Y, value=1),
-        Collider(lhs=0, rhs=3, repeat_cost=0, lhs_wins=W, rhs_wins=V, value=2),
-        Collider(lhs=1, rhs=2, repeat_cost=0, lhs_wins=X, rhs_wins=Z, value=1),
+        Collider(
+            lhs=0,
+            rhs=1,
+            repeat_cost=0,
+            lhs_wins=STATE_ID_X,
+            rhs_wins=STATE_ID_Y,
+            value=1,
+        ),
+        Collider(
+            lhs=0,
+            rhs=2,
+            repeat_cost=1,
+            lhs_wins=STATE_ID_Z,
+            rhs_wins=STATE_ID_Y,
+            value=1,
+        ),
+        Collider(
+            lhs=0,
+            rhs=3,
+            repeat_cost=0,
+            lhs_wins=STATE_ID_W,
+            rhs_wins=STATE_ID_V,
+            value=2,
+        ),
+        Collider(
+            lhs=1,
+            rhs=2,
+            repeat_cost=0,
+            lhs_wins=STATE_ID_X,
+            rhs_wins=STATE_ID_Z,
+            value=1,
+        ),
     ]
 )
 
@@ -54,24 +99,34 @@ class Flags:
 
 
 def _tiny_atlas(path: Path) -> Path:
-    con = open_connection(path)
-    with con:
-        con.execute("INSERT INTO meta VALUES ('root_id', ?)", (str(R),))
-        con.execute("INSERT INTO meta VALUES ('solved', 'true')")
-        for sid, value in VALUES.items():
-            depth = 0 if sid == R else 1
-            con.execute(
+    connection = open_connection(path)
+    with connection:
+        connection.execute(
+            "INSERT INTO meta VALUES ('root_id', ?)", (str(STATE_ID_ROOT),)
+        )
+        connection.execute("INSERT INTO meta VALUES ('solved', 'true')")
+        for state_id, value in VALUES.items():
+            depth = 0 if state_id == STATE_ID_ROOT else 1
+            connection.execute(
                 "INSERT INTO states (id, key, depth, active, expanded, value)"
                 " VALUES (?, ?, ?, 2, 1, ?)",
-                (sid, bytes([sid]), depth, value),
+                (state_id, bytes([state_id]), depth, value),
             )
-        for c in COLLIDERS:
-            con.execute(
+        for collider in COLLIDERS:
+            connection.execute(
                 "INSERT INTO actions (parent, lhs, rhs, repeat_cost, class_size, lhs_wins,"
                 " rhs_wins, value) VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
-                (R, c.lhs, c.rhs, c.repeat_cost, c.lhs_wins, c.rhs_wins, c.value),
+                (
+                    STATE_ID_ROOT,
+                    collider.lhs,
+                    collider.rhs,
+                    collider.repeat_cost,
+                    collider.lhs_wins,
+                    collider.rhs_wins,
+                    collider.value,
+                ),
             )
-    con.close()
+    connection.close()
     return path
 
 
@@ -83,9 +138,9 @@ def flagged(tmp_path: Path) -> Path:
 
 
 def _query(flags: Path, sql: str) -> list[tuple[int, ...]]:
-    con = sqlite3.connect(flags)
-    rows = con.execute(sql).fetchall()
-    con.close()
+    connection = sqlite3.connect(flags)
+    rows = connection.execute(sql).fetchall()
+    connection.close()
     return rows
 
 
@@ -93,18 +148,18 @@ def test_scheduler_flags(flagged: Path) -> None:
     rows = _query(flagged / "flags.db", "SELECT * FROM scheduler_flags")
     got = ZMap(
         {
-            sid: Flags(equilibrium=bool(eq), fewest_past_repeats=past)
-            for sid, eq, past in rows
+            state_id: Flags(equilibrium=bool(equilibrium), fewest_past_repeats=past)
+            for state_id, equilibrium, past in rows
         }
     )
     assert got == ZMap(
         {
-            R: Flags(equilibrium=True, fewest_past_repeats=0),
-            X: Flags(equilibrium=True, fewest_past_repeats=0),
-            Y: Flags(equilibrium=False, fewest_past_repeats=0),
-            Z: Flags(equilibrium=True, fewest_past_repeats=0),
-            W: Flags(equilibrium=False, fewest_past_repeats=0),
-            V: Flags(equilibrium=False, fewest_past_repeats=0),
+            STATE_ID_ROOT: Flags(equilibrium=True, fewest_past_repeats=0),
+            STATE_ID_X: Flags(equilibrium=True, fewest_past_repeats=0),
+            STATE_ID_Y: Flags(equilibrium=False, fewest_past_repeats=0),
+            STATE_ID_Z: Flags(equilibrium=True, fewest_past_repeats=0),
+            STATE_ID_W: Flags(equilibrium=False, fewest_past_repeats=0),
+            STATE_ID_V: Flags(equilibrium=False, fewest_past_repeats=0),
         }
     )
 
@@ -148,10 +203,10 @@ def test_summary(flagged: Path) -> None:
 
 
 def _edit(atlas: Path, sql: str) -> Path:
-    con = sqlite3.connect(atlas)
-    with con:
-        con.execute(sql)
-    con.close()
+    connection = sqlite3.connect(atlas)
+    with connection:
+        connection.execute(sql)
+    connection.close()
     return atlas
 
 
@@ -167,7 +222,10 @@ def _only(directory: Path) -> list[str]:
 @pytest.mark.parametrize(
     ("sql", "complaint"),
     [
-        (f"UPDATE states SET value = NULL WHERE id = {V}", "positions without a value"),
+        (
+            f"UPDATE states SET value = NULL WHERE id = {STATE_ID_V}",
+            "positions without a value",
+        ),
         ("DELETE FROM meta WHERE key = 'solved'", "not been through"),
         ("PRAGMA user_version = 4", "schema v4"),
         ("PRAGMA user_version = 0", "schema v0"),
@@ -187,7 +245,7 @@ def test_refuses_an_atlas_it_cannot_read(
 def test_an_unsolved_atlas_is_not_solved(tmp_path: Path) -> None:
     atlas = _edit(
         _tiny_atlas(tmp_path / "atlas.db"),
-        f"UPDATE states SET value = NULL WHERE id = {V}",
+        f"UPDATE states SET value = NULL WHERE id = {STATE_ID_V}",
     )
 
     with pytest.raises(ValueError, match="not solved"):

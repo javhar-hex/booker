@@ -20,18 +20,18 @@ from booker.equilibrium.database import FlagsDatabase
 from booker.equilibrium.layers import LayerSummary
 
 
-def build(atlas: Path, out: Path) -> None:
+def build(atlas: Path, flags: Path) -> None:
     """
-    Writes the flags of `atlas` to `out`, which must not exist. It appears only once it
+    Writes the flags of `atlas` to `flags`, which must not exist. It appears only once it
     is complete: a failed build leaves nothing behind to refuse the next one.
     """
-    if out.exists():
-        raise FileExistsError(out)
-    partial = out.with_name(out.name + ".partial")
+    if flags.exists():
+        raise FileExistsError(flags)
+    partial = flags.with_name(flags.name + ".partial")
     partial.unlink(missing_ok=True)
     try:
         _build_into(atlas, partial)
-        os.replace(partial, out)
+        os.replace(partial, flags)
     except BaseException:
         with contextlib.suppress(FileNotFoundError):
             partial.unlink()
