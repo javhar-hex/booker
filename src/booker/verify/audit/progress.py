@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import dataclasses as dc
 
-from booker.verify.id_range import IdRange
-from booker.verify.state_id import StateId
+from booker.verify.audit.id_range import IdRange
+from booker.verify.spot_check.state_id import StateId
 
 BEFORE_ANY_ID = -1
 

@@ -14,12 +14,12 @@ from booker.core.model.successor import successor
 from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
-from booker.verify.action_row import ActionRow
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.database import Database
-from booker.verify.state_id import StateId
-from booker.verify.state_row import StateRow
-from booker.verify.tally import Tally
+from booker.verify.spot_check.action_row import ActionRow
+from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.state_id import StateId
+from booker.verify.spot_check.state_row import StateRow
+from booker.verify.spot_check.tally import Tally
 
 
 @dc.dataclass(frozen=True, slots=True)

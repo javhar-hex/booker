@@ -1,7 +1,7 @@
 from booker.core.model.pairing import Pairing
 from booker.core.model.team import Team
-from booker.verify.action_row import ActionRow
-from booker.verify.state_id import StateId
+from booker.verify.spot_check.action_row import ActionRow
+from booker.verify.spot_check.state_id import StateId
 
 
 def test_builds_the_pairing_and_the_children_of_a_row() -> None:

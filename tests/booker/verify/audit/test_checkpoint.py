@@ -4,12 +4,12 @@ from pathlib import Path
 import pytest
 
 from booker.core.symmetry.state_symmetries import VF2
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.audit_scope import AuditScope
-from booker.verify.checkpoint import Checkpoint
-from booker.verify.id_range import IdRange
-from booker.verify.progress import Progress
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_scope import AuditScope
+from booker.verify.audit.checkpoint import Checkpoint
+from booker.verify.audit.id_range import IdRange
+from booker.verify.audit.progress import Progress
+from booker.verify.spot_check.audit_failure import AuditFailure
 
 
 def _scope(path: Path, ids: IdRange | None = None) -> AuditScope:

@@ -18,10 +18,10 @@ ALLOWED_OUTSIDE_VERIFY = (
 )
 
 
-def _imports() -> set[str]:
-    package = Path(booker.verify.__file__).parent
+def _imports(subpackage: str = "") -> set[str]:
+    package = Path(booker.verify.__file__).parent / subpackage
     imported: set[str] = set()
-    for source in package.glob("*.py"):
+    for source in package.rglob("*.py"):
         for node in ast.walk(ast.parse(source.read_text())):
             if isinstance(node, ast.ImportFrom) and node.module:
                 imported.add(node.module)
@@ -31,7 +31,7 @@ def _imports() -> set[str]:
 
 
 def test_the_verifier_reads_the_atlas_with_its_own_code() -> None:
-    assert "booker.verify.database" in _imports()
+    assert "booker.verify.spot_check.database" in _imports()
 
 
 def test_the_verifier_imports_nothing_that_generates_the_atlas() -> None:
@@ -39,3 +39,20 @@ def test_the_verifier_imports_nothing_that_generates_the_atlas() -> None:
 
     assert outside
     assert all(name.startswith(ALLOWED_OUTSIDE_VERIFY) for name in outside), outside
+
+
+def test_the_spot_check_knows_nothing_of_the_audit_that_runs_it() -> None:
+    inside = {
+        name for name in _imports("spot_check") if name.startswith("booker.verify")
+    }
+
+    assert inside
+    assert all(name.startswith("booker.verify.spot_check") for name in inside), inside
+
+
+def test_the_symmetry_sample_knows_nothing_of_the_audit() -> None:
+    inside = {
+        name for name in _imports("symmetry_sample") if name.startswith("booker.verify")
+    }
+
+    assert not any(name.startswith("booker.verify.audit") for name in inside), inside

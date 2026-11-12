@@ -6,7 +6,7 @@ import dataclasses as dc
 
 from javhar_util.immutables import ZVec
 
-from booker.verify.action_row import ActionRow
+from booker.verify.spot_check.action_row import ActionRow
 
 
 @dc.dataclass(frozen=True, slots=True)

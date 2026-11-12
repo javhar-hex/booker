@@ -1,5 +1,5 @@
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.id_range import IdRange
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.id_range import IdRange
 
 
 def test_only_a_range_from_the_start_is_the_whole_database() -> None:

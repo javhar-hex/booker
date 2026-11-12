@@ -14,8 +14,8 @@ from booker.core.symmetry.bliss_symmetry import BlissSymmetry
 from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.state_symmetries import STATE_SYMMETRIES
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.symmetry_sample import compare_symmetries
+from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.symmetry_sample.symmetry_sample import compare_symmetries
 
 ALL = STATE_SYMMETRIES
 

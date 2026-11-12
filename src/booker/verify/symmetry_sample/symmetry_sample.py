@@ -23,10 +23,10 @@ from booker.core.model.successor import successor
 from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.database import Database
-from booker.verify.sample_report import SampleReport
-from booker.verify.state_id import StateId
+from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.state_id import StateId
+from booker.verify.symmetry_sample.sample_report import SampleReport
 
 
 def compare_symmetries(

@@ -1,7 +1,7 @@
 from javhar_util.immutables import ZVec
 
-from booker.verify.action_row import ActionRow
-from booker.verify.tally import Tally
+from booker.verify.spot_check.action_row import ActionRow
+from booker.verify.spot_check.tally import Tally
 
 
 def _row(index_rhs: int, class_size: int) -> ActionRow:

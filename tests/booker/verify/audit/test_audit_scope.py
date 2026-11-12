@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from booker.core.symmetry.state_symmetries import BLISS
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.audit_scope import AuditScope
-from booker.verify.id_range import IdRange
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_scope import AuditScope
+from booker.verify.audit.id_range import IdRange
 
 
 def test_covers_the_database_by_its_absolute_path_and_the_ids_and_the_mode() -> None:

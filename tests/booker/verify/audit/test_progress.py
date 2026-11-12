@@ -1,6 +1,6 @@
-from booker.verify.id_range import IdRange
-from booker.verify.progress import BEFORE_ANY_ID, Progress
-from booker.verify.state_id import StateId
+from booker.verify.audit.id_range import IdRange
+from booker.verify.audit.progress import BEFORE_ANY_ID, Progress
+from booker.verify.spot_check.state_id import StateId
 
 
 def test_a_whole_audit_starts_before_every_id() -> None:

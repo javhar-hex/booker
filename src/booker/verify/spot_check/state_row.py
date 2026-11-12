@@ -7,8 +7,8 @@ from typing import ClassVar
 
 from booker.atlas.packed_state import PackedState
 from booker.core.model.state import State
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.state_id import StateId
+from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.state_id import StateId
 
 
 @dc.dataclass(frozen=True, slots=True)

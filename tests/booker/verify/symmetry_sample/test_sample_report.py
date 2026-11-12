@@ -1,4 +1,4 @@
-from booker.verify.sample_report import SampleReport
+from booker.verify.symmetry_sample.sample_report import SampleReport
 
 
 def test_a_report_says_how_much_was_asked() -> None:

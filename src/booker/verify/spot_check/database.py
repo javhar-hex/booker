@@ -13,10 +13,10 @@ from typing import Self
 
 from javhar_util.immutables import ZMap, ZVec
 
-from booker.verify.action_row import ActionRow
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.state_id import StateId
-from booker.verify.state_row import StateRow
+from booker.verify.spot_check.action_row import ActionRow
+from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.state_id import StateId
+from booker.verify.spot_check.state_row import StateRow
 
 POSITION_CACHE_SIZE = 65536
 

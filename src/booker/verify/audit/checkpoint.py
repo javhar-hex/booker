@@ -8,10 +8,10 @@ import os
 from pathlib import Path
 from typing import Any
 
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.audit_scope import AuditScope
-from booker.verify.progress import Progress
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_scope import AuditScope
+from booker.verify.audit.progress import Progress
+from booker.verify.spot_check.audit_failure import AuditFailure
 
 CHECKPOINT_EVERY = 1000
 

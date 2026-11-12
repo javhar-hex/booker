@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from booker.cli import main
-from booker.verify.audit_failure import AuditFailure
+from booker.verify.spot_check.audit_failure import AuditFailure
 
 
 @pytest.fixture

@@ -1,8 +1,8 @@
 from booker.core.symmetry.state_symmetries import VF2
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.audit_report import AuditReport
-from booker.verify.id_range import IdRange
-from booker.verify.progress import Progress
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_report import AuditReport
+from booker.verify.audit.id_range import IdRange
+from booker.verify.audit.progress import Progress
 
 
 def test_a_report_says_what_was_checked() -> None:

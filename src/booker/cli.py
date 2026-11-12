@@ -15,10 +15,10 @@ from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
 from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_summaries
 from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
-from booker.verify.audit import audit
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.id_range import IdRange
-from booker.verify.symmetry_sample import compare_symmetries
+from booker.verify.audit.audit import audit
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.id_range import IdRange
+from booker.verify.symmetry_sample.symmetry_sample import compare_symmetries
 
 _LOG = functools.partial(print, flush=True)
 

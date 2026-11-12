@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.audit_report import AuditReport
-from booker.verify.checkpoint import CHECKPOINT_EVERY, Checkpoint
-from booker.verify.database import Database
-from booker.verify.progress import Progress
-from booker.verify.state_check import StateCheck
-from booker.verify.whole_database import (
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_report import AuditReport
+from booker.verify.audit.checkpoint import CHECKPOINT_EVERY, Checkpoint
+from booker.verify.audit.progress import Progress
+from booker.verify.audit.whole_database import (
     check_metadata,
     check_root_value,
     check_whole_database,
 )
+from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.state_check import StateCheck
 
 REPORT_EVERY = 10000
 

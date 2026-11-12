@@ -7,7 +7,7 @@ from typing import ClassVar
 
 from booker.core.model.pairing import Pairing
 from booker.core.model.team import Team
-from booker.verify.state_id import StateId
+from booker.verify.spot_check.state_id import StateId
 
 
 @dc.dataclass(frozen=True, slots=True)

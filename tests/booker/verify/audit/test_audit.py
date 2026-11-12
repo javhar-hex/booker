@@ -23,14 +23,14 @@ from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
-from booker.verify.audit import audit
-from booker.verify.audit_failure import AuditFailure
-from booker.verify.audit_plan import AuditPlan
-from booker.verify.audit_report import AuditReport
-from booker.verify.database import Database
-from booker.verify.id_range import IdRange
-from booker.verify.state_check import StateCheck
-from booker.verify.state_id import StateId
+from booker.verify.audit.audit import audit
+from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_report import AuditReport
+from booker.verify.audit.id_range import IdRange
+from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.state_check import StateCheck
+from booker.verify.spot_check.state_id import StateId
 
 PAIRING = Pairing.of(Team(index=0), Team(index=1))
 RECORD_5_1 = Record(wins=5, losses=1)

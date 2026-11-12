@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses as dc
 import os
 
-from booker.verify.audit_plan import AuditPlan
+from booker.verify.audit.audit_plan import AuditPlan
 
 
 @dc.dataclass(frozen=True, slots=True)
