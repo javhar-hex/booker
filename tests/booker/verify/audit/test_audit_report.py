@@ -3,6 +3,7 @@ from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.audit.id_range import IdRange
 from booker.verify.audit.progress import Progress
+from booker.verify.spot_check.pairing_count import PairingCount
 
 
 def test_a_report_says_what_was_checked() -> None:
@@ -10,8 +11,7 @@ def test_a_report_says_what_was_checked() -> None:
         ids=IdRange(start=2),
         strict=VF2,
         states=1500,
-        actions=3,
-        pairings=4,
+        counted=PairingCount(orbits=3, pairings=4),
         is_solved=True,
         unexpanded=0,
     )
@@ -27,8 +27,7 @@ def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
         ids=IdRange(),
         strict=None,
         states=1,
-        actions=2,
-        pairings=3,
+        counted=PairingCount(orbits=2, pairings=3),
         is_solved=False,
         unexpanded=5,
     )
@@ -41,7 +40,9 @@ def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
 
 def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() -> None:
     plan = AuditPlan(db="atlas.db", strict=VF2, ids=IdRange(start=2))
-    progress = Progress(next_id=9, states=7, actions=30, pairings=44)
+    progress = Progress(
+        next_id=9, states=7, counted=PairingCount(orbits=30, pairings=44)
+    )
 
     report = AuditReport.of(plan, progress, is_solved=True, unexpanded=5)
 
@@ -49,8 +50,7 @@ def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() ->
         ids=IdRange(start=2),
         strict=VF2,
         states=7,
-        actions=30,
-        pairings=44,
+        counted=PairingCount(orbits=30, pairings=44),
         is_solved=True,
         unexpanded=5,
     )

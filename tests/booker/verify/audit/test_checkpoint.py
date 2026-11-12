@@ -10,6 +10,7 @@ from booker.verify.audit.checkpoint import Checkpoint
 from booker.verify.audit.id_range import IdRange
 from booker.verify.audit.progress import Progress
 from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.pairing_count import PairingCount
 
 
 def _scope(path: Path, ids: IdRange | None = None) -> AuditScope:
@@ -23,7 +24,9 @@ def test_a_missing_file_means_no_progress(tmp_path: Path) -> None:
 
 def test_saved_progress_is_loaded_again(tmp_path: Path) -> None:
     checkpoint = Checkpoint(str(tmp_path / "p.json"), _scope(tmp_path))
-    progress = Progress(next_id=12, states=11, actions=40, pairings=90)
+    progress = Progress(
+        next_id=12, states=11, counted=PairingCount(orbits=40, pairings=90)
+    )
 
     checkpoint.save(progress)
 
@@ -32,7 +35,7 @@ def test_saved_progress_is_loaded_again(tmp_path: Path) -> None:
 
 def test_saving_leaves_no_temporary_file(tmp_path: Path) -> None:
     Checkpoint(str(tmp_path / "p.json"), _scope(tmp_path)).save(
-        Progress(next_id=1, states=0, actions=0, pairings=0)
+        Progress(next_id=1, states=0, counted=PairingCount.none())
     )
 
     assert sorted(path.name for path in tmp_path.iterdir()) == ["p.json"]
@@ -41,7 +44,7 @@ def test_saving_leaves_no_temporary_file(tmp_path: Path) -> None:
 def test_the_file_keeps_the_format_of_earlier_audits(tmp_path: Path) -> None:
     path = tmp_path / "p.json"
     Checkpoint(str(path), _scope(tmp_path, IdRange(start=3))).save(
-        Progress(next_id=4, states=1, actions=2, pairings=3)
+        Progress(next_id=4, states=1, counted=PairingCount(orbits=2, pairings=3))
     )
 
     assert json.loads(path.read_text()) == {

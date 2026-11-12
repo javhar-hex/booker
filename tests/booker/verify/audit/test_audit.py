@@ -29,6 +29,7 @@ from booker.verify.audit.audit_report import AuditReport
 from booker.verify.audit.id_range import IdRange
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_check import StateCheck
 from booker.verify.spot_check.state_id import StateId
 
@@ -114,7 +115,8 @@ def solved(tmp_path: Path) -> Path:
 def test_accepts_a_solved_atlas(solved: Path) -> None:
     report = _audit(solved)
 
-    assert (report.states, report.actions, report.pairings) == (2, 1, 1)
+    assert report.states == 2
+    assert report.counted == PairingCount(orbits=1, pairings=1)
     assert report.is_solved
     assert report.unexpanded == 0
 

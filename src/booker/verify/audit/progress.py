@@ -5,6 +5,7 @@ from __future__ import annotations
 import dataclasses as dc
 
 from booker.verify.audit.id_range import IdRange
+from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
 
 BEFORE_ANY_ID = -1
@@ -16,18 +17,16 @@ class Progress:
 
     next_id: int
     states: int
-    actions: int
-    pairings: int
+    counted: PairingCount
 
     @classmethod
     def start(cls, ids: IdRange) -> Progress:
         first = BEFORE_ANY_ID if ids.start is None else ids.start
-        return cls(next_id=first, states=0, actions=0, pairings=0)
+        return cls(next_id=first, states=0, counted=PairingCount.none())
 
-    def after(self, state: StateId, actions: int, pairings: int) -> Progress:
+    def after(self, state: StateId, counted: PairingCount) -> Progress:
         return Progress(
             next_id=state.value + 1,
             states=self.states + 1,
-            actions=self.actions + actions,
-            pairings=self.pairings + pairings,
+            counted=self.counted.plus(counted),
         )

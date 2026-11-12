@@ -42,14 +42,15 @@ def _walk(
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")
     check = StateCheck(db=db, symmetry=plan.strict, is_solved=is_solved)
     for state_id in db.state_ids(progress.next_id, plan.ids.stop):
-        count = check.run(state_id)
-        progress = progress.after(state_id, count.orbits, count.pairings)
+        progress = progress.after(state_id, check.run(state_id))
         if checkpoint and _is_time_to_save(progress, plan):
             checkpoint.save(progress)
         if plan.limit is not None and progress.states >= plan.limit:
             break
         if progress.states % REPORT_EVERY == 0:
-            log(f"checked {progress.states:,} states, {progress.actions:,} actions")
+            log(
+                f"checked {progress.states:,} states, {progress.counted.orbits:,} actions"
+            )
     return progress
 
 

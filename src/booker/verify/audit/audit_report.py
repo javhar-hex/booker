@@ -8,6 +8,7 @@ from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.id_range import IdRange
 from booker.verify.audit.progress import Progress
+from booker.verify.spot_check.pairing_count import PairingCount
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -15,8 +16,7 @@ class AuditReport:
     ids: IdRange
     strict: StateSymmetry | None
     states: int
-    actions: int
-    pairings: int
+    counted: PairingCount
     is_solved: bool
     unexpanded: int
 
@@ -29,8 +29,7 @@ class AuditReport:
             ids=plan.ids,
             strict=plan.strict,
             states=progress.states,
-            actions=progress.actions,
-            pairings=progress.pairings,
+            counted=progress.counted,
             is_solved=is_solved,
             unexpanded=unexpanded,
         )
@@ -42,7 +41,7 @@ class AuditReport:
             else f"children and orbits compared by {self.strict.name}"
         )
         return (
-            f"PASS: ids {self.ids}: checked {self.states:,} states / {self.actions:,} "
-            f"actions ({self.pairings:,} labelled pairings), {how}, "
+            f"PASS: ids {self.ids}: checked {self.states:,} states / "
+            f"{self.counted.orbits:,} actions ({self.counted.pairings:,} labelled pairings), {how}, "
             f"solved={self.is_solved}, unexpanded={self.unexpanded:,}"
         )

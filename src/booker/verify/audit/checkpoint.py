@@ -12,6 +12,7 @@ from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_scope import AuditScope
 from booker.verify.audit.progress import Progress
 from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.pairing_count import PairingCount
 
 CHECKPOINT_EVERY = 1000
 
@@ -42,15 +43,24 @@ class Checkpoint:
         return Progress(
             next_id=saved["next_id"],
             states=saved["states"],
-            actions=saved["actions"],
-            pairings=saved["pairings"],
+            counted=PairingCount(orbits=saved["actions"], pairings=saved["pairings"]),
         )
 
     def save(self, progress: Progress) -> None:
         "Atomically: a crash leaves the previous checkpoint, never half of the next."
         temporary = self.path + ".tmp"
         with open(temporary, "w") as f:
-            json.dump({"scope": dc.asdict(self.scope), **dc.asdict(progress)}, f)
+            json.dump(
+                {
+                    "scope": dc.asdict(self.scope),
+                    "next_id": progress.next_id,
+                    "states": progress.states,
+                    # The file keeps the names of earlier audits: its actions are orbits.
+                    "actions": progress.counted.orbits,
+                    "pairings": progress.counted.pairings,
+                },
+                f,
+            )
             f.flush()
             os.fsync(f.fileno())
         os.replace(temporary, self.path)
