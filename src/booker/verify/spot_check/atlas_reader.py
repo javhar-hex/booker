@@ -60,14 +60,12 @@ class AtlasReader:
 
     def state_ids(self, start: int, stop: int | None) -> Iterator[StateId]:
         "The ids from `start` up to, not including, `stop`, in order."
-        if stop is None:
-            rows = self._connection.execute(
-                "SELECT id FROM states WHERE id>=? ORDER BY id", (start,)
-            )
-        else:
-            rows = self._connection.execute(
-                "SELECT id FROM states WHERE id>=? AND id<? ORDER BY id", (start, stop)
-            )
+        # SQLite cannot use `id<?` as a bound inside the OR, so a range with a stop scans
+        # on to the end of the table once, after its last row. A flag keeps the SQL one query.
+        rows = self._connection.execute(
+            "SELECT id FROM states WHERE id>=? AND (? OR id<?) ORDER BY id",
+            (start, stop is None, stop),
+        )
         for (state_id,) in rows:
             yield StateId(value=state_id)
 
