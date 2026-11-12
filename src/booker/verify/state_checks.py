@@ -15,7 +15,8 @@ from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
 from booker.verify.audit_failure import AuditFailure
-from booker.verify.database import ActionRow, Database, StateId, StoredState
+from booker.verify.database import Database
+from booker.verify.state_id import StateId
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -49,7 +50,10 @@ class StateCheck:
         return Tally(actions=len(rows), pairings=sum(row.class_size for row in rows))
 
     def _check_pairings(
-        self, state_id: StateId, stored: StoredState, rows: ZVec[ActionRow]
+        self,
+        state_id: StateId,
+        stored: Database.StoredState,
+        rows: ZVec[Database.ActionRow],
     ) -> None:
         pairings = ZSet(row.pairing for row in rows)
         if len(pairings) != len(rows):
@@ -74,7 +78,7 @@ class StateCheck:
             _check_orbits(state_id, self.symmetry.orbits(stored.state, legal), rows)
 
     def _check_children(
-        self, state_id: StateId, stored: StoredState, row: ActionRow
+        self, state_id: StateId, stored: Database.StoredState, row: Database.ActionRow
     ) -> None:
         pairing = row.pairing
         if int(stored.state.has_met(pairing)) != row.repeat_cost:
@@ -100,7 +104,10 @@ class StateCheck:
         return self.symmetry is None or self.symmetry.are_isomorphic(expected, stored)
 
     def _check_values(
-        self, state_id: StateId, stored: StoredState, rows: ZVec[ActionRow]
+        self,
+        state_id: StateId,
+        stored: Database.StoredState,
+        rows: ZVec[Database.ActionRow],
     ) -> None:
         if stored.value is None:
             raise AuditFailure(f"state {state_id.value}: unsolved")
@@ -113,7 +120,7 @@ class StateCheck:
                 f"is worth {min(options)}"
             )
 
-    def _option(self, state_id: StateId, row: ActionRow) -> int:
+    def _option(self, state_id: StateId, row: Database.ActionRow) -> int:
         "What the Scheduler gets by choosing this action: its cost plus its value."
         value_lhs = self.db.stored(row.lhs_wins).value
         value_rhs = self.db.stored(row.rhs_wins).value
@@ -128,7 +135,7 @@ class StateCheck:
 
 
 def _check_orbits(
-    state_id: StateId, orbits: PairingOrbits, rows: ZVec[ActionRow]
+    state_id: StateId, orbits: PairingOrbits, rows: ZVec[Database.ActionRow]
 ) -> None:
     "Each orbit has exactly one stored pairing, which carries the orbit's size."
     sizes = {row.pairing: row.class_size for row in rows}
@@ -150,7 +157,7 @@ def _names(pairings: ZSet[Pairing] | list[Pairing]) -> list[tuple[int, int]]:
     return sorted((p.lhs.index, p.rhs.index) for p in pairings)
 
 
-def _check_standings(state_id: StateId, stored: StoredState) -> None:
+def _check_standings(state_id: StateId, stored: Database.StoredState) -> None:
     state = stored.state
     if stored.num_teams != state.size or not 0 <= stored.depth <= MAX_MATCHES:
         raise AuditFailure(f"state {state_id.value}: inconsistent team count or depth")

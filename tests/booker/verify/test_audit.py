@@ -27,9 +27,10 @@ from booker.verify.audit import audit
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
 from booker.verify.audit_report import AuditReport
-from booker.verify.database import Database, StateId
+from booker.verify.database import Database
 from booker.verify.id_range import IdRange
 from booker.verify.state_checks import StateCheck
+from booker.verify.state_id import StateId
 
 PAIRING = Pairing.of(Team(index=0), Team(index=1))
 RECORD_5_1 = Record(wins=5, losses=1)

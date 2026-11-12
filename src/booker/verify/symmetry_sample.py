@@ -24,7 +24,8 @@ from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
 from booker.verify.audit_failure import AuditFailure
-from booker.verify.database import Database, StateId
+from booker.verify.database import Database
+from booker.verify.state_id import StateId
 
 
 @dc.dataclass(frozen=True, slots=True)

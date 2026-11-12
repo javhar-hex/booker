@@ -19,39 +19,31 @@ from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.verify.audit_failure import AuditFailure
+from booker.verify.state_id import StateId
 
 POSITION_CACHE_SIZE = 65536
 
 
-@dc.dataclass(frozen=True, slots=True, order=True)
-class StateId:
-    "A row of the `states` table; not a team index, nor a depth."
-
-    value: int
-
-
-@dc.dataclass(frozen=True, slots=True)
-class StoredState:
-    state: State
-    depth: int
-    num_teams: int
-    value: int | None
-    is_expanded: bool
-
-
-@dc.dataclass(frozen=True, slots=True)
-class ActionRow:
-    "The Scheduler's pairing from a position, and where each winner leads."
-
-    pairing: Pairing
-    repeat_cost: int
-    lhs_wins: StateId
-    rhs_wins: StateId
-    class_size: int
-    value: int | None
-
-
 class Database:
+    @dc.dataclass(frozen=True, slots=True)
+    class StoredState:
+        state: State
+        depth: int
+        num_teams: int
+        value: int | None
+        is_expanded: bool
+
+    @dc.dataclass(frozen=True, slots=True)
+    class ActionRow:
+        "The Scheduler's pairing from a position, and where each winner leads."
+
+        pairing: Pairing
+        repeat_cost: int
+        lhs_wins: StateId
+        rhs_wins: StateId
+        class_size: int
+        value: int | None
+
     def __init__(self, con: sqlite3.Connection) -> None:
         self._con = con
         self._load = functools.lru_cache(maxsize=POSITION_CACHE_SIZE)(self._read)
@@ -86,7 +78,7 @@ class Database:
             (parent.value,),
         )
         return ZVec(
-            ActionRow(
+            Database.ActionRow(
                 pairing=Pairing.of(Team(index=index_lhs), Team(index=index_rhs)),
                 repeat_cost=cost,
                 lhs_wins=StateId(value=lhs_wins),
@@ -159,7 +151,7 @@ class Database:
             raise AuditFailure(
                 f"state {state_id.value}: invalid position: {error}"
             ) from error
-        return StoredState(
+        return Database.StoredState(
             state=state,
             depth=depth,
             num_teams=num_teams,

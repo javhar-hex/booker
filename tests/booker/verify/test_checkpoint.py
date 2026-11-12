@@ -7,8 +7,8 @@ from booker.core.symmetry.state_symmetries import VF2
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
 from booker.verify.checkpoint import BEFORE_ANY_ID, Checkpoint, Progress, Scope
-from booker.verify.database import StateId
 from booker.verify.id_range import IdRange
+from booker.verify.state_id import StateId
 
 
 def _scope(path: Path, ids: IdRange | None = None) -> Scope:

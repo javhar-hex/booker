@@ -10,8 +10,8 @@ from typing import Any
 
 from booker.verify.audit_failure import AuditFailure
 from booker.verify.audit_plan import AuditPlan
-from booker.verify.database import StateId
 from booker.verify.id_range import IdRange
+from booker.verify.state_id import StateId
 
 CHECKPOINT_EVERY = 1000
 BEFORE_ANY_ID = -1
