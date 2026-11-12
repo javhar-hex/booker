@@ -60,10 +60,14 @@ class AtlasReader:
 
     def state_ids(self, start: int, stop: int | None) -> Iterator[StateId]:
         "The ids from `start` up to, not including, `stop`, in order."
-        rows = self._connection.execute(
-            "SELECT id FROM states WHERE id>=? AND id<? ORDER BY id",
-            (start, 2**62 if stop is None else stop),
-        )
+        if stop is None:
+            rows = self._connection.execute(
+                "SELECT id FROM states WHERE id>=? ORDER BY id", (start,)
+            )
+        else:
+            rows = self._connection.execute(
+                "SELECT id FROM states WHERE id>=? AND id<? ORDER BY id", (start, stop)
+            )
         for (state_id,) in rows:
             yield StateId(value=state_id)
 
