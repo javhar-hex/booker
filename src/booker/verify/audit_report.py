@@ -5,7 +5,9 @@ from __future__ import annotations
 import dataclasses as dc
 
 from booker.core.symmetry.state_symmetry import StateSymmetry
+from booker.verify.audit_plan import AuditPlan
 from booker.verify.id_range import IdRange
+from booker.verify.progress import Progress
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -17,6 +19,21 @@ class AuditReport:
     pairings: int
     is_solved: bool
     unexpanded: int
+
+    @classmethod
+    def of(
+        cls, plan: AuditPlan, progress: Progress, is_solved: bool, unexpanded: int
+    ) -> AuditReport:
+        "What an audit of `plan` found, having got as far as `progress`."
+        return cls(
+            ids=plan.ids,
+            strict=plan.strict,
+            states=progress.states,
+            actions=progress.actions,
+            pairings=progress.pairings,
+            is_solved=is_solved,
+            unexpanded=unexpanded,
+        )
 
     def __str__(self) -> str:
         how = (

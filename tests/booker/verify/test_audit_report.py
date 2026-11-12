@@ -1,6 +1,8 @@
 from booker.core.symmetry.state_symmetries import VF2
+from booker.verify.audit_plan import AuditPlan
 from booker.verify.audit_report import AuditReport
 from booker.verify.id_range import IdRange
+from booker.verify.progress import Progress
 
 
 def test_a_report_says_what_was_checked() -> None:
@@ -34,4 +36,21 @@ def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
     assert str(report) == (
         "PASS: ids [start, end): checked 1 states / 2 actions (3 labelled pairings), "
         "children and orbits not compared, solved=False, unexpanded=5"
+    )
+
+
+def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() -> None:
+    plan = AuditPlan(db="atlas.db", strict=VF2, ids=IdRange(start=2))
+    progress = Progress(next_id=9, states=7, actions=30, pairings=44)
+
+    report = AuditReport.of(plan, progress, is_solved=True, unexpanded=5)
+
+    assert report == AuditReport(
+        ids=IdRange(start=2),
+        strict=VF2,
+        states=7,
+        actions=30,
+        pairings=44,
+        is_solved=True,
+        unexpanded=5,
     )

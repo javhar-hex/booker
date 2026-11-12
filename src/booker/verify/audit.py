@@ -30,15 +30,7 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
         progress = _walk(db, plan, is_solved, log)
         if plan.is_whole_database and plan.expect_root is not None:
             check_root_value(db, root, plan.expect_root)
-    return AuditReport(
-        ids=plan.ids,
-        strict=plan.strict,
-        states=progress.states,
-        actions=progress.actions,
-        pairings=progress.pairings,
-        is_solved=is_solved,
-        unexpanded=unexpanded,
-    )
+    return AuditReport.of(plan, progress, is_solved, unexpanded)
 
 
 def _walk(
