@@ -1,25 +1,15 @@
 """
-Each check of the verifier is shown to fire: a small, hand-built and fully solved atlas
-is accepted, and then broken in one way at a time. Whole-database checks are shown on a
-generated atlas.
+The audit walks the positions of an atlas and checks the atlas as a whole: the metadata,
+the opening, completeness, orphans and the root value. The checks of one position are
+shown in the tests of `StateCheck`. Whole-database checks are shown on a generated atlas.
 """
 
-import shutil
-import sqlite3
 from pathlib import Path
 
 import pytest
-from javhar_util.immutables import ZSet, ZVec
+from support.hand_built_atlases import tampered_copy
 from support.logs import discard
 
-from booker.atlas.atlas import Atlas
-from booker.core.model.invariants import MAX_MATCHES
-from booker.core.model.pairing import Pairing
-from booker.core.model.record import Record
-from booker.core.model.state import State
-from booker.core.model.team import Team
-from booker.core.symmetry.bliss_symmetry import BlissSymmetry
-from booker.core.symmetry.orbits import PairingOrbit, PairingOrbits
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
@@ -27,52 +17,11 @@ from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.audit.id_range import IdRange
-from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
-from booker.verify.spot_check.state_check import StateCheck
-from booker.verify.spot_check.state_id import StateId
 
-PAIRING = Pairing.of(Team(index=0), Team(index=1))
-RECORD_5_1 = Record(wins=5, losses=1)
-RECORD_6_1 = Record(wins=6, losses=1)
-RECORD_4_1 = Record(wins=4, losses=1)
 EVERY_STATE = IdRange(start=0)
-PARENT, CHILD = 1, 2
-
-
-def _state(*records: Record, met: bool = False) -> State:
-    return State(records=ZVec(records), past_pairings=ZSet([PAIRING] if met else []))
-
-
-def _build(
-    path: Path,
-    parent: State,
-    children: tuple[State, State],
-    pairing: Pairing | None,
-    is_rematch: bool = False,
-) -> Path:
-    with Atlas.open(path) as atlas:
-        writer = atlas.expansion_writer()
-        parent_id = writer.add_state(parent)
-        lhs_wins, rhs_wins = (writer.add_state(child) for child in children)
-        writer.record_root(parent_id)
-        if pairing is not None:
-            writer.add_action(parent_id, pairing, is_rematch, 1, lhs_wins, rhs_wins)
-        writer.mark_expanded(parent_id)
-        writer.mark_decided_expanded()
-        atlas.retrograde_solver().reset_values()
-        for depth in range(MAX_MATCHES, -1, -1):
-            atlas.retrograde_solver().back_up(depth)
-    return path
-
-
-def _final_pair(path: Path, met: bool = False) -> Path:
-    "Two teams a loss from elimination: whoever wins the match is the champion."
-    champion = _state(RECORD_6_1)
-    return _build(
-        path, _state(RECORD_5_1, RECORD_5_1, met=met), (champion, champion), PAIRING, met
-    )
+ENDGAME_STATES = 29
 
 
 def _audit(
@@ -97,21 +46,6 @@ def _audit(
     return audit(plan, log=(log if log is not None else []).append)
 
 
-def _tamper(db: Path, sql: str) -> Path:
-    tampered = db.with_name("tampered.db")
-    shutil.copy(db, tampered)
-    con = sqlite3.connect(tampered)
-    with con:
-        con.execute(sql)
-    con.close()
-    return tampered
-
-
-@pytest.fixture
-def solved(tmp_path: Path) -> Path:
-    return _final_pair(tmp_path / "solved.db")
-
-
 def test_accepts_a_solved_atlas(solved: Path) -> None:
     report = _audit(solved)
 
@@ -121,88 +55,25 @@ def test_accepts_a_solved_atlas(solved: Path) -> None:
     assert report.unexpanded == 0
 
 
-def test_accepts_a_rematch_that_costs_one(tmp_path: Path) -> None:
-    assert _audit(_final_pair(tmp_path / "rematch.db", met=True)).is_solved
-
-
 @pytest.mark.parametrize(
-    ("sql", "ids", "complaint"),
+    ("sql", "complaint"),
     [
-        ("UPDATE states SET value=5 WHERE id=1", EVERY_STATE, "best action is worth"),
-        ("UPDATE actions SET value=3", EVERY_STATE, "Collider value"),
-        ("UPDATE actions SET repeat_cost=1", EVERY_STATE, "wrong repeat cost"),
-        ("UPDATE actions SET lhs_wins=1", EVERY_STATE, "one match deeper"),
-        ("UPDATE actions SET lhs_wins=99", EVERY_STATE, "does not exist"),
-        ("UPDATE states SET expanded=0 WHERE id=1", EVERY_STATE, "unexpanded, with"),
-        ("UPDATE states SET expanded=0 WHERE id=2", EVERY_STATE, "bad decided state"),
-        ("UPDATE states SET value=1 WHERE id=2", IdRange(start=CHILD), "worth 0"),
-        ("UPDATE states SET depth=29 WHERE id=2", IdRange(start=CHILD), "depth 29"),
-        ("UPDATE states SET active=3 WHERE id=1", EVERY_STATE, "team count"),
-        (
-            "UPDATE states SET key=X'FF' WHERE id=2",
-            IdRange(start=CHILD),
-            "invalid position",
-        ),
-        ("PRAGMA user_version = 4", EVERY_STATE, "schema"),
-        ("UPDATE meta SET value='chess' WHERE key='game'", EVERY_STATE, "game"),
-        ("DELETE FROM meta WHERE key='root_id'", EVERY_STATE, "does not say"),
+        ("PRAGMA user_version = 4", "schema"),
+        ("UPDATE meta SET value='chess' WHERE key='game'", "game"),
+        ("DELETE FROM meta WHERE key='root_id'", "does not say"),
     ],
 )
-def test_rejects_a_solved_atlas_broken_in_one_way(
-    solved: Path, sql: str, ids: IdRange, complaint: str
+def test_rejects_an_atlas_with_the_wrong_metadata(
+    solved: Path, sql: str, complaint: str
 ) -> None:
     with pytest.raises(AuditFailure, match=complaint):
-        _audit(_tamper(solved, sql), ids=ids)
-
-
-@pytest.mark.parametrize(
-    ("key", "depth", "complaint"),
-    [
-        ("020000 01", 28, "unbeaten teams cannot have met"),
-        ("020D0200", 29, "a champion, with teams still playing"),
-    ],
-)
-def test_rejects_an_impossible_position(
-    solved: Path, key: str, depth: int, complaint: str
-) -> None:
-    sql = (
-        "INSERT INTO states(key,depth,active,expanded,value) "
-        f"VALUES (X'{key.replace(' ', '')}', {depth}, 2, 0, 0)"
-    )
-
-    with pytest.raises(AuditFailure, match=complaint):
-        _audit(_tamper(solved, sql), ids=IdRange(start=3))
+        _audit(tampered_copy(solved, sql))
 
 
 def test_an_atlas_missing_a_value_is_audited_as_unsolved(solved: Path) -> None:
-    report = _audit(_tamper(solved, "UPDATE states SET value=NULL WHERE id=1"))
+    report = _audit(tampered_copy(solved, "UPDATE states SET value=NULL WHERE id=1"))
 
     assert not report.is_solved
-
-
-def test_rejects_an_illegal_pairing(tmp_path: Path) -> None:
-    parent = _state(RECORD_5_1, RECORD_4_1)
-    atlas = _build(
-        tmp_path / "illegal.db",
-        parent,
-        (_state(RECORD_6_1), _state(RECORD_5_1)),
-        PAIRING,
-    )
-
-    with pytest.raises(AuditFailure, match="illegal pairings"):
-        _audit(atlas)
-
-
-def test_rejects_a_dead_end(tmp_path: Path) -> None:
-    atlas = _build(
-        tmp_path / "dead.db",
-        _state(RECORD_5_1, RECORD_4_1),
-        (_state(RECORD_6_1), _state(RECORD_6_1)),
-        pairing=None,
-    )
-
-    with pytest.raises(AuditFailure, match="dead end"):
-        _audit(atlas)
 
 
 @pytest.fixture(scope="module")
@@ -236,15 +107,15 @@ def test_rejects_a_generated_atlas_broken_as_a_whole(
     generated: Path, sql: str, complaint: str
 ) -> None:
     with pytest.raises(AuditFailure, match=complaint):
-        _audit(_tamper(generated, sql), ids=IdRange())
+        _audit(tampered_copy(generated, sql), ids=IdRange())
 
 
 def test_a_ranged_audit_leaves_the_whole_database_checks_alone(generated: Path) -> None:
-    _audit(_tamper(generated, ORPHAN), ids=IdRange(start=1, stop=3))
+    _audit(tampered_copy(generated, ORPHAN), ids=IdRange(start=1, stop=3))
 
 
 def test_a_cut_short_audit_does_not_look_for_orphans(generated: Path) -> None:
-    _audit(_tamper(generated, ORPHAN), ids=IdRange(), limit=1)
+    _audit(tampered_copy(generated, ORPHAN), ids=IdRange(), limit=1)
 
 
 def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
@@ -276,24 +147,6 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
     assert resumed == _audit(generated, ids=IdRange())
 
 
-ENDGAME_STATES = 29
-ROOT = 1
-
-
-UNEQUAL_CHILDREN = (
-    "SELECT action.rowid FROM actions action JOIN states x ON x.id = action.lhs_wins "
-    "JOIN states y ON y.id = action.rhs_wins WHERE x.value != y.value LIMIT 1"
-)
-COLLIDER_AS_MIN = (
-    "UPDATE actions SET value = (SELECT MIN(x.value, y.value) FROM states x, states y "
-    f"WHERE x.id = actions.lhs_wins AND y.id = actions.rhs_wins) WHERE rowid = ({UNEQUAL_CHILDREN})"
-)
-ROOT_AS_MAX = (
-    "UPDATE states SET value = (SELECT MAX(repeat_cost + value) FROM actions "
-    f"WHERE parent = states.id) WHERE id = {ROOT}"
-)
-
-
 def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
     report = _audit(endgame)
 
@@ -302,105 +155,8 @@ def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
     assert report.unexpanded == 0
 
 
-@pytest.mark.parametrize(
-    ("sql", "complaint"),
-    [
-        (COLLIDER_AS_MIN, "Collider value"),
-        (ROOT_AS_MAX, "best action is worth"),
-        (f"UPDATE states SET value = value + 1 WHERE id = {ROOT}", "best action"),
-        ("UPDATE actions SET value = value + 1 WHERE rowid = 1", "Collider value"),
-    ],
-)
-def test_rejects_the_rest_of_a_real_game_valued_wrongly(
-    endgame: Path, sql: str, complaint: str
-) -> None:
-    with pytest.raises(AuditFailure, match=complaint):
-        _audit(_tamper(endgame, sql))
-
-
-class NeverIsomorphic(StateSymmetry):
-    "Denies that any two states are alike, to show the verifier asks."
-
-    @property
-    def name(self) -> str:
-        return "never-isomorphic"
-
-    def are_isomorphic(self, first: State, second: State) -> bool:
-        return False
-
-    def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
-        return BlissSymmetry().orbits(state, pairings)
-
-
-class SplitsEveryOrbit(StateSymmetry):
-    "Finds every pairing alone in its orbit, to show the verifier asks."
-
-    @property
-    def name(self) -> str:
-        return "splits-every-orbit"
-
-    def are_isomorphic(self, first: State, second: State) -> bool:
-        return True
-
-    def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
-        return PairingOrbits(
-            orbits=ZVec(PairingOrbit(members=ZSet([p])) for p in sorted(pairings))
-        )
-
-
 @pytest.mark.parametrize("symmetry", [BLISS, VF2])
 def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementation(
     endgame: Path, symmetry: StateSymmetry
 ) -> None:
     assert _audit(endgame, strict=symmetry).states == ENDGAME_STATES
-
-
-def test_the_strict_audit_asks_the_symmetry_whether_children_are_the_right_ones(
-    endgame: Path,
-) -> None:
-    with AtlasReader.open(str(endgame)) as db:
-        StateCheck(db=db, symmetry=None, is_solved=True).run(StateId(value=ROOT))
-
-        with pytest.raises(AuditFailure, match="wrong state"):
-            StateCheck(db=db, symmetry=NeverIsomorphic(), is_solved=True).run(
-                StateId(value=ROOT)
-            )
-
-
-def test_the_strict_audit_asks_the_symmetry_for_the_orbits(endgame: Path) -> None:
-    with (
-        AtlasReader.open(str(endgame)) as db,
-        pytest.raises(AuditFailure, match="orbit (sizes|representatives)"),
-    ):
-        StateCheck(db=db, symmetry=SplitsEveryOrbit(), is_solved=True).run(
-            StateId(value=ROOT)
-        )
-
-
-SWAPPED_CHILDREN = (
-    "UPDATE actions SET lhs_wins = rhs_wins, rhs_wins = lhs_wins WHERE rowid = 1"
-)
-SWAPPED_SIZES = (
-    f"UPDATE actions SET class_size = 3 - class_size WHERE parent = {ROOT} "
-    "AND (lhs, rhs) IN ((0, 1), (0, 3))"
-)
-
-
-@pytest.mark.parametrize("strict", [None, BLISS, VF2])
-def test_rejects_children_of_the_right_depth_that_are_swapped(
-    endgame: Path, strict: StateSymmetry | None
-) -> None:
-    with pytest.raises(AuditFailure, match="wrong state"):
-        _audit(_tamper(endgame, SWAPPED_CHILDREN), strict=strict)
-
-
-def test_only_the_strict_audit_finds_orbit_sizes_that_add_up_but_are_swapped(
-    endgame: Path,
-) -> None:
-    "One orbit of two pairings and one of a single pairing trade their sizes."
-    tampered = _tamper(endgame, SWAPPED_SIZES)
-
-    _audit(tampered)
-    for symmetry in (BLISS, VF2):
-        with pytest.raises(AuditFailure, match="orbit sizes"):
-            _audit(tampered, strict=symmetry)

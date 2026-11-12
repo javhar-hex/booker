@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from javhar_util.immutables import ZSet, ZVec
+from support.hand_built_atlases import final_pair_atlas
 from support.logs import discard
 
 from booker.atlas.atlas import Atlas
@@ -38,3 +39,9 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
         )
     solve(str(path))
     return path
+
+
+@pytest.fixture
+def solved(tmp_path: Path) -> Path:
+    "Two teams a loss from elimination who have not met, solved, by hand."
+    return final_pair_atlas(tmp_path / "solved.db")
