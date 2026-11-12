@@ -37,106 +37,112 @@ class StateCheck:
     is_solved: bool
 
     def run(self, state_id: StateId) -> PairingCount:
-        stored = self.db.stored(state_id)
-        _check_standings(state_id, stored)
-        rows = self.db.actions(state_id)
-        self._check_pairings(state_id, stored, rows)
-        for row in rows:
-            self._check_children(state_id, stored, row)
+        state_row = self.db.state_row(state_id)
+        _check_standings(state_id, state_row)
+        action_rows = self.db.action_rows(state_id)
+        self._check_pairings(state_id, state_row, action_rows)
+        for action_row in action_rows:
+            self._check_children(state_id, state_row, action_row)
         if self.is_solved:
-            self._check_values(state_id, stored, rows)
-        return PairingCount.of(rows)
+            self._check_values(state_id, state_row, action_rows)
+        return PairingCount.of(action_rows)
 
     def _check_pairings(
         self,
         state_id: StateId,
-        stored: StateRow,
-        rows: ZVec[ActionRow],
+        state_row: StateRow,
+        action_rows: ZVec[ActionRow],
     ) -> None:
-        pairings = ZSet(row.pairing for row in rows)
-        if len(pairings) != len(rows):
+        pairings = ZSet(action_row.pairing for action_row in action_rows)
+        if len(pairings) != len(action_rows):
             raise AuditFailure(f"state {state_id.value}: a pairing is stored twice")
-        if not stored.is_expanded:
-            if rows:
+        if not state_row.is_expanded:
+            if action_rows:
                 raise AuditFailure(f"state {state_id.value}: unexpanded, with actions")
             return
-        legal = legal_pairings(stored.state)
+        legal = legal_pairings(state_row.state)
         if illegal := pairings - legal:
             raise AuditFailure(f"state {state_id.value}: illegal pairings {illegal}")
-        if (size := sum(row.class_size for row in rows)) != len(legal):
+        if (size := sum(action_row.class_size for action_row in action_rows)) != len(
+            legal
+        ):
             raise AuditFailure(
                 f"state {state_id.value}: orbit sizes add up to {size}, "
                 f"but {len(legal)} pairings are legal"
             )
-        if (not rows) != stored.state.is_decided:
+        if (not action_rows) != state_row.state.is_decided:
             raise AuditFailure(
                 f"state {state_id.value}: a dead end, or a decided state with moves"
             )
         if self.symmetry is not None:
-            _check_orbits(state_id, self.symmetry.orbits(stored.state, legal), rows)
+            _check_orbits(
+                state_id, self.symmetry.orbits(state_row.state, legal), action_rows
+            )
 
     def _check_children(
-        self, state_id: StateId, stored: StateRow, row: ActionRow
+        self, state_id: StateId, state_row: StateRow, action_row: ActionRow
     ) -> None:
-        pairing = row.pairing
-        if int(stored.state.has_met(pairing)) != row.repeat_cost:
+        pairing = action_row.pairing
+        if int(state_row.state.has_met(pairing)) != action_row.repeat_cost:
             raise AuditFailure(
                 f"state {state_id.value}, pairing {pairing}: "
-                f"wrong repeat cost {row.repeat_cost}"
+                f"wrong repeat cost {action_row.repeat_cost}"
             )
         for winner, child_id in (
-            (pairing.lhs, row.lhs_wins),
-            (pairing.rhs, row.rhs_wins),
+            (pairing.lhs, action_row.lhs_wins),
+            (pairing.rhs, action_row.rhs_wins),
         ):
             where = f"state {state_id.value}, pairing {pairing}, winner {winner.index}"
-            expected = successor(stored.state, Outcome.single(pairing, winner))
-            child = self.db.stored(child_id).state
-            if child.matches_played != stored.depth + 1:
+            expected = successor(state_row.state, Outcome.single(pairing, winner))
+            child = self.db.state_row(child_id).state
+            if child.matches_played != state_row.depth + 1:
                 raise AuditFailure(f"{where}: the child is not one match deeper")
             if not self._is_the_same_state(expected, child):
                 raise AuditFailure(f"{where}: leads to the wrong state {child_id.value}")
 
-    def _is_the_same_state(self, expected: State, stored: State) -> bool:
-        if signature(expected) != signature(stored):
+    def _is_the_same_state(self, expected: State, stored_state: State) -> bool:
+        if signature(expected) != signature(stored_state):
             return False
-        return self.symmetry is None or self.symmetry.are_isomorphic(expected, stored)
+        return self.symmetry is None or self.symmetry.are_isomorphic(
+            expected, stored_state
+        )
 
     def _check_values(
         self,
         state_id: StateId,
-        stored: StateRow,
-        rows: ZVec[ActionRow],
+        state_row: StateRow,
+        action_rows: ZVec[ActionRow],
     ) -> None:
-        if stored.value is None:
+        if state_row.value is None:
             raise AuditFailure(f"state {state_id.value}: unsolved")
-        if stored.state.is_decided and stored.value != 0:
+        if state_row.state.is_decided and state_row.value != 0:
             raise AuditFailure(f"state {state_id.value}: a decided state is worth 0")
-        options = [self._option(state_id, row) for row in rows]
-        if options and stored.value != min(options):
+        options = [self._option(state_id, action_row) for action_row in action_rows]
+        if options and state_row.value != min(options):
             raise AuditFailure(
-                f"state {state_id.value}: value {stored.value}, but its best action "
+                f"state {state_id.value}: value {state_row.value}, but its best action "
                 f"is worth {min(options)}"
             )
 
-    def _option(self, state_id: StateId, row: ActionRow) -> int:
+    def _option(self, state_id: StateId, action_row: ActionRow) -> int:
         "What the Scheduler gets by choosing this action: its cost plus its value."
-        value_lhs = self.db.stored(row.lhs_wins).value
-        value_rhs = self.db.stored(row.rhs_wins).value
+        value_lhs = self.db.state_row(action_row.lhs_wins).value
+        value_rhs = self.db.state_row(action_row.rhs_wins).value
         if value_lhs is None or value_rhs is None:
             raise AuditFailure(f"state {state_id.value}: a child is unsolved")
-        if row.value != max(value_lhs, value_rhs):
+        if action_row.value != max(value_lhs, value_rhs):
             raise AuditFailure(
-                f"state {state_id.value}, pairing {row.pairing}: Collider value "
-                f"{row.value}, but the children are worth {value_lhs} and {value_rhs}"
+                f"state {state_id.value}, pairing {action_row.pairing}: Collider value "
+                f"{action_row.value}, but the children are worth {value_lhs} and {value_rhs}"
             )
-        return row.repeat_cost + row.value
+        return action_row.repeat_cost + action_row.value
 
 
 def _check_orbits(
-    state_id: StateId, orbits: PairingOrbits, rows: ZVec[ActionRow]
+    state_id: StateId, orbits: PairingOrbits, action_rows: ZVec[ActionRow]
 ) -> None:
     "Each orbit has exactly one stored pairing, which carries the orbit's size."
-    sizes = {row.pairing: row.class_size for row in rows}
+    sizes = {action_row.pairing: action_row.class_size for action_row in action_rows}
     for orbit in orbits:
         representatives = [pairing for pairing in sizes if pairing in orbit.members]
         if len(representatives) != 1:
@@ -152,20 +158,20 @@ def _check_orbits(
 
 
 def _names(pairings: ZSet[Pairing] | list[Pairing]) -> list[tuple[int, int]]:
-    return sorted((p.lhs.index, p.rhs.index) for p in pairings)
+    return sorted((pairing.lhs.index, pairing.rhs.index) for pairing in pairings)
 
 
-def _check_standings(state_id: StateId, stored: StateRow) -> None:
-    state = stored.state
-    if stored.num_teams != state.size or not 0 <= stored.depth <= MAX_MATCHES:
+def _check_standings(state_id: StateId, state_row: StateRow) -> None:
+    state = state_row.state
+    if state_row.num_teams != state.size or not 0 <= state_row.depth <= MAX_MATCHES:
         raise AuditFailure(f"state {state_id.value}: inconsistent team count or depth")
-    if stored.depth != state.matches_played:
+    if state_row.depth != state.matches_played:
         raise AuditFailure(
-            f"state {state_id.value}: depth {stored.depth}, but its teams have "
+            f"state {state_id.value}: depth {state_row.depth}, but its teams have "
             f"played {state.matches_played} matches"
         )
     if state.is_decided:
-        if state.records[0].wins != CHAMPION_WINS or not stored.is_expanded:
+        if state.records[0].wins != CHAMPION_WINS or not state_row.is_expanded:
             raise AuditFailure(f"state {state_id.value}: a bad decided state")
     elif any(record.wins >= CHAMPION_WINS for record in state.records):
         raise AuditFailure(

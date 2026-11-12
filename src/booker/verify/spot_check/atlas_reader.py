@@ -48,10 +48,10 @@ class AtlasReader:
     def metadata(self) -> ZMap[str, str]:
         return ZMap(dict(self._connection.execute("SELECT key,value FROM meta")))
 
-    def stored(self, state_id: StateId) -> StateRow:
+    def state_row(self, state_id: StateId) -> StateRow:
         return self._read_cached(state_id)
 
-    def actions(self, parent: StateId) -> ZVec[ActionRow]:
+    def action_rows(self, parent: StateId) -> ZVec[ActionRow]:
         rows = self._connection.execute(
             f"SELECT {ActionRow.COLUMNS} FROM actions WHERE parent=? ORDER BY lhs,rhs",
             (parent.value,),

@@ -41,7 +41,7 @@ def check_whole_database(db: AtlasReader, plan: AuditPlan, root: StateId) -> Non
 
 
 def check_root_value(db: AtlasReader, root: StateId, expected: int) -> None:
-    value = db.stored(root).value
+    value = db.state_row(root).value
     if value != expected:
         raise AuditFailure(f"root value is {value}, expected {expected}")
 
@@ -55,8 +55,8 @@ def _check_complete(db: AtlasReader) -> None:
     if db.max_depth() != MAX_MATCHES:
         raise AuditFailure(f"last match is missing: depth {db.max_depth()}")
     decided = {
-        (stored.state.records[0], stored.depth)
-        for stored in (db.stored(state_id) for state_id in db.decided_ids())
+        (state_row.state.records[0], state_row.depth)
+        for state_row in (db.state_row(state_id) for state_id in db.decided_ids())
     }
     if len(db.decided_ids()) != 2 or decided != _both_endings():
         raise AuditFailure(f"incorrect decided states: {sorted(map(str, decided))}")
@@ -72,7 +72,7 @@ def _both_endings() -> set[tuple[Record, int]]:
 
 
 def _check_opening(db: AtlasReader, root: StateId) -> None:
-    if db.stored(root).state != State.start():
+    if db.state_row(root).state != State.start():
         raise AuditFailure("wrong initial position")
     if db.num_at_depth(0) != 1:
         raise AuditFailure(f"{db.num_at_depth(0)} positions at depth 0, expected 1")
