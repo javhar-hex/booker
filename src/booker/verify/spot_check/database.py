@@ -22,15 +22,15 @@ POSITION_CACHE_SIZE = 65536
 
 
 class Database:
-    def __init__(self, con: sqlite3.Connection) -> None:
-        self._con = con
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
         self._load = functools.lru_cache(maxsize=POSITION_CACHE_SIZE)(self._read)
 
     @classmethod
     def open(cls, path: str) -> Database:
-        con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
-        con.execute("PRAGMA foreign_keys=ON")
-        return cls(con)
+        connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        connection.execute("PRAGMA foreign_keys=ON")
+        return cls(connection)
 
     def __enter__(self) -> Self:
         return self
@@ -41,16 +41,16 @@ class Database:
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        self._con.close()
+        self._connection.close()
 
     def metadata(self) -> ZMap[str, str]:
-        return ZMap(dict(self._con.execute("SELECT key,value FROM meta")))
+        return ZMap(dict(self._connection.execute("SELECT key,value FROM meta")))
 
     def stored(self, state_id: StateId) -> StateRow:
         return self._load(state_id)
 
     def actions(self, parent: StateId) -> ZVec[ActionRow]:
-        rows = self._con.execute(
+        rows = self._connection.execute(
             f"SELECT {ActionRow.COLUMNS} FROM actions WHERE parent=? ORDER BY lhs,rhs",
             (parent.value,),
         )
@@ -58,7 +58,7 @@ class Database:
 
     def state_ids(self, start: int, stop: int | None) -> Iterator[StateId]:
         "The ids from `start` up to, not including, `stop`, in order."
-        rows = self._con.execute(
+        rows = self._connection.execute(
             "SELECT id FROM states WHERE id>=? AND id<? ORDER BY id",
             (start, 2**62 if stop is None else stop),
         )
@@ -69,7 +69,7 @@ class Database:
         return self._count("PRAGMA user_version")
 
     def decided_ids(self) -> ZVec[StateId]:
-        rows = self._con.execute("SELECT id FROM states WHERE active=1")
+        rows = self._connection.execute("SELECT id FROM states WHERE active=1")
         return ZVec(StateId(value=state_id) for (state_id,) in rows)
 
     def num_unexpanded(self) -> int:
@@ -89,12 +89,14 @@ class Database:
 
     def is_intact(self) -> bool:
         "SQLite's own integrity and foreign key checks both pass."
-        ok = self._con.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-        return bool(ok and not self._con.execute("PRAGMA foreign_key_check").fetchone())
+        ok = self._connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        return bool(
+            ok and not self._connection.execute("PRAGMA foreign_key_check").fetchone()
+        )
 
     def first_orphan(self, root: StateId) -> StateId | None:
         "A position that no action leads to, other than the root."
-        row = self._con.execute(
+        row = self._connection.execute(
             """
             SELECT s.id FROM states s WHERE s.id!=? AND NOT EXISTS (
               SELECT 1 FROM actions action WHERE action.lhs_wins=s.id OR action.rhs_wins=s.id
@@ -105,7 +107,7 @@ class Database:
         return None if row is None else StateId(value=row[0])
 
     def _read(self, state_id: StateId) -> StateRow:
-        row = self._con.execute(
+        row = self._connection.execute(
             f"SELECT {StateRow.COLUMNS} FROM states WHERE id=?", (state_id.value,)
         ).fetchone()
         if row is None:
@@ -113,5 +115,5 @@ class Database:
         return StateRow.of(state_id, row)
 
     def _count(self, sql: str, params: tuple[int, ...] = ()) -> int:
-        count: int = self._con.execute(sql, params).fetchone()[0]
+        count: int = self._connection.execute(sql, params).fetchone()[0]
         return count
