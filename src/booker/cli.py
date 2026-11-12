@@ -1,5 +1,5 @@
 """
-Command line: `python -m booker.cli generate|solve|stats|verify|equilibrium ...`.
+Command line: `python -m booker.cli expand|solve|stats|verify|equilibrium ...`.
 """
 
 from __future__ import annotations
@@ -25,8 +25,8 @@ _LOG = functools.partial(print, flush=True)
 def main(argv: Sequence[str] | None = None) -> None:
     parser = _parser()
     args = parser.parse_args(argv)
-    if args.command == "generate":
-        _generate(args, parser)
+    if args.command == "expand":
+        _expand(args, parser)
     elif args.command == "solve":
         print(f"root minimax value: {solve(args.db)}")
     elif args.command == "verify":
@@ -39,7 +39,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         _print_stats(args.db)
 
 
-def _generate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def _expand(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     symmetry = STATE_SYMMETRIES[args.state_symmetry]
     if args.max_depth is None and symmetry != BLISS:
         parser.error(
@@ -56,14 +56,14 @@ def _parser() -> argparse.ArgumentParser:
         description="Unrestricted (16,2,6) Scheduler-Collider atlas"
     )
     sub = parser.add_subparsers(dest="command", required=True)
-    generating = sub.add_parser("generate")
-    generating.add_argument("db")
-    generating.add_argument(
+    expanding = sub.add_parser("expand")
+    expanding.add_argument("db")
+    expanding.add_argument(
         "--max-depth",
         type=int,
         help=f"matches to expand to (default {MAX_MATCHES}, the whole game, for bliss)",
     )
-    generating.add_argument(
+    expanding.add_argument(
         "--state-symmetry", choices=sorted(STATE_SYMMETRIES), default=BLISS.name
     )
     sub.add_parser("solve").add_argument("db")

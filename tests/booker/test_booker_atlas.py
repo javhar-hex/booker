@@ -56,7 +56,7 @@ REFERENCE = ZVec(
 )
 
 
-def _generate(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
+def _expand(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
     directory.mkdir(exist_ok=True)
     db = directory / f"{symmetry.name}-{max_depth}.db"
     expand_atlas(str(db), max_depth=max_depth, symmetry=symmetry, log=discard)
@@ -88,24 +88,24 @@ def _reference_below(max_depth: int) -> ZVec[LayerCounts]:
 
 @pytest.fixture(scope="module")
 def shallow_atlas(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return _generate(tmp_path_factory.mktemp("shallow"), SHALLOW_DEPTH, BLISS)
+    return _expand(tmp_path_factory.mktemp("shallow"), SHALLOW_DEPTH, BLISS)
 
 
 @pytest.fixture(scope="module")
 def deep_atlas(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return _generate(tmp_path_factory.mktemp("deep"), len(REFERENCE), BLISS)
+    return _expand(tmp_path_factory.mktemp("deep"), len(REFERENCE), BLISS)
 
 
 def test_layers_until_some_match_is_necessarily_outside_round_one(
     tmp_path: Path,
 ) -> None:
     max_depth = FIRST_ROUND_MATCHES + 2
-    db = _generate(tmp_path, max_depth, BLISS)
+    db = _expand(tmp_path, max_depth, BLISS)
     assert _expanded_layers(db, max_depth) == _reference_below(max_depth)
 
 
 def test_bliss_and_vf2_agree(shallow_atlas: Path, tmp_path: Path) -> None:
-    vf2_atlas = _generate(tmp_path, SHALLOW_DEPTH, VF2)
+    vf2_atlas = _expand(tmp_path, SHALLOW_DEPTH, VF2)
     expected = _expanded_layers(shallow_atlas, SHALLOW_DEPTH)
     assert _expanded_layers(vf2_atlas, SHALLOW_DEPTH) == expected
 
@@ -114,8 +114,8 @@ def test_bliss_and_vf2_agree_past_the_depth_they_were_first_trusted_to(
     tmp_path: Path,
 ) -> None:
     depth = SHALLOW_DEPTH + 3
-    bliss = _generate(tmp_path / "bliss", depth, BLISS)
-    vf2 = _generate(tmp_path / "vf2", depth, VF2)
+    bliss = _expand(tmp_path / "bliss", depth, BLISS)
+    vf2 = _expand(tmp_path / "vf2", depth, VF2)
 
     assert _expanded_layers(vf2, depth) == _expanded_layers(bliss, depth)
     assert _expanded_layers(bliss, depth) == _reference_below(depth)
