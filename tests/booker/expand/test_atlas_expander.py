@@ -14,9 +14,9 @@ from booker.core.model.team import Team
 from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.atlas_expander import AtlasExpander, expand_atlas
-from booker.generate.expansion_summary import ExpansionSummary
-from booker.generate.state_canonicalizer import StateCanonicalizer
+from booker.expand.atlas_expander import AtlasExpander, expand_atlas
+from booker.expand.expansion_summary import ExpansionSummary
+from booker.expand.state_canonicalizer import StateCanonicalizer
 
 DEPTH = 5
 

@@ -7,8 +7,8 @@ from collections.abc import Iterable
 from booker.core.model.state import State
 from booker.core.symmetry.state_symmetries import BLISS
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.bliss_canonicalizer import BlissCanonicalizer
-from booker.generate.memo_canonicalizer import MemoCanonicalizer
+from booker.expand.bliss_canonicalizer import BlissCanonicalizer
+from booker.expand.memo_canonicalizer import MemoCanonicalizer
 
 
 class StateCanonicalizer:

@@ -8,7 +8,7 @@ from booker.core.model.team import Team
 from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.state_canonicalizer import StateCanonicalizer
+from booker.expand.state_canonicalizer import StateCanonicalizer
 
 RECORD_1_1 = Record(wins=1, losses=1)
 PATH = State(

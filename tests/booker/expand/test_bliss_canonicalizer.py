@@ -9,7 +9,7 @@ import networkx as nx
 
 from booker.core.model.state import State
 from booker.core.symmetry.relabelling import Relabelling
-from booker.generate.bliss_canonicalizer import BlissCanonicalizer
+from booker.expand.bliss_canonicalizer import BlissCanonicalizer
 
 CANONICALIZER = BlissCanonicalizer()
 

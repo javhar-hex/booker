@@ -9,7 +9,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS
-from booker.generate.atlas_expander import AtlasExpander
+from booker.expand.atlas_expander import AtlasExpander
 from booker.solve import solve
 
 RECORD_5_1 = Record(wins=5, losses=1)

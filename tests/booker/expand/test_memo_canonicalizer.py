@@ -8,7 +8,7 @@ from booker.core.model.team import Team
 from booker.core.symmetry.relabelling import Relabelling
 from booker.core.symmetry.state_symmetries import STATE_SYMMETRIES
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.generate.memo_canonicalizer import MemoCanonicalizer
+from booker.expand.memo_canonicalizer import MemoCanonicalizer
 
 IMPLEMENTATIONS = list(STATE_SYMMETRIES.values())
 RECORD_1_1 = Record(wins=1, losses=1)

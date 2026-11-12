@@ -13,9 +13,9 @@ from booker.core.model.outcome import Outcome
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.state_symmetry import StateSymmetry
+from booker.expand.expansion_summary import ExpansionSummary
+from booker.expand.state_canonicalizer import StateCanonicalizer
 from booker.game.rules import legal_pairings
-from booker.generate.expansion_summary import ExpansionSummary
-from booker.generate.state_canonicalizer import StateCanonicalizer
 
 
 def expand_atlas(
