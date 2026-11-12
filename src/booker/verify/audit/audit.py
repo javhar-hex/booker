@@ -42,8 +42,8 @@ def _walk(
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")
     check = StateCheck(db=db, symmetry=plan.strict, is_solved=is_solved)
     for state_id in db.state_ids(progress.next_id, plan.ids.stop):
-        tally = check.run(state_id)
-        progress = progress.after(state_id, tally.actions, tally.pairings)
+        count = check.run(state_id)
+        progress = progress.after(state_id, count.orbits, count.pairings)
         if checkpoint and _is_time_to_save(progress, plan):
             checkpoint.save(progress)
         if plan.limit is not None and progress.states >= plan.limit:

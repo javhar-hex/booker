@@ -17,9 +17,9 @@ from booker.game.rules import legal_pairings
 from booker.verify.spot_check.action_row import ActionRow
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.database import Database
+from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_row import StateRow
-from booker.verify.spot_check.tally import Tally
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -35,7 +35,7 @@ class StateCheck:
     symmetry: StateSymmetry | None
     is_solved: bool
 
-    def run(self, state_id: StateId) -> Tally:
+    def run(self, state_id: StateId) -> PairingCount:
         stored = self.db.stored(state_id)
         _check_standings(state_id, stored)
         rows = self.db.actions(state_id)
@@ -44,7 +44,7 @@ class StateCheck:
             self._check_children(state_id, stored, row)
         if self.is_solved:
             self._check_values(state_id, stored, rows)
-        return Tally.of(rows)
+        return PairingCount.of(rows)
 
     def _check_pairings(
         self,
