@@ -21,7 +21,11 @@ from javhar_util.immutables import ZMap, ZVec
 
 from booker.atlas.schema import open_connection
 from booker.cli import main
-from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_summaries
+from booker.equilibrium.equilibrium_analysis import (
+    EquilibriumAnalysis,
+    analyze_equilibrium,
+    layer_summaries,
+)
 from booker.equilibrium.layer_summary import LayerSummary
 
 STATE_ID_ROOT, STATE_ID_X, STATE_ID_Y, STATE_ID_Z, STATE_ID_W, STATE_ID_V = (
@@ -265,6 +269,24 @@ def test_a_failed_analysis_leaves_nothing_to_refuse_the_next(tmp_path: Path) -> 
     )
 
     with pytest.raises(RuntimeError, match="never reached"):
+        analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
+
+    assert _only(tmp_path) == ["atlas.db"]
+
+
+def test_an_analysis_interrupted_in_the_middle_leaves_nothing_behind(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    analyze_depth = EquilibriumAnalysis._analyze_depth
+
+    def analyze_then_fail(self: EquilibriumAnalysis, depth: int) -> None:
+        analyze_depth(self, depth)
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(EquilibriumAnalysis, "_analyze_depth", analyze_then_fail)
+    atlas = _tiny_atlas(tmp_path / "atlas.db")
+
+    with pytest.raises(KeyboardInterrupt):
         analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
 
     assert _only(tmp_path) == ["atlas.db"]

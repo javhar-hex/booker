@@ -13,7 +13,6 @@ from __future__ import annotations
 import contextlib
 import os
 import sqlite3
-from collections.abc import Iterator
 from pathlib import Path
 from types import TracebackType
 from typing import Self
@@ -38,7 +37,10 @@ class EquilibriumAnalysis:
     def open(cls, atlas: Path, analysis: Path) -> EquilibriumAnalysis:
         "`analysis` is created if it is new; `atlas` is never written to, nor its schema guessed."
         # URIs, not paths, so that `mode=ro` is honoured whichever way SQLite was built.
-        connection = sqlite3.connect(analysis.resolve().as_uri(), uri=True)
+        # Autocommit: the analysis is atomic as a file, by being renamed once complete.
+        connection = sqlite3.connect(
+            analysis.resolve().as_uri(), uri=True, isolation_level=None
+        )
         try:
             attached = f"{atlas.resolve().as_uri()}?mode=ro"
             connection.execute("ATTACH DATABASE ? AS atlas", (attached,))
@@ -64,10 +66,9 @@ class EquilibriumAnalysis:
         "Analyzes every position of the atlas, which must be solved, from the root down."
         self._require_solved()
         self._connection.executescript(SCHEMA)
-        with self._transaction():
-            self._analyze_root()
-            for depth in range(self._max_depth()):
-                self._analyze_depth(depth)
+        self._analyze_root()
+        for depth in range(self._max_depth()):
+            self._analyze_depth(depth)
         self._require_every_state_analyzed()
 
     def layer_summaries(self) -> ZVec[LayerSummary]:
@@ -92,11 +93,6 @@ class EquilibriumAnalysis:
                 collider_critical,
             ) in rows
         )
-
-    @contextlib.contextmanager
-    def _transaction(self) -> Iterator[None]:
-        with self._connection:
-            yield
 
     def _require_solved(self) -> None:
         solved = self._connection.execute(
