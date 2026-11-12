@@ -211,7 +211,10 @@ def test_only_the_strict_verifier_finds_two_stored_pairings_in_one_orbit(
     db = _tampered(shallow_atlas, tmp_path, SPLIT_ROOT_ORBIT)
 
     _audit(db)
-    with pytest.raises(AuditFailure, match="orbit representatives"):
+    with pytest.raises(
+        AuditFailure,
+        match=r"orbit representatives: 2 stored for the orbit of .* \(120 pairings\)",
+    ):
         _audit(db, strict=VF2)
 
 

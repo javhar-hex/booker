@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import dataclasses as dc
-from collections.abc import Iterable
 
 from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.invariants import CHAMPION_WINS, MAX_MATCHES
 from booker.core.model.outcome import Outcome
-from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.orbits import PairingOrbits
@@ -150,16 +148,10 @@ def _check_orbits(
     for orbit in orbits:
         representatives = [pairing for pairing in sizes if pairing in orbit.members]
         if len(representatives) != 1:
-
-            def names(pairings: Iterable[Pairing]) -> list[tuple[int, int]]:
-                return sorted(
-                    (pairing.lhs.index, pairing.rhs.index) for pairing in pairings
-                )
-
             raise AuditFailure.of(
                 state_id,
-                f"orbit representatives: {names(representatives)} stored "
-                f"for the orbit of {names(orbit.members)}",
+                f"orbit representatives: {len(representatives)} stored for the orbit of "
+                f"{min(orbit.members)} ({orbit.size} pairings): {representatives}",
             )
         if sizes[representatives[0]] != orbit.size:
             raise AuditFailure.of(
