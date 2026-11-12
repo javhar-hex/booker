@@ -1,4 +1,4 @@
-"""Equilibrium pass on a hand-built solved atlas whose flags can be read off by hand.
+"""Equilibrium pass on a hand-built solved atlas whose analysis can be read off by hand.
 
 Root R (value 1; the state ids are STATE_ID_ROOT, STATE_ID_X, and so on) has four
 Collider children (pairing: repeat cost, winners, value):
@@ -21,8 +21,8 @@ from javhar_util.immutables import ZMap, ZVec
 
 from booker.atlas.schema import open_connection
 from booker.cli import main
-from booker.equilibrium.flags import build, summary
-from booker.equilibrium.layers import LayerSummary
+from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_summaries
+from booker.equilibrium.layer_summary import LayerSummary
 
 STATE_ID_ROOT, STATE_ID_X, STATE_ID_Y, STATE_ID_Z, STATE_ID_W, STATE_ID_V = (
     1,
@@ -93,7 +93,7 @@ COLLIDERS = ZVec(
 
 
 @dataclass(frozen=True)
-class Flags:
+class SchedulerEquilibrium:
     equilibrium: bool
     fewest_past_repeats: int
 
@@ -131,44 +131,44 @@ def _tiny_atlas(path: Path) -> Path:
 
 
 @pytest.fixture
-def flagged(tmp_path: Path) -> Path:
+def analyzed(tmp_path: Path) -> Path:
     atlas = _tiny_atlas(tmp_path / "atlas.db")
-    build(atlas, tmp_path / "flags.db")
+    analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
     return tmp_path
 
 
-def _query(flags: Path, sql: str) -> list[tuple[int, ...]]:
-    connection = sqlite3.connect(flags)
+def _query(analysis: Path, sql: str) -> list[tuple[int, ...]]:
+    connection = sqlite3.connect(analysis)
     rows = connection.execute(sql).fetchall()
     connection.close()
     return rows
 
 
-def test_scheduler_flags(flagged: Path) -> None:
-    rows = _query(flagged / "flags.db", "SELECT * FROM scheduler_flags")
+def test_scheduler_equilibrium(analyzed: Path) -> None:
+    rows = _query(analyzed / "equilibrium.db", "SELECT * FROM scheduler_equilibrium")
     got = ZMap(
         {
-            state_id: Flags(equilibrium=bool(equilibrium), fewest_past_repeats=past)
+            state_id: SchedulerEquilibrium(
+                equilibrium=bool(equilibrium), fewest_past_repeats=past
+            )
             for state_id, equilibrium, past in rows
         }
     )
     assert got == ZMap(
         {
-            STATE_ID_ROOT: Flags(equilibrium=True, fewest_past_repeats=0),
-            STATE_ID_X: Flags(equilibrium=True, fewest_past_repeats=0),
-            STATE_ID_Y: Flags(equilibrium=False, fewest_past_repeats=0),
-            STATE_ID_Z: Flags(equilibrium=True, fewest_past_repeats=0),
-            STATE_ID_W: Flags(equilibrium=False, fewest_past_repeats=0),
-            STATE_ID_V: Flags(equilibrium=False, fewest_past_repeats=0),
+            STATE_ID_ROOT: SchedulerEquilibrium(equilibrium=True, fewest_past_repeats=0),
+            STATE_ID_X: SchedulerEquilibrium(equilibrium=True, fewest_past_repeats=0),
+            STATE_ID_Y: SchedulerEquilibrium(equilibrium=False, fewest_past_repeats=0),
+            STATE_ID_Z: SchedulerEquilibrium(equilibrium=True, fewest_past_repeats=0),
+            STATE_ID_W: SchedulerEquilibrium(equilibrium=False, fewest_past_repeats=0),
+            STATE_ID_V: SchedulerEquilibrium(equilibrium=False, fewest_past_repeats=0),
         }
     )
 
 
-def test_collider_flags(flagged: Path) -> None:
-    sql = (
-        "SELECT lhs, rhs, equilibrium, critical, fewest_past_repeats FROM collider_flags"
-    )
-    assert set(_query(flagged / "flags.db", sql)) == {
+def test_collider_equilibrium(analyzed: Path) -> None:
+    sql = "SELECT lhs, rhs, equilibrium, critical, fewest_past_repeats FROM collider_equilibrium"
+    assert set(_query(analyzed / "equilibrium.db", sql)) == {
         (0, 1, 1, 1, 0),
         (0, 2, 0, 0, 1),
         (0, 3, 0, 0, 0),
@@ -176,8 +176,8 @@ def test_collider_flags(flagged: Path) -> None:
     }
 
 
-def test_summary(flagged: Path) -> None:
-    layers = summary(flagged / "atlas.db", flagged / "flags.db")
+def test_summary(analyzed: Path) -> None:
+    layers = layer_summaries(analyzed / "atlas.db", analyzed / "equilibrium.db")
     assert layers == ZVec(
         [
             LayerSummary(
@@ -237,7 +237,7 @@ def test_refuses_an_atlas_it_cannot_read(
     atlas = _edit(_tiny_atlas(tmp_path / "atlas.db"), sql)
 
     with pytest.raises(ValueError, match=complaint):
-        build(atlas, tmp_path / "flags.db")
+        analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
 
     assert _only(tmp_path) == ["atlas.db"]
 
@@ -249,15 +249,15 @@ def test_an_unsolved_atlas_is_not_solved(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ValueError, match="not solved"):
-        build(atlas, tmp_path / "flags.db")
+        analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
 
 
-def test_refuses_to_overwrite(flagged: Path) -> None:
+def test_refuses_to_overwrite(analyzed: Path) -> None:
     with pytest.raises(FileExistsError):
-        build(flagged / "atlas.db", flagged / "flags.db")
+        analyze_equilibrium(analyzed / "atlas.db", analyzed / "equilibrium.db")
 
 
-def test_a_failed_build_leaves_nothing_to_refuse_the_next(tmp_path: Path) -> None:
+def test_a_failed_analysis_leaves_nothing_to_refuse_the_next(tmp_path: Path) -> None:
     atlas = _edit(
         _tiny_atlas(tmp_path / "atlas.db"),
         "INSERT INTO states (id, key, depth, active, expanded, value)"
@@ -265,44 +265,44 @@ def test_a_failed_build_leaves_nothing_to_refuse_the_next(tmp_path: Path) -> Non
     )
 
     with pytest.raises(RuntimeError, match="never reached"):
-        build(atlas, tmp_path / "flags.db")
+        analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
 
     assert _only(tmp_path) == ["atlas.db"]
 
 
-def test_a_stale_partial_build_is_replaced(tmp_path: Path) -> None:
+def test_a_stale_partial_analysis_is_replaced(tmp_path: Path) -> None:
     atlas = _tiny_atlas(tmp_path / "atlas.db")
-    (tmp_path / "flags.db.partial").write_text("left by a crash")
+    (tmp_path / "equilibrium.db.partial").write_text("left by a crash")
 
-    build(atlas, tmp_path / "flags.db")
+    analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
 
-    assert _only(tmp_path) == ["atlas.db", "flags.db"]
+    assert _only(tmp_path) == ["atlas.db", "equilibrium.db"]
 
 
 def test_the_atlas_is_left_as_it_was(tmp_path: Path) -> None:
     atlas = _tiny_atlas(tmp_path / "atlas.db")
     before = hashlib.sha256(atlas.read_bytes()).hexdigest()
 
-    build(atlas, tmp_path / "flags.db")
+    analyze_equilibrium(atlas, tmp_path / "equilibrium.db")
 
     assert hashlib.sha256(atlas.read_bytes()).hexdigest() == before
 
 
-def test_summarizing_flags_that_do_not_exist_is_an_error(tmp_path: Path) -> None:
+def test_summarizing_an_analysis_that_does_not_exist_is_an_error(tmp_path: Path) -> None:
     atlas = _tiny_atlas(tmp_path / "atlas.db")
 
     with pytest.raises(FileNotFoundError):
-        summary(atlas, tmp_path / "flags.db")
+        layer_summaries(atlas, tmp_path / "equilibrium.db")
 
     assert _only(tmp_path) == ["atlas.db"]
 
 
-def test_the_command_builds_the_flags_and_prints_each_depth(
+def test_the_command_analyzes_the_equilibrium_and_prints_each_depth(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     atlas = _tiny_atlas(tmp_path / "atlas.db")
 
-    main(["equilibrium", str(atlas), str(tmp_path / "flags.db")])
+    main(["equilibrium", str(atlas), str(tmp_path / "equilibrium.db")])
 
     lines = capsys.readouterr().out.splitlines()
     assert lines[0].split()[0] == "depth"
@@ -312,14 +312,14 @@ def test_the_command_builds_the_flags_and_prints_each_depth(
     ]
 
 
-def test_the_command_can_summarize_flags_it_built_before(
-    flagged: Path, capsys: pytest.CaptureFixture[str]
+def test_the_command_can_summarize_an_analysis_it_made_before(
+    analyzed: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     main(
         [
             "equilibrium",
-            str(flagged / "atlas.db"),
-            str(flagged / "flags.db"),
+            str(analyzed / "atlas.db"),
+            str(analyzed / "equilibrium.db"),
             "--summary-only",
         ]
     )

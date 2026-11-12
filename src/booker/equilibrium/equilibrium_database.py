@@ -1,4 +1,4 @@
-"""The flags database, with the atlas it flags attached to it, read-only."""
+"""The equilibrium database, with the atlas it analyzes attached to it, read-only."""
 
 from __future__ import annotations
 
@@ -12,21 +12,21 @@ from typing import Self
 from javhar_util.immutables import ZVec
 
 from booker.atlas.schema import SCHEMA_VERSION
-from booker.equilibrium.layers import LayerSummary
+from booker.equilibrium.layer_summary import LayerSummary
 from booker.equilibrium.sql import COLLIDER_LAYER, SCHEDULER_LAYER, SCHEMA, SUMMARY
 
 
-class FlagsDatabase:
-    "Obtain one with `FlagsDatabase.open`."
+class EquilibriumDatabase:
+    "Obtain one with `EquilibriumDatabase.open`."
 
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
     @classmethod
-    def open(cls, atlas: Path, flags: Path) -> FlagsDatabase:
-        "`flags` is created if it is new; `atlas` is never written to, nor its schema guessed."
+    def open(cls, atlas: Path, analysis: Path) -> EquilibriumDatabase:
+        "`analysis` is created if it is new; `atlas` is never written to, nor its schema guessed."
         # URIs, not paths, so that `mode=ro` is honoured whichever way SQLite was built.
-        connection = sqlite3.connect(flags.resolve().as_uri(), uri=True)
+        connection = sqlite3.connect(analysis.resolve().as_uri(), uri=True)
         try:
             attached = f"{atlas.resolve().as_uri()}?mode=ro"
             connection.execute("ATTACH DATABASE ? AS atlas", (attached,))
@@ -68,16 +68,16 @@ class FlagsDatabase:
                 f"Atlas is not solved: {unvalued:,} positions without a value"
             )
 
-    def create_flag_tables(self) -> None:
+    def create_tables(self) -> None:
         self._connection.executescript(SCHEMA)
 
-    def flag_root(self) -> None:
+    def analyze_root(self) -> None:
         self._connection.execute(
-            "INSERT INTO scheduler_flags VALUES (?, 1, 0)", (self._root_id(),)
+            "INSERT INTO scheduler_equilibrium VALUES (?, 1, 0)", (self._root_id(),)
         )
 
-    def flag_depth(self, depth: int) -> None:
-        "Flags the Collider positions under the Scheduler's at `depth`, then their children."
+    def analyze_depth(self, depth: int) -> None:
+        "Analyzes the Collider positions under the Scheduler's at `depth`, then their children."
         self._connection.execute(COLLIDER_LAYER, (depth,))
         self._connection.execute(SCHEDULER_LAYER, (depth,))
 
@@ -87,15 +87,16 @@ class FlagsDatabase:
         ).fetchone()[0]
         return depth
 
-    def require_every_state_flagged(self) -> None:
+    def require_every_state_analyzed(self) -> None:
         missing = self._connection.execute(
-            "SELECT COUNT(*) FROM atlas.states s"
-            " WHERE NOT EXISTS (SELECT 1 FROM scheduler_flags f WHERE f.id = s.id)"
+            "SELECT COUNT(*) FROM atlas.states state WHERE NOT EXISTS"
+            " (SELECT 1 FROM scheduler_equilibrium"
+            " WHERE scheduler_equilibrium.id = state.id)"
         ).fetchone()[0]
         if missing:
             raise RuntimeError(f"{missing:,} states were never reached from the root")
 
-    def layers(self) -> ZVec[LayerSummary]:
+    def layer_summaries(self) -> ZVec[LayerSummary]:
         rows = self._connection.execute(SUMMARY, (self._root_value(),)).fetchall()
         return ZVec(
             LayerSummary(

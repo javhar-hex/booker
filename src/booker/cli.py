@@ -12,7 +12,7 @@ from pathlib import Path
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
-from booker.equilibrium.flags import build, summary
+from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_summaries
 from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit import audit
@@ -77,10 +77,10 @@ def _parser() -> argparse.ArgumentParser:
     comparing.add_argument("--samples", type=int, default=300)
     comparing.add_argument("--seed", type=int, default=0)
     equilibrium = sub.add_parser(
-        "equilibrium", help="flag the positions reachable under optimal play"
+        "equilibrium", help="analyze which positions optimal play can reach"
     )
     equilibrium.add_argument("atlas", type=Path)
-    equilibrium.add_argument("flags", type=Path)
+    equilibrium.add_argument("analysis", type=Path)
     equilibrium.add_argument("--summary-only", action="store_true")
     return parser
 
@@ -133,9 +133,9 @@ def _compare_symmetry(args: argparse.Namespace) -> None:
 
 def _equilibrium(args: argparse.Namespace) -> None:
     if not args.summary_only:
-        build(args.atlas, args.flags)
+        analyze_equilibrium(args.atlas, args.analysis)
     print("depth  scheduler  sched-eq  balanced-off  collider  coll-eq  critical")
-    for layer in summary(args.atlas, args.flags):
+    for layer in layer_summaries(args.atlas, args.analysis):
         print(
             f"{layer.depth:>5} {layer.scheduler:>10,} {layer.scheduler_equilibrium:>9,} "
             f"{layer.scheduler_balanced_off_equilibrium:>13,} {layer.collider:>9,} "
