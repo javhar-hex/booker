@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from booker.verify.audit_plan import AuditPlan
+from booker.verify.audit_report import AuditReport
 from booker.verify.checkpoint import CHECKPOINT_EVERY, Checkpoint, Progress, Scope
 from booker.verify.database import Database
-from booker.verify.plan import AuditPlan, AuditReport
 from booker.verify.state_checks import StateCheck
 from booker.verify.whole_database import (
     check_metadata,

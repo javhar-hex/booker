@@ -12,8 +12,8 @@ from booker.core.model.invariants import (
 from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.verify.audit_failure import AuditFailure
+from booker.verify.audit_plan import AuditPlan
 from booker.verify.database import Database, StateId
-from booker.verify.plan import AuditPlan
 
 
 def check_metadata(db: Database) -> StateId:

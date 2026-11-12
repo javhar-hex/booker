@@ -25,8 +25,10 @@ from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
 from booker.verify.audit import audit
 from booker.verify.audit_failure import AuditFailure
+from booker.verify.audit_plan import AuditPlan
+from booker.verify.audit_report import AuditReport
 from booker.verify.database import Database, StateId
-from booker.verify.plan import AuditPlan, AuditReport, IdRange
+from booker.verify.id_range import IdRange
 from booker.verify.state_checks import StateCheck
 
 PAIRING = Pairing.of(Team(index=0), Team(index=1))

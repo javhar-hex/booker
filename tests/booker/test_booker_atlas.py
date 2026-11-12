@@ -22,7 +22,9 @@ from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit import audit
 from booker.verify.audit_failure import AuditFailure
-from booker.verify.plan import AuditPlan, AuditReport, IdRange
+from booker.verify.audit_plan import AuditPlan
+from booker.verify.audit_report import AuditReport
+from booker.verify.id_range import IdRange
 
 FIRST_ROUND_MATCHES = 8
 SHALLOW_DEPTH = 6

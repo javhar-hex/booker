@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from booker.verify.audit_failure import AuditFailure
+from booker.verify.audit_plan import AuditPlan
 from booker.verify.database import StateId
-from booker.verify.plan import AuditPlan, IdRange
+from booker.verify.id_range import IdRange
 
 CHECKPOINT_EVERY = 1000
 BEFORE_ANY_ID = -1

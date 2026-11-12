@@ -16,7 +16,8 @@ from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_s
 from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit import audit
-from booker.verify.plan import AuditPlan, IdRange
+from booker.verify.audit_plan import AuditPlan
+from booker.verify.id_range import IdRange
 from booker.verify.symmetry_sample import compare_symmetries
 
 _LOG = functools.partial(print, flush=True)

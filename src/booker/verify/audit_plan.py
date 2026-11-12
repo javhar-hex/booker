@@ -1,23 +1,11 @@
-"""What to audit, and what an audit found."""
+"""What to audit."""
 
 from __future__ import annotations
 
 import dataclasses as dc
 
 from booker.core.symmetry.state_symmetry import StateSymmetry
-
-
-@dc.dataclass(frozen=True, slots=True)
-class IdRange:
-    "The state ids from `start` up to, not including, `stop`; `None` is unbounded."
-
-    start: int | None = None
-    stop: int | None = None
-
-    def __str__(self) -> str:
-        start = "start" if self.start is None else self.start
-        stop = "end" if self.stop is None else self.stop
-        return f"[{start}, {stop})"
+from booker.verify.id_range import IdRange
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -35,7 +23,7 @@ class AuditPlan:
     """
 
     db: str
-    ids: IdRange = IdRange()
+    ids: IdRange = dc.field(default_factory=IdRange)
     strict: StateSymmetry | None = None
     limit: int | None = None
     expect_root: int | None = None
@@ -45,26 +33,3 @@ class AuditPlan:
     @property
     def is_whole_database(self) -> bool:
         return self.ids.start is None
-
-
-@dc.dataclass(frozen=True, slots=True)
-class AuditReport:
-    ids: IdRange
-    strict: StateSymmetry | None
-    states: int
-    actions: int
-    pairings: int
-    is_solved: bool
-    unexpanded: int
-
-    def __str__(self) -> str:
-        how = (
-            "children and orbits not compared"
-            if self.strict is None
-            else f"children and orbits compared by {self.strict.name}"
-        )
-        return (
-            f"PASS: ids {self.ids}: checked {self.states:,} states / {self.actions:,} "
-            f"actions ({self.pairings:,} labelled pairings), {how}, "
-            f"solved={self.is_solved}, unexpanded={self.unexpanded:,}"
-        )
