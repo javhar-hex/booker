@@ -8,6 +8,7 @@ from javhar_util.immutables import ZSet, ZVec
 
 from booker.core.model.invariants import CHAMPION_WINS, MAX_MATCHES
 from booker.core.model.outcome import Outcome
+from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.successor import successor
 from booker.core.symmetry.orbits import PairingOrbits
@@ -62,9 +63,18 @@ class StateCheck:
         legal = legal_pairings(state_row.state)
         if illegal := pairings - legal:
             raise AuditFailure.of(state_id, f"illegal pairings {illegal}")
-        if (size := sum(action_row.class_size for action_row in action_rows)) != len(
-            legal
-        ):
+        self._check_pairings_covered(state_id, state_row, action_rows, legal)
+
+    def _check_pairings_covered(
+        self,
+        state_id: StateId,
+        state_row: StateRow,
+        action_rows: ZVec[ActionRow],
+        legal: ZSet[Pairing],
+    ) -> None:
+        "The stored orbits account for every legal pairing, and are the symmetry's orbits."
+        size = sum(action_row.class_size for action_row in action_rows)
+        if size != len(legal):
             raise AuditFailure.of(
                 state_id,
                 f"orbit sizes add up to {size}, but {len(legal)} pairings are legal",
