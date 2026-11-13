@@ -42,7 +42,9 @@ def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
 
 
 def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() -> None:
-    plan = AuditPlan(db=Path("atlas.db"), strict=VF2, ids=StateIdRange(start=StateId(2)))
+    plan = AuditPlan(
+        db_path=Path("atlas.db"), strict=VF2, ids=StateIdRange(start=StateId(2))
+    )
     progress = Progress(
         next_id=StateId(value=9), states=7, counted=PairingCount(orbits=30, pairings=44)
     )

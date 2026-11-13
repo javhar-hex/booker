@@ -23,7 +23,7 @@ class AuditPlan:
     implementation of the symmetries of states: slow, and a check of the generator.
     """
 
-    db: Path
+    db_path: Path
     ids: StateIdRange = dc.field(default_factory=StateIdRange)
     strict: StateSymmetry | None = None
     limit: int | None = None

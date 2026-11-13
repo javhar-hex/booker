@@ -26,7 +26,7 @@ ENDGAME_STATES = 29
 
 
 def _audit(
-    db: Path,
+    db_path: Path,
     ids: StateIdRange = EVERY_STATE,
     limit: int | None = None,
     require_complete: bool = False,
@@ -36,7 +36,7 @@ def _audit(
     strict: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
-        db=db,
+        db_path=db_path,
         strict=strict,
         ids=ids,
         limit=limit,

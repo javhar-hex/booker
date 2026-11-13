@@ -10,7 +10,7 @@ DB = Path("a.db")
 
 
 def test_a_plan_without_a_range_is_the_whole_database() -> None:
-    assert AuditPlan(db=DB, strict=None).is_whole_database
+    assert AuditPlan(db_path=DB, strict=None).is_whole_database
 
 
 @pytest.mark.parametrize(
@@ -22,4 +22,4 @@ def test_a_plan_without_a_range_is_the_whole_database() -> None:
     ],
 )
 def test_a_plan_with_either_end_of_a_range_is_not(ids: StateIdRange) -> None:
-    assert not AuditPlan(db=DB, strict=None, ids=ids).is_whole_database
+    assert not AuditPlan(db_path=DB, strict=None, ids=ids).is_whole_database

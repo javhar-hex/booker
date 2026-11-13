@@ -14,14 +14,14 @@ from booker.verify.spot_check.state_id_range import StateIdRange
 class AuditScope:
     "What an audit covers; progress saved for one scope means nothing for another."
 
-    db: Path
+    db_path: Path
     strict: StateSymmetry | None
     ids: StateIdRange
 
     @classmethod
     def of(cls, plan: AuditPlan) -> AuditScope:
         return cls(
-            db=plan.db.resolve(),
+            db_path=plan.db_path.resolve(),
             strict=plan.strict,
             ids=plan.ids,
         )

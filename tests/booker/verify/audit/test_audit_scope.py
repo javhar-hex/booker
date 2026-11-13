@@ -9,7 +9,7 @@ from booker.verify.spot_check.state_id_range import StateIdRange
 
 def test_covers_the_database_by_its_absolute_path_and_the_ids_and_the_symmetry() -> None:
     plan = AuditPlan(
-        db=Path("atlas.db"),
+        db_path=Path("atlas.db"),
         strict=BLISS,
         ids=StateIdRange(start=StateId(3), stop=StateId(9)),
     )
@@ -17,15 +17,15 @@ def test_covers_the_database_by_its_absolute_path_and_the_ids_and_the_symmetry()
     scope = AuditScope.of(plan)
 
     assert scope == AuditScope(
-        db=Path("atlas.db").resolve(),
+        db_path=Path("atlas.db").resolve(),
         strict=BLISS,
         ids=StateIdRange(start=StateId(3), stop=StateId(9)),
     )
 
 
 def test_a_cheap_audit_of_every_id_has_no_symmetry_and_no_bounds() -> None:
-    scope = AuditScope.of(AuditPlan(db=Path("/data/atlas.db")))
+    scope = AuditScope.of(AuditPlan(db_path=Path("/data/atlas.db")))
 
     assert scope == AuditScope(
-        db=Path("/data/atlas.db"), strict=None, ids=StateIdRange()
+        db_path=Path("/data/atlas.db"), strict=None, ids=StateIdRange()
     )

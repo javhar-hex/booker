@@ -133,14 +133,14 @@ def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
 
 
 def _audit(
-    db: Path,
+    db_path: Path,
     ids: StateIdRange | None = None,
     limit: int | None = None,
     checkpoint: Path | None = None,
     strict: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
-        db=db,
+        db_path=db_path,
         strict=strict,
         ids=StateIdRange() if ids is None else ids,
         limit=limit,

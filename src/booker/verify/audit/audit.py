@@ -22,7 +22,7 @@ REPORT_EVERY = 10000
 
 def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
     "Raises `AuditFailure` at the first thing wrong; `log` hears of progress."
-    with AtlasReader.open(plan.db) as db:
+    with AtlasReader.open(plan.db_path) as db:
         root = check_metadata(db)
         unexpanded = db.num_unexpanded()
         is_solved = db.num_unsolved() == 0
