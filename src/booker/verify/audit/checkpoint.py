@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_progress import AuditProgress
 from booker.verify.audit.audit_scope import AuditScope
-from booker.verify.audit.progress import Progress
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
@@ -32,7 +32,7 @@ class Checkpoint:
             return None
         return cls(path=plan.checkpoint, scope=AuditScope.of(plan))
 
-    def load(self) -> Progress | None:
+    def load(self) -> AuditProgress | None:
         "The progress an earlier audit of the same scope saved, if any."
         if not self.path.exists():
             return None
@@ -41,26 +41,28 @@ class Checkpoint:
             raise AuditFailure(
                 f"checkpoint is for another run: {saved['scope']}, not {self.scope}"
             )
-        return Progress(
-            next_id=None
+        return AuditProgress(
+            next_state_id=None
             if saved["next_id"] is None
             else StateId(value=saved["next_id"]),
-            states=saved["states"],
-            counted=PairingCount(orbits=saved["actions"], pairings=saved["pairings"]),
+            num_checked_states=saved["states"],
+            cml_pairing_count=PairingCount(
+                orbits=saved["actions"], pairings=saved["pairings"]
+            ),
         )
 
-    def save(self, progress: Progress) -> None:
+    def save(self, progress: AuditProgress) -> None:
         "Atomically: a crash leaves the previous checkpoint, never half of the next."
         temporary = self.path.with_name(self.path.name + ".tmp")
         with open(temporary, "w") as file:
             json.dump(
                 {
                     "scope": self._scope_as_json,
-                    "next_id": _id_value(progress.next_id),
-                    "states": progress.states,
+                    "next_id": _id_value(progress.next_state_id),
+                    "states": progress.num_checked_states,
                     # The file keeps the names of earlier audits: its actions are orbits.
-                    "actions": progress.counted.orbits,
-                    "pairings": progress.counted.pairings,
+                    "actions": progress.cml_pairing_count.orbits,
+                    "pairings": progress.cml_pairing_count.pairings,
                 },
                 file,
             )

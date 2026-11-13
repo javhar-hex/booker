@@ -50,8 +50,8 @@ def _audit(
 def test_accepts_a_solved_atlas(solved: Path) -> None:
     report = _audit(solved)
 
-    assert report.states == 2
-    assert report.counted == PairingCount(orbits=1, pairings=1)
+    assert report.num_checked_states == 2
+    assert report.cml_pairing_count == PairingCount(orbits=1, pairings=1)
     assert report.is_solved
     assert report.unexpanded == 0
 
@@ -93,7 +93,7 @@ WRONG_OPENING = f"UPDATE states SET key=X'10{'02' + '00' * 15}{'00' * 15}' WHERE
 
 
 def test_accepts_a_generated_atlas_as_a_whole(generated: Path) -> None:
-    assert _audit(generated, state_id_range=StateIdRange()).states > 0
+    assert _audit(generated, state_id_range=StateIdRange()).num_checked_states > 0
 
 
 @pytest.mark.parametrize(
@@ -137,7 +137,12 @@ def test_an_unsolved_root_is_not_the_expected_gtv(generated: Path) -> None:
 
 
 def test_a_limit_stops_after_that_many_states(generated: Path) -> None:
-    assert _audit(generated, state_id_range=StateIdRange(), max_num_states=3).states == 3
+    assert (
+        _audit(
+            generated, state_id_range=StateIdRange(), max_num_states=3
+        ).num_checked_states
+        == 3
+    )
 
 
 def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None:
@@ -164,7 +169,7 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
 def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
     report = _audit(endgame)
 
-    assert report.states == ENDGAME_STATES
+    assert report.num_checked_states == ENDGAME_STATES
     assert report.is_solved
     assert report.unexpanded == 0
 
@@ -173,4 +178,6 @@ def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
 def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementation(
     endgame: Path, symmetry: StateSymmetry
 ) -> None:
-    assert _audit(endgame, reference_symmetry=symmetry).states == ENDGAME_STATES
+    assert (
+        _audit(endgame, reference_symmetry=symmetry).num_checked_states == ENDGAME_STATES
+    )

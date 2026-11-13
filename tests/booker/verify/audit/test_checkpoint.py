@@ -5,9 +5,9 @@ import pytest
 
 from booker.core.symmetry.state_symmetries import VF2
 from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_progress import AuditProgress
 from booker.verify.audit.audit_scope import AuditScope
 from booker.verify.audit.checkpoint import Checkpoint
-from booker.verify.audit.progress import Progress
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
@@ -31,10 +31,10 @@ def test_a_missing_file_means_no_progress(tmp_path: Path) -> None:
 
 def test_saved_progress_is_loaded_again(tmp_path: Path) -> None:
     checkpoint = Checkpoint(tmp_path / "p.json", _scope(tmp_path))
-    progress = Progress(
-        next_id=StateId(value=12),
-        states=11,
-        counted=PairingCount(orbits=40, pairings=90),
+    progress = AuditProgress(
+        next_state_id=StateId(value=12),
+        num_checked_states=11,
+        cml_pairing_count=PairingCount(orbits=40, pairings=90),
     )
 
     checkpoint.save(progress)
@@ -44,19 +44,23 @@ def test_saved_progress_is_loaded_again(tmp_path: Path) -> None:
 
 def test_progress_before_any_state_is_saved_and_loaded_again(tmp_path: Path) -> None:
     checkpoint = Checkpoint(tmp_path / "p.json", _scope(tmp_path))
-    progress = Progress.start(StateIdRange())
+    progress = AuditProgress.start(StateIdRange())
 
     checkpoint.save(progress)
 
     assert checkpoint.load() == progress
-    assert checkpoint.load() == Progress(
-        next_id=None, states=0, counted=PairingCount.none()
+    assert checkpoint.load() == AuditProgress(
+        next_state_id=None, num_checked_states=0, cml_pairing_count=PairingCount.none()
     )
 
 
 def test_saving_leaves_no_temporary_file(tmp_path: Path) -> None:
     Checkpoint(tmp_path / "p.json", _scope(tmp_path)).save(
-        Progress(next_id=StateId(value=1), states=0, counted=PairingCount.none())
+        AuditProgress(
+            next_state_id=StateId(value=1),
+            num_checked_states=0,
+            cml_pairing_count=PairingCount.none(),
+        )
     )
 
     assert sorted(path.name for path in tmp_path.iterdir()) == ["p.json"]
@@ -65,10 +69,10 @@ def test_saving_leaves_no_temporary_file(tmp_path: Path) -> None:
 def test_the_file_keeps_the_format_of_earlier_audits(tmp_path: Path) -> None:
     path = tmp_path / "p.json"
     Checkpoint(path, _scope(tmp_path, StateIdRange(start=StateId(3)))).save(
-        Progress(
-            next_id=StateId(value=4),
-            states=1,
-            counted=PairingCount(orbits=2, pairings=3),
+        AuditProgress(
+            next_state_id=StateId(value=4),
+            num_checked_states=1,
+            cml_pairing_count=PairingCount(orbits=2, pairings=3),
         )
     )
 
@@ -88,7 +92,7 @@ def test_the_file_keeps_the_format_of_earlier_audits(tmp_path: Path) -> None:
 
 def test_progress_of_another_scope_is_refused(tmp_path: Path) -> None:
     path = tmp_path / "p.json"
-    Checkpoint(path, _scope(tmp_path)).save(Progress.start(StateIdRange()))
+    Checkpoint(path, _scope(tmp_path)).save(AuditProgress.start(StateIdRange()))
 
     with pytest.raises(AuditFailure, match="another run"):
         Checkpoint(path, _scope(tmp_path, StateIdRange(start=StateId(5)))).load()

@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.audit.audit_progress import AuditProgress
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.audit.checkpoint import CHECKPOINT_EVERY, Checkpoint
-from booker.verify.audit.progress import Progress
 from booker.verify.audit.whole_database import (
     check_metadata,
     check_root_gtv,
@@ -36,27 +36,35 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
 
 def _walk(
     db: AtlasReader, plan: AuditPlan, is_solved: bool, log: Callable[[str], None]
-) -> Progress:
+) -> AuditProgress:
     checkpoint = Checkpoint.of(plan)
-    progress = (checkpoint and checkpoint.load()) or Progress.start(plan.state_id_range)
-    if progress.states:
-        log(f"resuming at id {progress.next_id} after {progress.states:,} states")
+    progress = (checkpoint and checkpoint.load()) or AuditProgress.start(
+        plan.state_id_range
+    )
+    if progress.num_checked_states:
+        log(
+            f"resuming at id {progress.next_state_id} after {progress.num_checked_states:,} states"
+        )
     check = StateCheck(db=db, symmetry=plan.reference_symmetry, is_solved=is_solved)
-    remaining = StateIdRange(start=progress.next_id, stop=plan.state_id_range.stop)
+    remaining = StateIdRange(start=progress.next_state_id, stop=plan.state_id_range.stop)
     for state_id in db.state_ids(remaining):
         progress = progress.after(state_id, check.run(state_id))
         if checkpoint and _is_time_to_save(progress, plan):
             checkpoint.save(progress)
-        if plan.max_num_states is not None and progress.states >= plan.max_num_states:
+        if (
+            plan.max_num_states is not None
+            and progress.num_checked_states >= plan.max_num_states
+        ):
             break
-        if progress.states % REPORT_EVERY == 0:
+        if progress.num_checked_states % REPORT_EVERY == 0:
             log(
-                f"checked {progress.states:,} states, {progress.counted.orbits:,} actions"
+                f"checked {progress.num_checked_states:,} states, {progress.cml_pairing_count.orbits:,} actions"
             )
     return progress
 
 
-def _is_time_to_save(progress: Progress, plan: AuditPlan) -> bool:
+def _is_time_to_save(progress: AuditProgress, plan: AuditPlan) -> bool:
     return (
-        progress.states % CHECKPOINT_EVERY == 0 or progress.states == plan.max_num_states
+        progress.num_checked_states % CHECKPOINT_EVERY == 0
+        or progress.num_checked_states == plan.max_num_states
     )
