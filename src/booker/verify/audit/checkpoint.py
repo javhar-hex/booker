@@ -72,7 +72,7 @@ class Checkpoint:
     def _scope_as_json(self) -> dict[str, str | int | None]:
         return {
             "db": str(self.scope.db),
-            "mode": self.scope.mode,
+            "mode": None if self.scope.strict is None else self.scope.strict.name,
             "from_id": _id_value(self.scope.ids.start),
             "to_id": _id_value(self.scope.ids.stop),
         }
