@@ -1,15 +1,25 @@
 from pathlib import Path
 
+import pytest
+
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
+DB = Path("a.db")
 
-def test_only_a_range_from_the_start_is_the_whole_database() -> None:
-    assert AuditPlan(db=Path("a.db"), strict=None).is_whole_database
-    assert AuditPlan(
-        db=Path("a.db"), strict=None, ids=StateIdRange(stop=StateId(4))
-    ).is_whole_database
-    assert not AuditPlan(
-        db=Path("a.db"), strict=None, ids=StateIdRange(start=StateId(4))
-    ).is_whole_database
+
+def test_a_plan_without_a_range_is_the_whole_database() -> None:
+    assert AuditPlan(db=DB, strict=None).is_whole_database
+
+
+@pytest.mark.parametrize(
+    "ids",
+    [
+        StateIdRange(start=StateId(4)),
+        StateIdRange(stop=StateId(4)),
+        StateIdRange(start=StateId(2), stop=StateId(4)),
+    ],
+)
+def test_a_plan_with_either_end_of_a_range_is_not(ids: StateIdRange) -> None:
+    assert not AuditPlan(db=DB, strict=None, ids=ids).is_whole_database

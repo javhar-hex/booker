@@ -33,4 +33,4 @@ class AuditPlan:
 
     @property
     def is_whole_database(self) -> bool:
-        return self.ids.start is None
+        return self.ids.start is None and self.ids.stop is None
