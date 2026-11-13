@@ -93,9 +93,9 @@ class AtlasReader:
 
     def is_intact(self) -> bool:
         "SQLite's own integrity and foreign key checks both pass."
-        ok = self._connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-        return bool(
-            ok and not self._connection.execute("PRAGMA foreign_key_check").fetchone()
+        return (
+            self._connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+            and self._connection.execute("PRAGMA foreign_key_check").fetchone() is None
         )
 
     def first_orphan(self, root: StateId) -> StateId | None:
