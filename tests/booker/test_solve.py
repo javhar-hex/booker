@@ -17,7 +17,7 @@ FINAL_PAIRING = Pairing.of(Team(index=0), Team(index=1))
 
 
 @pytest.mark.parametrize("have_met", [False, True])
-def test_returns_the_root_value_of_the_last_match(
+def test_returns_the_root_gtv_of_the_last_match(
     tmp_path_factory: pytest.TempPathFactory, have_met: bool
 ) -> None:
     path = tmp_path_factory.mktemp("last-match") / "atlas.db"

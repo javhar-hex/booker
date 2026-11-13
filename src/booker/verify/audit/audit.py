@@ -10,7 +10,7 @@ from booker.verify.audit.checkpoint import CHECKPOINT_EVERY, Checkpoint
 from booker.verify.audit.progress import Progress
 from booker.verify.audit.whole_database import (
     check_metadata,
-    check_root_value,
+    check_root_gtv,
     check_whole_database,
 )
 from booker.verify.spot_check.atlas_reader import AtlasReader
@@ -24,12 +24,12 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
     with AtlasReader.open(plan.db) as db:
         root = check_metadata(db)
         unexpanded = db.num_unexpanded()
-        is_solved = db.num_unvalued() == 0
+        is_solved = db.num_unsolved() == 0
         if plan.is_whole_database:
             check_whole_database(db, plan, root)
         progress = _walk(db, plan, is_solved, log)
         if plan.is_whole_database and plan.expect_root is not None:
-            check_root_value(db, root, plan.expect_root)
+            check_root_gtv(db, root, plan.expect_root)
     return AuditReport.of(plan, progress, is_solved, unexpanded)
 
 

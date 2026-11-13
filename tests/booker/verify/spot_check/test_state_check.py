@@ -56,14 +56,14 @@ def test_accepts_a_rematch_that_costs_one(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("sql", "first_id", "complaint"),
     [
-        ("UPDATE states SET value=5 WHERE id=1", 0, "best action is worth"),
-        ("UPDATE actions SET value=3", 0, "Collider value"),
+        ("UPDATE states SET gtv=5 WHERE id=1", 0, "best action is worth"),
+        ("UPDATE actions SET gtv=3", 0, "Collider GTV"),
         ("UPDATE actions SET repeat_cost=1", 0, "wrong repeat cost"),
         ("UPDATE actions SET lhs_wins=1", 0, "one match deeper"),
         ("UPDATE actions SET lhs_wins=99", 0, "does not exist"),
         ("UPDATE states SET expanded=0 WHERE id=1", 0, "unexpanded, with"),
         ("UPDATE states SET expanded=0 WHERE id=2", 0, "bad decided state"),
-        ("UPDATE states SET value=1 WHERE id=2", CHILD, "worth 0"),
+        ("UPDATE states SET gtv=1 WHERE id=2", CHILD, "worth 0"),
         ("UPDATE states SET depth=29 WHERE id=2", CHILD, "depth 29"),
         ("UPDATE states SET active=3 WHERE id=1", 0, "team count"),
         ("UPDATE states SET key=X'FF' WHERE id=2", CHILD, "invalid position"),
@@ -87,7 +87,7 @@ def test_rejects_an_impossible_position(
     solved: Path, key: str, depth: int, complaint: str
 ) -> None:
     sql = (
-        "INSERT INTO states(key,depth,active,expanded,value) "
+        "INSERT INTO states(key,depth,active,expanded,gtv) "
         f"VALUES (X'{key.replace(' ', '')}', {depth}, 2, 0, 0)"
     )
 
@@ -95,8 +95,8 @@ def test_rejects_an_impossible_position(
         _check_every_state(tampered_copy(solved, sql), first_id=3)
 
 
-def test_an_atlas_that_is_not_solved_is_not_held_to_its_values(solved: Path) -> None:
-    unsolved = tampered_copy(solved, "UPDATE states SET value=NULL WHERE id=1")
+def test_an_atlas_that_is_not_solved_is_not_held_to_its_gtvs(solved: Path) -> None:
+    unsolved = tampered_copy(solved, "UPDATE states SET gtv=NULL WHERE id=1")
 
     _check_every_state(unsolved, is_solved=False)
     with pytest.raises(AuditFailure, match="unsolved"):
@@ -129,14 +129,14 @@ def test_rejects_a_dead_end(tmp_path: Path) -> None:
 
 UNEQUAL_CHILDREN = (
     "SELECT action.rowid FROM actions action JOIN states x ON x.id = action.lhs_wins "
-    "JOIN states y ON y.id = action.rhs_wins WHERE x.value != y.value LIMIT 1"
+    "JOIN states y ON y.id = action.rhs_wins WHERE x.gtv != y.gtv LIMIT 1"
 )
 COLLIDER_AS_MIN = (
-    "UPDATE actions SET value = (SELECT MIN(x.value, y.value) FROM states x, states y "
+    "UPDATE actions SET gtv = (SELECT MIN(x.gtv, y.gtv) FROM states x, states y "
     f"WHERE x.id = actions.lhs_wins AND y.id = actions.rhs_wins) WHERE rowid = ({UNEQUAL_CHILDREN})"
 )
 ROOT_AS_MAX = (
-    "UPDATE states SET value = (SELECT MAX(repeat_cost + value) FROM actions "
+    "UPDATE states SET gtv = (SELECT MAX(repeat_cost + gtv) FROM actions "
     f"WHERE parent = states.id) WHERE id = {ROOT}"
 )
 SWAPPED_CHILDREN = (
@@ -158,13 +158,13 @@ def test_accepts_the_rest_of_a_real_game(
 @pytest.mark.parametrize(
     ("sql", "complaint"),
     [
-        (COLLIDER_AS_MIN, "Collider value"),
+        (COLLIDER_AS_MIN, "Collider GTV"),
         (ROOT_AS_MAX, "best action is worth"),
-        (f"UPDATE states SET value = value + 1 WHERE id = {ROOT}", "best action"),
-        ("UPDATE actions SET value = value + 1 WHERE rowid = 1", "Collider value"),
+        (f"UPDATE states SET gtv = gtv + 1 WHERE id = {ROOT}", "best action"),
+        ("UPDATE actions SET gtv = gtv + 1 WHERE rowid = 1", "Collider GTV"),
     ],
 )
-def test_rejects_the_rest_of_a_real_game_valued_wrongly(
+def test_rejects_the_rest_of_a_real_game_wrong_gtv(
     endgame: Path, sql: str, complaint: str
 ) -> None:
     with pytest.raises(AuditFailure, match=complaint):

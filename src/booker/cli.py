@@ -28,7 +28,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.command == "expand":
         _expand(args, parser)
     elif args.command == "solve":
-        print(f"root minimax value: {solve(args.db)}")
+        print(f"root GTV: {solve(args.db)}")
     elif args.command == "verify":
         _verify(args)
     elif args.command == "equilibrium":
@@ -131,12 +131,12 @@ def _equilibrium(args: argparse.Namespace) -> None:
 
 
 def _print_stats(path: str) -> None:
-    print("depth  states  collider  pairings  min-value  max-value")
+    print("depth  states  collider  pairings  min-gtv  max-gtv")
     with Atlas.open(path) as atlas:
         for row in atlas.depth_summaries():
             print(
                 f"{row.depth:>5} {row.num_states:>7,} {row.num_colliders:>9,} "
-                f"{row.num_pairings:>9,} {row.min_value!s:>10} {row.max_value!s:>10}"
+                f"{row.num_pairings:>9,} {row.min_gtv!s:>8} {row.max_gtv!s:>8}"
             )
 
 

@@ -100,7 +100,7 @@ class Atlas:
     def depth_summaries(self) -> Iterator[DepthSummary]:
         rows = self.connection.execute("""
             SELECT s.depth, COUNT(DISTINCT s.id), COUNT(action.lhs),
-                   COALESCE(SUM(action.class_size),0), MIN(s.value), MAX(s.value)
+                   COALESCE(SUM(action.class_size),0), MIN(s.gtv), MAX(s.gtv)
             FROM states s LEFT JOIN actions action ON action.parent=s.id
             GROUP BY s.depth ORDER BY s.depth
             """)
@@ -110,8 +110,8 @@ class Atlas:
                 num_states=states,
                 num_colliders=colliders,
                 num_pairings=pairings,
-                min_value=lowest,
-                max_value=highest,
+                min_gtv=lowest,
+                max_gtv=highest,
             )
 
     def _count(self, sql: str, params: tuple[int, ...] = ()) -> int:

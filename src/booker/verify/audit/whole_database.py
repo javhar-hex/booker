@@ -40,17 +40,17 @@ def check_whole_database(db: AtlasReader, plan: AuditPlan, root: StateId) -> Non
         raise AuditFailure(f"orphan state {orphan.value}: no action leads to it")
 
 
-def check_root_value(db: AtlasReader, root: StateId, expected: int) -> None:
-    value = db.state_row(root).value
-    if value != expected:
-        raise AuditFailure(f"root value is {value}, expected {expected}")
+def check_root_gtv(db: AtlasReader, root: StateId, expected: int) -> None:
+    gtv = db.state_row(root).gtv
+    if gtv != expected:
+        raise AuditFailure(f"root GTV is {gtv}, expected {expected}")
 
 
 def _check_complete(db: AtlasReader) -> None:
-    unexpanded, unvalued = db.num_unexpanded(), db.num_unvalued()
-    if unexpanded or unvalued:
+    unexpanded, unsolved = db.num_unexpanded(), db.num_unsolved()
+    if unexpanded or unsolved:
         raise AuditFailure(
-            f"not complete: {unexpanded:,} unexpanded states, {unvalued:,} without a value"
+            f"not complete: {unexpanded:,} unexpanded states, {unsolved:,} without a GTV"
         )
     if db.max_depth() != MAX_MATCHES:
         raise AuditFailure(f"last match is missing: depth {db.max_depth()}")

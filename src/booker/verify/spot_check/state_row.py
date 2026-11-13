@@ -16,20 +16,20 @@ from booker.verify.spot_check.state_id import StateId
 class StateRow:
     "What the atlas stores of one position."
 
-    COLUMNS: ClassVar[str] = "key,depth,active,value,expanded"
+    COLUMNS: ClassVar[str] = "key,depth,active,gtv,expanded"
     "The columns of the row that `of` takes, in order."
 
     state: State
     depth: int
     num_teams: int
-    value: int | None
+    gtv: int | None
     is_expanded: bool
 
     @classmethod
     def of(
         cls, state_id: StateId, row: tuple[bytes, int, int, int | None, int]
     ) -> StateRow:
-        key, depth, num_teams, value, expanded = row
+        key, depth, num_teams, gtv, expanded = row
         try:
             state = PackedState(data=key).state
         except ValueError as error:
@@ -38,7 +38,7 @@ class StateRow:
             state=state,
             depth=depth,
             num_teams=num_teams,
-            value=value,
+            gtv=gtv,
             is_expanded=bool(expanded),
         )
 

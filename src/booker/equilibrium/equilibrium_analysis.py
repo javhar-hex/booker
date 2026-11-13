@@ -4,7 +4,7 @@ Equilibrium analysis of a solved atlas, written to a separate database.
 - equilibrium: reachable from the root when both players only make optimal moves.
 - critical (Collider positions): an equilibrium position where one winner is a mistake.
 - fewest_past_repeats: the fewest repeats over all paths from the root. A position is
-  balanced when this plus its value equals the root value; off the equilibrium path,
+  balanced when this plus its GTV equals the root GTV; off the equilibrium path,
   that means it is only reachable through mistakes that cancel each other out.
 """
 
@@ -72,7 +72,7 @@ class EquilibriumAnalysis:
         self._require_every_state_analyzed()
 
     def layer_summaries(self) -> ZVec[LayerSummary]:
-        rows = self._connection.execute(SUMMARY, (self._root_value(),)).fetchall()
+        rows = self._connection.execute(SUMMARY, (self._root_gtv(),)).fetchall()
         return ZVec(
             LayerSummary(
                 depth=depth,
@@ -98,15 +98,15 @@ class EquilibriumAnalysis:
         solved = self._connection.execute(
             "SELECT value FROM atlas.meta WHERE key='solved'"
         ).fetchone()
-        unvalued = self._connection.execute(
-            "SELECT (SELECT COUNT(*) FROM atlas.states WHERE value IS NULL)"
-            " + (SELECT COUNT(*) FROM atlas.actions WHERE value IS NULL)"
+        unsolved = self._connection.execute(
+            "SELECT (SELECT COUNT(*) FROM atlas.states WHERE gtv IS NULL)"
+            " + (SELECT COUNT(*) FROM atlas.actions WHERE gtv IS NULL)"
         ).fetchone()[0]
         if solved is None or solved[0] != "true":
             raise ValueError("Atlas is not solved: it has not been through `solve`")
-        if unvalued:
+        if unsolved:
             raise ValueError(
-                f"Atlas is not solved: {unvalued:,} positions without a value"
+                f"Atlas is not solved: {unsolved:,} positions without a GTV"
             )
 
     def _analyze_root(self) -> None:
@@ -148,9 +148,9 @@ class EquilibriumAnalysis:
         ).fetchone()
         return int(row[0])
 
-    def _root_value(self) -> int:
+    def _root_gtv(self) -> int:
         row = self._connection.execute(
-            "SELECT value FROM atlas.states WHERE id = ?", (self._root_id(),)
+            "SELECT gtv FROM atlas.states WHERE id = ?", (self._root_id(),)
         ).fetchone()
         return int(row[0])
 

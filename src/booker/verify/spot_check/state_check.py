@@ -1,4 +1,4 @@
-"""The checks on one position, its actions, and the values it and they are given."""
+"""The checks on one position, its actions, and the GTVs it and they are given."""
 
 from __future__ import annotations
 
@@ -122,17 +122,17 @@ class StateCheck:
         state_row: StateRow,
         action_rows: ZVec[ActionRow],
     ) -> None:
-        if state_row.value is None:
+        if state_row.gtv is None:
             raise AuditFailure.of(state_id, "unsolved")
-        if state_row.state.is_decided and state_row.value != 0:
+        if state_row.state.is_decided and state_row.gtv != 0:
             raise AuditFailure.of(state_id, "a decided state is worth 0")
         options = [
             self._checked_option(state_id, action_row) for action_row in action_rows
         ]
-        if options and state_row.value != min(options):
+        if options and state_row.gtv != min(options):
             raise AuditFailure.of(
                 state_id,
-                f"value {state_row.value}, but its best action is worth {min(options)}",
+                f"GTV {state_row.gtv}, but its best action is worth {min(options)}",
             )
 
     def _checked_option(self, state_id: StateId, action_row: ActionRow) -> int:
@@ -140,14 +140,14 @@ class StateCheck:
         What the Scheduler gets by choosing this action: its cost plus its GTV, once the
         Collider's GTV is checked to be the larger of its children's.
         """
-        value_lhs = self.db.state_row(action_row.lhs_wins).value
-        value_rhs = self.db.state_row(action_row.rhs_wins).value
-        if value_lhs is None or value_rhs is None:
+        gtv_lhs = self.db.state_row(action_row.lhs_wins).gtv
+        gtv_rhs = self.db.state_row(action_row.rhs_wins).gtv
+        if gtv_lhs is None or gtv_rhs is None:
             raise AuditFailure.of(state_id, "a child is unsolved")
-        if action_row.value != max(value_lhs, value_rhs):
+        if action_row.gtv != max(gtv_lhs, gtv_rhs):
             raise AuditFailure.of(
                 state_id,
-                f"pairing {action_row.pairing}: Collider value {action_row.value}, "
-                f"but the children are worth {value_lhs} and {value_rhs}",
+                f"pairing {action_row.pairing}: Collider GTV {action_row.gtv}, "
+                f"but the children are worth {gtv_lhs} and {gtv_rhs}",
             )
-        return action_row.repeat_cost + action_row.value
+        return action_row.repeat_cost + action_row.gtv

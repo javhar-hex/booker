@@ -18,7 +18,7 @@ from booker.verify.spot_check.state_id import StateId
 class ActionRow:
     "The Scheduler's pairing from a position, and where each winner leads."
 
-    COLUMNS: ClassVar[str] = "lhs,rhs,repeat_cost,lhs_wins,rhs_wins,class_size,value"
+    COLUMNS: ClassVar[str] = "lhs,rhs,repeat_cost,lhs_wins,rhs_wins,class_size,gtv"
     "The columns of the row that `of` takes, in order."
 
     pairing: Pairing
@@ -26,18 +26,18 @@ class ActionRow:
     lhs_wins: StateId
     rhs_wins: StateId
     class_size: int
-    value: int | None
+    gtv: int | None
 
     @classmethod
     def of(cls, row: tuple[int, int, int, int, int, int, int | None]) -> ActionRow:
-        index_lhs, index_rhs, repeat_cost, lhs_wins, rhs_wins, class_size, value = row
+        index_lhs, index_rhs, repeat_cost, lhs_wins, rhs_wins, class_size, gtv = row
         return cls(
             pairing=Pairing.of(Team(index=index_lhs), Team(index=index_rhs)),
             repeat_cost=repeat_cost,
             lhs_wins=StateId(value=lhs_wins),
             rhs_wins=StateId(value=rhs_wins),
             class_size=class_size,
-            value=value,
+            gtv=gtv,
         )
 
     @classmethod

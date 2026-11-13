@@ -24,8 +24,8 @@ COLLIDER_LAYER = """
 WITH layer AS (
   SELECT action.parent, action.lhs, action.rhs,
          parent_equilibrium.equilibrium
-           AND action.repeat_cost + action.value = parent_state.value AS optimal_pairing,
-         MIN(lhs_child.value, rhs_child.value) < action.value AS has_mistake,
+           AND action.repeat_cost + action.gtv = parent_state.gtv AS optimal_pairing,
+         MIN(lhs_child.gtv, rhs_child.gtv) < action.gtv AS has_mistake,
          parent_equilibrium.fewest_past_repeats + action.repeat_cost AS repeats
   FROM atlas.states parent_state
   JOIN atlas.actions action ON action.parent = parent_state.id
@@ -41,7 +41,7 @@ SELECT parent, lhs, rhs, optimal_pairing, optimal_pairing AND has_mistake, repea
 SCHEDULER_LAYER = """
 WITH edge AS (
   SELECT CASE winner.side WHEN 0 THEN action.lhs_wins ELSE action.rhs_wins END AS child,
-         action_equilibrium.equilibrium, action.value AS collider_value,
+         action_equilibrium.equilibrium, action.gtv AS collider_gtv,
          action_equilibrium.fewest_past_repeats
   FROM atlas.states parent_state
   JOIN atlas.actions action ON action.parent = parent_state.id
@@ -53,7 +53,7 @@ WITH edge AS (
 )
 INSERT INTO scheduler_equilibrium
 SELECT edge.child,
-       MAX(edge.equilibrium AND child_state.value = edge.collider_value),
+       MAX(edge.equilibrium AND child_state.gtv = edge.collider_gtv),
        MIN(edge.fewest_past_repeats)
 FROM edge JOIN atlas.states child_state ON child_state.id = edge.child
 GROUP BY edge.child
@@ -64,7 +64,7 @@ WITH scheduler AS (
   SELECT state.depth, COUNT(*) AS num_positions,
          SUM(scheduler_equilibrium.equilibrium) AS num_equilibrium,
          SUM(NOT scheduler_equilibrium.equilibrium
-             AND scheduler_equilibrium.fewest_past_repeats + state.value = ?)
+             AND scheduler_equilibrium.fewest_past_repeats + state.gtv = ?)
            AS num_balanced_off
   FROM atlas.states state
   JOIN scheduler_equilibrium ON scheduler_equilibrium.id = state.id

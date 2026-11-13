@@ -24,8 +24,8 @@ def test_expands_and_reports_each_depth(
         "states",
         "collider",
         "pairings",
-        "min-value",
-        "max-value",
+        "min-gtv",
+        "max-gtv",
     ]
     assert [line.split()[0] for line in lines[1:]] == ["0", "1", "2", "3"]
     assert lines[1].split()[1:4] == ["1", "1", "120"]

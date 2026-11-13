@@ -79,10 +79,10 @@ class AtlasReader:
     def num_unexpanded(self) -> int:
         return self._count("SELECT COUNT(*) FROM states WHERE expanded=0")
 
-    def num_unvalued(self) -> int:
+    def num_unsolved(self) -> int:
         return self._count(
-            "SELECT (SELECT COUNT(*) FROM states WHERE value IS NULL)"
-            "+(SELECT COUNT(*) FROM actions WHERE value IS NULL)"
+            "SELECT (SELECT COUNT(*) FROM states WHERE gtv IS NULL)"
+            "+(SELECT COUNT(*) FROM actions WHERE gtv IS NULL)"
         )
 
     def num_at_depth(self, depth: int) -> int:

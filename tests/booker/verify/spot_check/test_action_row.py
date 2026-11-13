@@ -19,12 +19,12 @@ def test_builds_the_pairing_and_the_children_of_a_row() -> None:
         lhs_wins=StateId(value=40),
         rhs_wins=StateId(value=41),
         class_size=12,
-        value=None,
+        gtv=None,
     )
 
 
-def test_a_solved_row_has_its_value() -> None:
-    assert ActionRow.of((0, 1, 0, 2, 3, 1, 4)).value == 4
+def test_a_solved_row_has_its_gtv() -> None:
+    assert ActionRow.of((0, 1, 0, 2, 3, 1, 4)).gtv == 4
 
 
 def test_the_columns_are_those_that_of_takes_in_order() -> None:
@@ -35,7 +35,7 @@ def test_the_columns_are_those_that_of_takes_in_order() -> None:
         "lhs_wins",
         "rhs_wins",
         "class_size",
-        "value",
+        "gtv",
     ]
 
 

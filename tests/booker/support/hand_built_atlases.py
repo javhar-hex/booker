@@ -41,7 +41,7 @@ def hand_built_atlas(
             writer.add_action(parent_id, pairing, is_rematch, 1, lhs_wins, rhs_wins)
         writer.mark_expanded(parent_id)
         writer.mark_decided_expanded()
-        atlas.retrograde_solver().reset_values()
+        atlas.retrograde_solver().reset_gtvs()
         for depth in range(MAX_MATCHES, -1, -1):
             atlas.retrograde_solver().back_up(depth)
     return path

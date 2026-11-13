@@ -4,17 +4,17 @@ position, which the action rows contract.
 
 states: `id`; `key`, the position as `PackedState` bytes, unique; `depth`, the number of
 matches played; `active`, the number of live teams, so 1 for a decided position; `expanded`,
-whether its actions have been generated; `value`, the minimum guaranteed number of further
-repeats, once solved.
+whether its actions have been generated; `gtv`, the game-theoretical value, which is the
+minimum guaranteed number of further repeats, once solved.
 
 actions: one per Collider-to-move state up to isomorphism, from the position `parent`.
 (lhs, rhs) is the smallest legal pairing of its automorphism orbit, as team indices, and
 `class_size` the size of that orbit. The Scheduler pays `repeat_cost`, 1 for a rematch, on
 choosing the pairing; `lhs_wins` and `rhs_wins` are the positions that follow each winner. A
-Collider state's `value` is the larger of its two children's values, and a Scheduler
-state's the least, over its actions, of `repeat_cost` + `value`.
+Collider state's `gtv` is the larger of its two children's GTVs, and a Scheduler
+state's the least, over its actions, of `repeat_cost` + `gtv`.
 
-meta: the game and its value convention, the `state_symmetry` implementation, the id of the
+meta: the game and its GTV convention, the `state_symmetry` implementation, the id of the
 root position, and whether the atlas is solved. The schema version is SQLite's own
 `PRAGMA user_version`.
 """
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from javhar_util.immutables import ZMap
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS states (
   depth INTEGER NOT NULL,
   active INTEGER NOT NULL,
   expanded INTEGER NOT NULL DEFAULT 0 CHECK(expanded IN (0,1)),
-  value INTEGER,
-  CHECK(value IS NULL OR value >= 0)
+  gtv INTEGER,
+  CHECK(gtv IS NULL OR gtv >= 0)
 );
 CREATE INDEX IF NOT EXISTS ix_states_depth ON states(depth,expanded);
 CREATE TABLE IF NOT EXISTS actions (
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS actions (
   class_size INTEGER NOT NULL CHECK(class_size >= 1),
   lhs_wins INTEGER NOT NULL REFERENCES states(id),
   rhs_wins INTEGER NOT NULL REFERENCES states(id),
-  value INTEGER CHECK(value IS NULL OR value >= 0),
+  gtv INTEGER CHECK(gtv IS NULL OR gtv >= 0),
   PRIMARY KEY(parent,lhs,rhs),
   CHECK(lhs < rhs)
 );
@@ -59,7 +59,7 @@ CREATE INDEX IF NOT EXISTS ix_actions_rhs_wins ON actions(rhs_wins);
 META = ZMap(
     {
         "game": "unrestricted-16-2-6",
-        "value_convention": "minimum guaranteed additional repeats",
+        "gtv_convention": "minimum guaranteed additional repeats",
     }
 )
 

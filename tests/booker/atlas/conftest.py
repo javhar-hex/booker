@@ -63,10 +63,10 @@ def solved(
         writer.mark_expanded(parent)
         writer.mark_decided_expanded()
         solver = atlas.retrograde_solver()
-        solver.reset_values()
+        solver.reset_gtvs()
         for depth in range(MAX_MATCHES, -1, -1):
             solver.back_up(depth)
-            assert solver.num_unvalued(depth) == 0
+            assert solver.num_unsolved(depth) == 0
         solver.mark_solved()
         return atlas
 

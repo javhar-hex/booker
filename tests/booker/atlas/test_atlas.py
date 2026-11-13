@@ -120,8 +120,8 @@ def test_summarizes_each_depth(
     parent_depth = final_pair(True).matches_played
     assert [summary.depth for summary in summaries] == [parent_depth, parent_depth + 1]
     assert (summaries[0].num_states, summaries[0].num_colliders) == (1, 1)
-    assert (summaries[0].num_pairings, summaries[0].min_value) == (1, 1)
-    assert (summaries[1].num_states, summaries[1].max_value) == (1, 0)
+    assert (summaries[0].num_pairings, summaries[0].min_gtv) == (1, 1)
+    assert (summaries[1].num_states, summaries[1].max_gtv) == (1, 0)
 
 
 def test_the_values_of_an_unsolved_atlas_are_none(
@@ -132,7 +132,7 @@ def test_the_values_of_an_unsolved_atlas_are_none(
 
         (summary,) = atlas.depth_summaries()
 
-    assert (summary.min_value, summary.max_value) == (None, None)
+    assert (summary.min_gtv, summary.max_gtv) == (None, None)
 
 
 def test_summarizes_a_depth_of_several_positions(
@@ -156,7 +156,7 @@ def test_summarizes_a_depth_of_several_positions(
             writer.mark_expanded(parent)
         writer.mark_decided_expanded()
         solver = atlas.retrograde_solver()
-        solver.reset_values()
+        solver.reset_gtvs()
         for depth in range(MAX_MATCHES, -1, -1):
             solver.back_up(depth)
 
@@ -167,8 +167,8 @@ def test_summarizes_a_depth_of_several_positions(
 
     parents = summary[final_pair(True).matches_played]
     assert (parents.num_states, parents.num_colliders, parents.num_pairings) == (2, 3, 6)
-    assert (parents.min_value, parents.max_value) == (0, 1)
+    assert (parents.min_gtv, parents.max_gtv) == (0, 1)
 
     decided = summary[champion_state.matches_played]
     assert (decided.num_states, decided.num_colliders, decided.num_pairings) == (1, 0, 0)
-    assert (decided.min_value, decided.max_value) == (0, 0)
+    assert (decided.min_gtv, decided.max_gtv) == (0, 0)

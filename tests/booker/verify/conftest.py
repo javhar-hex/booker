@@ -28,7 +28,7 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """
     The rest of a real game from five teams on, fully generated and solved: unlike the
     hand-built atlases, its Scheduler has actions worth different amounts, and its
-    Collider positions have children worth different amounts, so that a value taken as
+    Collider positions have children worth different amounts, so that a GTV taken as
     a minimum where it should be a maximum, or the reverse, shows. It has 29 states,
     all of them late enough in the game to be quick to compare.
     """

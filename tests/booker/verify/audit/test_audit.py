@@ -1,6 +1,6 @@
 """
 The audit walks the positions of an atlas and checks the atlas as a whole: the metadata,
-the opening, completeness, orphans and the root value. The checks of one position are
+the opening, completeness, orphans and the root GTV. The checks of one position are
 shown in the tests of `StateCheck`. Whole-database checks are shown on a generated atlas.
 """
 
@@ -70,8 +70,8 @@ def test_rejects_an_atlas_with_the_wrong_metadata(
         _audit(tampered_copy(solved, sql))
 
 
-def test_an_atlas_missing_a_value_is_audited_as_unsolved(solved: Path) -> None:
-    report = _audit(tampered_copy(solved, "UPDATE states SET value=NULL WHERE id=1"))
+def test_an_atlas_missing_a_gtv_is_audited_as_unsolved(solved: Path) -> None:
+    report = _audit(tampered_copy(solved, "UPDATE states SET gtv=NULL WHERE id=1"))
 
     assert not report.is_solved
 
@@ -125,8 +125,8 @@ def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
         _audit(generated, ids=IdRange(), require_complete=True)
 
 
-def test_an_unsolved_root_is_not_the_expected_value(generated: Path) -> None:
-    with pytest.raises(AuditFailure, match="root value is None, expected 3"):
+def test_an_unsolved_root_is_not_the_expected_gtv(generated: Path) -> None:
+    with pytest.raises(AuditFailure, match="root GTV is None, expected 3"):
         _audit(generated, ids=IdRange(), expect_root=3)
 
 

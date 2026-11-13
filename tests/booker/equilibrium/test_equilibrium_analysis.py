@@ -1,11 +1,11 @@
 """Equilibrium pass on a hand-built solved atlas whose analysis can be read off by hand.
 
-Root R (value 1; the state ids are STATE_ID_ROOT, STATE_ID_X, and so on) has four
-Collider children (pairing: repeat cost, winners, value):
-  C1 (0,1): cost 0, X=1 / Y=0, value 1  -> equilibrium, critical
-  C2 (0,2): cost 1, Z=1 / Y=0, value 1  -> off: 1 + 1 > 1
-  C3 (0,3): cost 0, W=2 / V=1, value 2  -> off: 0 + 2 > 1
-  C4 (1,2): cost 0, X=1 / Z=1, value 1  -> equilibrium, indifferent
+Root R (GTV 1; the state ids are STATE_ID_ROOT, STATE_ID_X, and so on) has four
+Collider children (pairing: repeat cost, winners, GTV):
+  C1 (0,1): cost 0, X=1 / Y=0, GTV 1  -> equilibrium, critical
+  C2 (0,2): cost 1, Z=1 / Y=0, GTV 1  -> off: 1 + 1 > 1
+  C3 (0,3): cost 0, W=2 / V=1, GTV 2  -> off: 0 + 2 > 1
+  C4 (1,2): cost 0, X=1 / Z=1, GTV 1  -> equilibrium, indifferent
 V is balanced off the equilibrium path: the Scheduler's C3 and the Collider's V cancel.
 """
 
@@ -55,7 +55,7 @@ class Collider:
     repeat_cost: int
     lhs_wins: int
     rhs_wins: int
-    value: int
+    gtv: int
 
 
 COLLIDERS = ZVec(
@@ -66,7 +66,7 @@ COLLIDERS = ZVec(
             repeat_cost=0,
             lhs_wins=STATE_ID_X,
             rhs_wins=STATE_ID_Y,
-            value=1,
+            gtv=1,
         ),
         Collider(
             lhs=0,
@@ -74,7 +74,7 @@ COLLIDERS = ZVec(
             repeat_cost=1,
             lhs_wins=STATE_ID_Z,
             rhs_wins=STATE_ID_Y,
-            value=1,
+            gtv=1,
         ),
         Collider(
             lhs=0,
@@ -82,7 +82,7 @@ COLLIDERS = ZVec(
             repeat_cost=0,
             lhs_wins=STATE_ID_W,
             rhs_wins=STATE_ID_V,
-            value=2,
+            gtv=2,
         ),
         Collider(
             lhs=1,
@@ -90,7 +90,7 @@ COLLIDERS = ZVec(
             repeat_cost=0,
             lhs_wins=STATE_ID_X,
             rhs_wins=STATE_ID_Z,
-            value=1,
+            gtv=1,
         ),
     ]
 )
@@ -109,17 +109,17 @@ def _tiny_atlas(path: Path) -> Path:
             "INSERT INTO meta VALUES ('root_id', ?)", (str(STATE_ID_ROOT),)
         )
         connection.execute("INSERT INTO meta VALUES ('solved', 'true')")
-        for state_id, value in VALUES.items():
+        for state_id, gtv in VALUES.items():
             depth = 0 if state_id == STATE_ID_ROOT else 1
             connection.execute(
-                "INSERT INTO states (id, key, depth, active, expanded, value)"
+                "INSERT INTO states (id, key, depth, active, expanded, gtv)"
                 " VALUES (?, ?, ?, 2, 1, ?)",
-                (state_id, bytes([state_id]), depth, value),
+                (state_id, bytes([state_id]), depth, gtv),
             )
         for collider in COLLIDERS:
             connection.execute(
                 "INSERT INTO actions (parent, lhs, rhs, repeat_cost, class_size, lhs_wins,"
-                " rhs_wins, value) VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
+                " rhs_wins, gtv) VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
                 (
                     STATE_ID_ROOT,
                     collider.lhs,
@@ -127,7 +127,7 @@ def _tiny_atlas(path: Path) -> Path:
                     collider.repeat_cost,
                     collider.lhs_wins,
                     collider.rhs_wins,
-                    collider.value,
+                    collider.gtv,
                 ),
             )
     connection.close()
@@ -227,8 +227,8 @@ def _only(directory: Path) -> list[str]:
     ("sql", "complaint"),
     [
         (
-            f"UPDATE states SET value = NULL WHERE id = {STATE_ID_V}",
-            "positions without a value",
+            f"UPDATE states SET gtv = NULL WHERE id = {STATE_ID_V}",
+            "positions without a GTV",
         ),
         ("DELETE FROM meta WHERE key = 'solved'", "not been through"),
         ("PRAGMA user_version = 4", "schema v4"),
@@ -249,7 +249,7 @@ def test_refuses_an_atlas_it_cannot_read(
 def test_an_unsolved_atlas_is_not_solved(tmp_path: Path) -> None:
     atlas = _edit(
         _tiny_atlas(tmp_path / "atlas.db"),
-        f"UPDATE states SET value = NULL WHERE id = {STATE_ID_V}",
+        f"UPDATE states SET gtv = NULL WHERE id = {STATE_ID_V}",
     )
 
     with pytest.raises(ValueError, match="not solved"):
@@ -264,7 +264,7 @@ def test_refuses_to_overwrite(analyzed: Path) -> None:
 def test_a_failed_analysis_leaves_nothing_to_refuse_the_next(tmp_path: Path) -> None:
     atlas = _edit(
         _tiny_atlas(tmp_path / "atlas.db"),
-        "INSERT INTO states (id, key, depth, active, expanded, value)"
+        "INSERT INTO states (id, key, depth, active, expanded, gtv)"
         " VALUES (99, X'63', 1, 2, 1, 0)",
     )
 

@@ -16,7 +16,7 @@ def test_decodes_the_position_of_a_row() -> None:
     row = (PackedState.of(State.start()).data, 0, 16, None, 1)
 
     assert StateRow.of(STATE_ID, row) == StateRow(
-        state=State.start(), depth=0, num_teams=16, value=None, is_expanded=True
+        state=State.start(), depth=0, num_teams=16, gtv=None, is_expanded=True
     )
 
 
@@ -25,7 +25,7 @@ def test_an_expanded_flag_of_zero_is_not_expanded() -> None:
 
     state_row = StateRow.of(STATE_ID, row)
 
-    assert (state_row.is_expanded, state_row.value) == (False, 3)
+    assert (state_row.is_expanded, state_row.gtv) == (False, 3)
 
 
 def test_a_position_that_cannot_be_decoded_fails_the_audit_by_its_id() -> None:
@@ -34,7 +34,7 @@ def test_a_position_that_cannot_be_decoded_fails_the_audit_by_its_id() -> None:
 
 
 def test_the_columns_are_those_that_of_takes_in_order() -> None:
-    assert StateRow.COLUMNS.split(",") == ["key", "depth", "active", "value", "expanded"]
+    assert StateRow.COLUMNS.split(",") == ["key", "depth", "active", "gtv", "expanded"]
 
 
 def _row(state: State, depth: int, num_teams: int, is_expanded: bool = True) -> StateRow:
@@ -42,7 +42,7 @@ def _row(state: State, depth: int, num_teams: int, is_expanded: bool = True) -> 
         state=state,
         depth=depth,
         num_teams=num_teams,
-        value=None,
+        gtv=None,
         is_expanded=is_expanded,
     )
 
