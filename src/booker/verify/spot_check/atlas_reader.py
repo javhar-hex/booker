@@ -61,7 +61,8 @@ class AtlasReader:
 
     def state_ids(self, id_range: StateIdRange) -> Iterator[StateId]:
         "The ids in `id_range`, in order."
-        start, stop = id_range.start_value, id_range.stop_value
+        start = None if id_range.start is None else id_range.start.value
+        stop = None if id_range.stop is None else id_range.stop.value
         # SQLite cannot use a bound inside an OR to search the rowids, so a range scans
         # from the first row to the last, and filters. A flag per bound keeps one query.
         rows = self._connection.execute(

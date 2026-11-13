@@ -42,7 +42,7 @@ def _check_every_state(
     "Raises `AuditFailure` at the first position, from `first_id` on, that fails."
     with AtlasReader.open(str(atlas)) as db:
         check = StateCheck(db=db, symmetry=symmetry, is_solved=is_solved)
-        for state_id in db.state_ids(StateIdRange.of(start=first_id)):
+        for state_id in db.state_ids(StateIdRange(start=StateId(first_id))):
             check.run(state_id)
 
 

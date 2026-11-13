@@ -17,6 +17,7 @@ from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
 _LOG = functools.partial(print, flush=True)
@@ -76,6 +77,10 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _state_id(text: str) -> StateId:
+    return StateId(int(text))
+
+
 def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     verifying = sub.add_parser(
         "verify", help="independent position/transition/minimax verifier"
@@ -93,12 +98,12 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying.add_argument("--expect-root", type=int)
     verifying.add_argument(
         "--from-id",
-        type=int,
+        type=_state_id,
         help="First state id to check (inclusive); "
         "whole-database checks run only when omitted",
     )
     verifying.add_argument(
-        "--to-id", type=int, help="State id to stop before (exclusive)"
+        "--to-id", type=_state_id, help="State id to stop before (exclusive)"
     )
     verifying.add_argument(
         "--checkpoint", help="Progress file: saved periodically, resumed from if present"
@@ -109,7 +114,7 @@ def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
         db=args.db,
         strict=None if args.strict is None else STATE_SYMMETRIES[args.strict],
-        ids=StateIdRange.of(start=args.from_id, stop=args.to_id),
+        ids=StateIdRange(start=args.from_id, stop=args.to_id),
         limit=args.limit or None,
         expect_root=args.expect_root,
         require_complete=args.require_complete,

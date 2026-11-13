@@ -24,6 +24,7 @@ from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
 FIRST_ROUND_MATCHES = 8
@@ -154,8 +155,8 @@ def test_verifier_accepts_the_shallow_atlas(shallow_atlas: Path) -> None:
 
 def test_verifier_accepts_the_shallow_atlas_in_two_ranges(shallow_atlas: Path) -> None:
     middle = 10
-    _audit(shallow_atlas, ids=StateIdRange.of(stop=middle))
-    _audit(shallow_atlas, ids=StateIdRange.of(start=middle))
+    _audit(shallow_atlas, ids=StateIdRange(stop=StateId(middle)))
+    _audit(shallow_atlas, ids=StateIdRange(start=StateId(middle)))
 
 
 WRONG_ROOT_CLASS_SIZE = (
@@ -228,9 +229,9 @@ def test_verifier_range_checks_only_its_own_states(
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
     after_root = _root_id(db) + 1
-    _audit(db, ids=StateIdRange.of(start=after_root))
+    _audit(db, ids=StateIdRange(start=StateId(after_root)))
     with pytest.raises(AuditFailure, match="orbit sizes add up"):
-        _audit(db, ids=StateIdRange.of(stop=after_root))
+        _audit(db, ids=StateIdRange(stop=StateId(after_root)))
 
 
 @pytest.mark.slow
@@ -275,6 +276,6 @@ def test_verifier_refuses_a_checkpoint_from_another_range(
     with pytest.raises(AuditFailure, match="another run"):
         _audit(
             shallow_atlas,
-            ids=StateIdRange.of(start=FIRST_SITTING),
+            ids=StateIdRange(start=StateId(FIRST_SITTING)),
             checkpoint=checkpoint,
         )

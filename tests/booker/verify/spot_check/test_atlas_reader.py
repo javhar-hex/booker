@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from booker.verify.spot_check.atlas_reader import AtlasReader
+from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
 
@@ -31,4 +32,6 @@ def test_without_a_start_the_ids_begin_with_the_first(endgame: Path) -> None:
 
 def test_there_are_no_ids_in_an_empty_range(endgame: Path) -> None:
     with AtlasReader.open(str(endgame)) as reader:
-        assert list(reader.state_ids(StateIdRange.of(start=5, stop=5))) == []
+        assert (
+            list(reader.state_ids(StateIdRange(start=StateId(5), stop=StateId(5)))) == []
+        )

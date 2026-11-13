@@ -11,7 +11,7 @@ def test_a_whole_audit_starts_with_no_next_id() -> None:
 
 
 def test_a_ranged_audit_starts_at_its_range() -> None:
-    assert Progress.start(StateIdRange.of(start=7)).next_id == StateId(value=7)
+    assert Progress.start(StateIdRange(start=StateId(7))).next_id == StateId(value=7)
 
 
 def test_progress_counts_what_each_state_brought() -> None:

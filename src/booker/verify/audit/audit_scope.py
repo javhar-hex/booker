@@ -22,6 +22,6 @@ class AuditScope:
         return cls(
             db=os.path.abspath(plan.db),
             mode=None if plan.strict is None else plan.strict.name,
-            from_id=plan.ids.start_value,
-            to_id=plan.ids.stop_value,
+            from_id=None if plan.ids.start is None else plan.ids.start.value,
+            to_id=None if plan.ids.stop is None else plan.ids.stop.value,
         )

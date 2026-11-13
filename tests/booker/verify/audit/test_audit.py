@@ -18,9 +18,10 @@ from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
+from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
-EVERY_STATE = StateIdRange.of(start=0)
+EVERY_STATE = StateIdRange(start=StateId(0))
 ENDGAME_STATES = 29
 
 
@@ -111,7 +112,10 @@ def test_rejects_a_generated_atlas_broken_as_a_whole(
 
 
 def test_a_ranged_audit_leaves_the_whole_database_checks_alone(generated: Path) -> None:
-    _audit(tampered_copy(generated, ORPHAN), ids=StateIdRange.of(start=1, stop=3))
+    _audit(
+        tampered_copy(generated, ORPHAN),
+        ids=StateIdRange(start=StateId(1), stop=StateId(3)),
+    )
 
 
 def test_a_cut_short_audit_does_not_look_for_orphans(generated: Path) -> None:

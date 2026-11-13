@@ -58,7 +58,7 @@ def test_saving_leaves_no_temporary_file(tmp_path: Path) -> None:
 
 def test_the_file_keeps_the_format_of_earlier_audits(tmp_path: Path) -> None:
     path = tmp_path / "p.json"
-    Checkpoint(str(path), _scope(tmp_path, StateIdRange.of(start=3))).save(
+    Checkpoint(str(path), _scope(tmp_path, StateIdRange(start=StateId(3)))).save(
         Progress(
             next_id=StateId(value=4),
             states=1,
@@ -85,7 +85,7 @@ def test_progress_of_another_scope_is_refused(tmp_path: Path) -> None:
     Checkpoint(path, _scope(tmp_path)).save(Progress.start(StateIdRange()))
 
     with pytest.raises(AuditFailure, match="another run"):
-        Checkpoint(path, _scope(tmp_path, StateIdRange.of(start=5))).load()
+        Checkpoint(path, _scope(tmp_path, StateIdRange(start=StateId(5)))).load()
 
 
 def test_a_plan_without_a_checkpoint_has_none(tmp_path: Path) -> None:
@@ -96,10 +96,10 @@ def test_a_plan_with_a_checkpoint_has_it_for_its_own_scope(tmp_path: Path) -> No
     plan = AuditPlan(
         db=str(tmp_path / "atlas.db"),
         strict=VF2,
-        ids=StateIdRange.of(start=3),
+        ids=StateIdRange(start=StateId(3)),
         checkpoint=str(tmp_path / "p.json"),
     )
 
     assert Checkpoint.of(plan) == Checkpoint(
-        str(tmp_path / "p.json"), _scope(tmp_path, StateIdRange.of(start=3))
+        str(tmp_path / "p.json"), _scope(tmp_path, StateIdRange(start=StateId(3)))
     )
