@@ -37,7 +37,7 @@ class Checkpoint:
         if not self.path.exists():
             return None
         saved: dict[str, Any] = json.loads(self.path.read_text())
-        if saved["scope"] != dc.asdict(self.scope):
+        if saved["scope"] != self._scope_as_json:
             raise AuditFailure(
                 f"checkpoint is for another run: {saved['scope']}, not {self.scope}"
             )
@@ -52,20 +52,31 @@ class Checkpoint:
     def save(self, progress: Progress) -> None:
         "Atomically: a crash leaves the previous checkpoint, never half of the next."
         temporary = self.path.with_name(self.path.name + ".tmp")
-        with open(temporary, "w") as f:
+        with open(temporary, "w") as file:
             json.dump(
                 {
-                    "scope": dc.asdict(self.scope),
-                    "next_id": None
-                    if progress.next_id is None
-                    else progress.next_id.value,
+                    "scope": self._scope_as_json,
+                    "next_id": _id_value(progress.next_id),
                     "states": progress.states,
                     # The file keeps the names of earlier audits: its actions are orbits.
                     "actions": progress.counted.orbits,
                     "pairings": progress.counted.pairings,
                 },
-                f,
+                file,
             )
-            f.flush()
-            os.fsync(f.fileno())
+            file.flush()
+            os.fsync(file.fileno())
         os.replace(temporary, self.path)
+
+    @property
+    def _scope_as_json(self) -> dict[str, str | int | None]:
+        return {
+            "db": str(self.scope.db),
+            "mode": self.scope.mode,
+            "from_id": _id_value(self.scope.ids.start),
+            "to_id": _id_value(self.scope.ids.stop),
+        }
+
+
+def _id_value(state_id: StateId | None) -> int | None:
+    return None if state_id is None else state_id.value

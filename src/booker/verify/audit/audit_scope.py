@@ -3,25 +3,24 @@
 from __future__ import annotations
 
 import dataclasses as dc
-import os
+from pathlib import Path
 
 from booker.verify.audit.audit_plan import AuditPlan
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 
 @dc.dataclass(frozen=True, slots=True)
 class AuditScope:
     "What an audit covers; progress saved for one scope means nothing for another."
 
-    db: str
+    db: Path
     mode: str | None
-    from_id: int | None
-    to_id: int | None
+    ids: StateIdRange
 
     @classmethod
     def of(cls, plan: AuditPlan) -> AuditScope:
         return cls(
-            db=os.path.abspath(plan.db),
+            db=plan.db.resolve(),
             mode=None if plan.strict is None else plan.strict.name,
-            from_id=None if plan.ids.start is None else plan.ids.start.value,
-            to_id=None if plan.ids.stop is None else plan.ids.stop.value,
+            ids=plan.ids,
         )

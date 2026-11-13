@@ -17,11 +17,13 @@ def test_covers_the_database_by_its_absolute_path_and_the_ids_and_the_mode() -> 
     scope = AuditScope.of(plan)
 
     assert scope == AuditScope(
-        db=str(Path("atlas.db").resolve()), mode="bliss", from_id=3, to_id=9
+        db=Path("atlas.db").resolve(),
+        mode="bliss",
+        ids=StateIdRange(start=StateId(3), stop=StateId(9)),
     )
 
 
 def test_a_cheap_audit_of_every_id_has_no_mode_and_no_bounds() -> None:
     scope = AuditScope.of(AuditPlan(db=Path("/data/atlas.db")))
 
-    assert scope == AuditScope(db="/data/atlas.db", mode=None, from_id=None, to_id=None)
+    assert scope == AuditScope(db=Path("/data/atlas.db"), mode=None, ids=StateIdRange())
