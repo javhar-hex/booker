@@ -14,9 +14,11 @@ from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
 
-def _scope(path: Path, ids: StateIdRange | None = None) -> AuditScope:
-    ids = StateIdRange() if ids is None else ids
-    return AuditScope.of(AuditPlan(db_path=path / "atlas.db", strict=VF2, ids=ids))
+def _scope(path: Path, state_id_range: StateIdRange | None = None) -> AuditScope:
+    state_id_range = StateIdRange() if state_id_range is None else state_id_range
+    return AuditScope.of(
+        AuditPlan(db_path=path / "atlas.db", strict=VF2, state_id_range=state_id_range)
+    )
 
 
 def test_a_missing_file_means_no_progress(tmp_path: Path) -> None:
@@ -96,7 +98,7 @@ def test_a_plan_with_a_checkpoint_has_it_for_its_own_scope(tmp_path: Path) -> No
     plan = AuditPlan(
         db_path=tmp_path / "atlas.db",
         strict=VF2,
-        ids=StateIdRange(start=StateId(3)),
+        state_id_range=StateIdRange(start=StateId(3)),
         checkpoint=tmp_path / "p.json",
     )
 

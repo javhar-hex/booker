@@ -14,12 +14,14 @@ def test_a_plan_without_a_range_is_the_whole_database() -> None:
 
 
 @pytest.mark.parametrize(
-    "ids",
+    "state_id_range",
     [
         StateIdRange(start=StateId(4)),
         StateIdRange(stop=StateId(4)),
         StateIdRange(start=StateId(2), stop=StateId(4)),
     ],
 )
-def test_a_plan_with_either_end_of_a_range_is_not(ids: StateIdRange) -> None:
-    assert not AuditPlan(db_path=DB, strict=None, ids=ids).is_whole_database
+def test_a_plan_with_either_end_of_a_range_is_not(state_id_range: StateIdRange) -> None:
+    assert not AuditPlan(
+        db_path=DB, strict=None, state_id_range=state_id_range
+    ).is_whole_database

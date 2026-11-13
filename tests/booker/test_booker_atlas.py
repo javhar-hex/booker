@@ -134,7 +134,7 @@ def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
 
 def _audit(
     db_path: Path,
-    ids: StateIdRange | None = None,
+    state_id_range: StateIdRange | None = None,
     limit: int | None = None,
     checkpoint: Path | None = None,
     strict: StateSymmetry | None = None,
@@ -142,7 +142,7 @@ def _audit(
     plan = AuditPlan(
         db_path=db_path,
         strict=strict,
-        ids=StateIdRange() if ids is None else ids,
+        state_id_range=StateIdRange() if state_id_range is None else state_id_range,
         limit=limit,
         checkpoint=checkpoint,
     )
@@ -155,8 +155,8 @@ def test_verifier_accepts_the_shallow_atlas(shallow_atlas: Path) -> None:
 
 def test_verifier_accepts_the_shallow_atlas_in_two_ranges(shallow_atlas: Path) -> None:
     middle = 10
-    _audit(shallow_atlas, ids=StateIdRange(stop=StateId(middle)))
-    _audit(shallow_atlas, ids=StateIdRange(start=StateId(middle)))
+    _audit(shallow_atlas, state_id_range=StateIdRange(stop=StateId(middle)))
+    _audit(shallow_atlas, state_id_range=StateIdRange(start=StateId(middle)))
 
 
 WRONG_ROOT_CLASS_SIZE = (
@@ -229,9 +229,9 @@ def test_verifier_range_checks_only_its_own_states(
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
     after_root = _root_id(db) + 1
-    _audit(db, ids=StateIdRange(start=StateId(after_root)))
+    _audit(db, state_id_range=StateIdRange(start=StateId(after_root)))
     with pytest.raises(AuditFailure, match="orbit sizes add up"):
-        _audit(db, ids=StateIdRange(stop=StateId(after_root)))
+        _audit(db, state_id_range=StateIdRange(stop=StateId(after_root)))
 
 
 @pytest.mark.slow
@@ -276,6 +276,6 @@ def test_verifier_refuses_a_checkpoint_from_another_range(
     with pytest.raises(AuditFailure, match="another run"):
         _audit(
             shallow_atlas,
-            ids=StateIdRange(start=StateId(FIRST_SITTING)),
+            state_id_range=StateIdRange(start=StateId(FIRST_SITTING)),
             checkpoint=checkpoint,
         )

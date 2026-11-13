@@ -16,12 +16,12 @@ class AuditScope:
 
     db_path: Path
     strict: StateSymmetry | None
-    ids: StateIdRange
+    state_id_range: StateIdRange
 
     @classmethod
     def of(cls, plan: AuditPlan) -> AuditScope:
         return cls(
             db_path=plan.db_path.resolve(),
             strict=plan.strict,
-            ids=plan.ids,
+            state_id_range=plan.state_id_range,
         )

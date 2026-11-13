@@ -27,10 +27,10 @@ ENDGAME_STATES = 29
 
 def _audit(
     db_path: Path,
-    ids: StateIdRange = EVERY_STATE,
+    state_id_range: StateIdRange = EVERY_STATE,
     limit: int | None = None,
     require_complete: bool = False,
-    expect_root: int | None = None,
+    expected_root_gtv: int | None = None,
     checkpoint: Path | None = None,
     log: list[str] | None = None,
     strict: StateSymmetry | None = None,
@@ -38,10 +38,10 @@ def _audit(
     plan = AuditPlan(
         db_path=db_path,
         strict=strict,
-        ids=ids,
+        state_id_range=state_id_range,
         limit=limit,
         require_complete=require_complete,
-        expect_root=expect_root,
+        expected_root_gtv=expected_root_gtv,
         checkpoint=checkpoint,
     )
     return audit(plan, log=(log if log is not None else []).append)
@@ -93,7 +93,7 @@ WRONG_OPENING = f"UPDATE states SET key=X'10{'02' + '00' * 15}{'00' * 15}' WHERE
 
 
 def test_accepts_a_generated_atlas_as_a_whole(generated: Path) -> None:
-    assert _audit(generated, ids=StateIdRange()).states > 0
+    assert _audit(generated, state_id_range=StateIdRange()).states > 0
 
 
 @pytest.mark.parametrize(
@@ -108,34 +108,34 @@ def test_rejects_a_generated_atlas_broken_as_a_whole(
     generated: Path, sql: str, complaint: str
 ) -> None:
     with pytest.raises(AuditFailure, match=complaint):
-        _audit(tampered_copy(generated, sql), ids=StateIdRange())
+        _audit(tampered_copy(generated, sql), state_id_range=StateIdRange())
 
 
 def test_a_ranged_audit_leaves_the_whole_database_checks_alone(generated: Path) -> None:
     _audit(
         tampered_copy(generated, ORPHAN),
-        ids=StateIdRange(start=StateId(1), stop=StateId(3)),
+        state_id_range=StateIdRange(start=StateId(1), stop=StateId(3)),
     )
 
 
 def test_a_cut_short_audit_does_not_look_for_orphans(generated: Path) -> None:
-    _audit(tampered_copy(generated, ORPHAN), ids=StateIdRange(), limit=1)
+    _audit(tampered_copy(generated, ORPHAN), state_id_range=StateIdRange(), limit=1)
 
 
 def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
     generated: Path,
 ) -> None:
     with pytest.raises(AuditFailure, match="not complete"):
-        _audit(generated, ids=StateIdRange(), require_complete=True)
+        _audit(generated, state_id_range=StateIdRange(), require_complete=True)
 
 
 def test_an_unsolved_root_is_not_the_expected_gtv(generated: Path) -> None:
     with pytest.raises(AuditFailure, match="root GTV is None, expected 3"):
-        _audit(generated, ids=StateIdRange(), expect_root=3)
+        _audit(generated, state_id_range=StateIdRange(), expected_root_gtv=3)
 
 
 def test_a_limit_stops_after_that_many_states(generated: Path) -> None:
-    assert _audit(generated, ids=StateIdRange(), limit=3).states == 3
+    assert _audit(generated, state_id_range=StateIdRange(), limit=3).states == 3
 
 
 def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None:
@@ -143,12 +143,20 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
     first: list[str] = []
     second: list[str] = []
 
-    _audit(generated, ids=StateIdRange(), limit=3, checkpoint=checkpoint, log=first)
-    resumed = _audit(generated, ids=StateIdRange(), checkpoint=checkpoint, log=second)
+    _audit(
+        generated,
+        state_id_range=StateIdRange(),
+        limit=3,
+        checkpoint=checkpoint,
+        log=first,
+    )
+    resumed = _audit(
+        generated, state_id_range=StateIdRange(), checkpoint=checkpoint, log=second
+    )
 
     assert first == []
     assert second == ["resuming at id 4 after 3 states"]
-    assert resumed == _audit(generated, ids=StateIdRange())
+    assert resumed == _audit(generated, state_id_range=StateIdRange())
 
 
 def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:

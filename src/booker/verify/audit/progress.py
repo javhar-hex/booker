@@ -18,9 +18,9 @@ class Progress:
     counted: PairingCount
 
     @classmethod
-    def start(cls, ids: StateIdRange) -> Progress:
-        "Nothing is checked yet: the next id is the first of `ids`, if it has one."
-        return cls(next_id=ids.start, states=0, counted=PairingCount.none())
+    def start(cls, state_id_range: StateIdRange) -> Progress:
+        "Nothing is checked yet: the next id is the first of `state_id_range`, if it has one."
+        return cls(next_id=state_id_range.start, states=0, counted=PairingCount.none())
 
     def after(self, state: StateId, counted: PairingCount) -> Progress:
         return Progress(

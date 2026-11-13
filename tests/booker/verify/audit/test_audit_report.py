@@ -11,7 +11,7 @@ from booker.verify.spot_check.state_id_range import StateIdRange
 
 def test_a_report_says_what_was_checked() -> None:
     report = AuditReport(
-        ids=StateIdRange(start=StateId(2)),
+        state_id_range=StateIdRange(start=StateId(2)),
         strict=VF2,
         states=1500,
         counted=PairingCount(orbits=3, pairings=4),
@@ -27,7 +27,7 @@ def test_a_report_says_what_was_checked() -> None:
 
 def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
     report = AuditReport(
-        ids=StateIdRange(),
+        state_id_range=StateIdRange(),
         strict=None,
         states=1,
         counted=PairingCount(orbits=2, pairings=3),
@@ -43,7 +43,9 @@ def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
 
 def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() -> None:
     plan = AuditPlan(
-        db_path=Path("atlas.db"), strict=VF2, ids=StateIdRange(start=StateId(2))
+        db_path=Path("atlas.db"),
+        strict=VF2,
+        state_id_range=StateIdRange(start=StateId(2)),
     )
     progress = Progress(
         next_id=StateId(value=9), states=7, counted=PairingCount(orbits=30, pairings=44)
@@ -52,7 +54,7 @@ def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() ->
     report = AuditReport.of(plan, progress, is_solved=True, unexpanded=5)
 
     assert report == AuditReport(
-        ids=StateIdRange(start=StateId(2)),
+        state_id_range=StateIdRange(start=StateId(2)),
         strict=VF2,
         states=7,
         counted=PairingCount(orbits=30, pairings=44),

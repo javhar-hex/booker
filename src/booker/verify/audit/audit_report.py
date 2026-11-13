@@ -13,7 +13,7 @@ from booker.verify.spot_check.state_id_range import StateIdRange
 
 @dc.dataclass(frozen=True, slots=True)
 class AuditReport:
-    ids: StateIdRange
+    state_id_range: StateIdRange
     strict: StateSymmetry | None
     states: int
     counted: PairingCount
@@ -26,7 +26,7 @@ class AuditReport:
     ) -> AuditReport:
         "What an audit of `plan` found, having got as far as `progress`."
         return cls(
-            ids=plan.ids,
+            state_id_range=plan.state_id_range,
             strict=plan.strict,
             states=progress.states,
             counted=progress.counted,
@@ -41,7 +41,7 @@ class AuditReport:
             else f"children and orbits compared by {self.strict.name}"
         )
         return (
-            f"PASS: ids {self.ids}: checked {self.states:,} states / "
+            f"PASS: ids {self.state_id_range}: checked {self.states:,} states / "
             f"{self.counted.orbits:,} actions ({self.counted.pairings:,} labelled pairings), {how}, "
             f"solved={self.is_solved}, unexpanded={self.unexpanded:,}"
         )

@@ -73,8 +73,8 @@ class Checkpoint:
         return {
             "db": str(self.scope.db_path),
             "mode": None if self.scope.strict is None else self.scope.strict.name,
-            "from_id": _id_value(self.scope.ids.start),
-            "to_id": _id_value(self.scope.ids.stop),
+            "from_id": _id_value(self.scope.state_id_range.start),
+            "to_id": _id_value(self.scope.state_id_range.stop),
         }
 
 

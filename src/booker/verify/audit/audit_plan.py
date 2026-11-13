@@ -12,25 +12,26 @@ from booker.verify.spot_check.state_id_range import StateIdRange
 @dc.dataclass(frozen=True, slots=True)
 class AuditPlan:
     """
-    The checks on the states in `ids` and their actions. Whole-database checks run only
-    in the range that starts at the beginning, so a set of ranges partitioning the ids
-    checks everything exactly once. With `limit`, at most that many states in all are
+    The checks on the states in `state_id_range` and their actions. Whole-database checks
+    run only when there is no range, so a set of ranges partitioning the ids needs one run
+    more for them. With `limit`, at most that many states in all are
     checked, counting those of earlier sittings resumed from `checkpoint`.
 
     Whether the stored children and pairings are the right ones is checked cheaply, by
     what a state's records and meetings must add up to. With `strict`, every child is also
     compared with the successor it should be, and every orbit found again, by that
     implementation of the symmetries of states: slow, and a check of the generator.
+    With `expected_root_gtv`, the whole-database checks include that the root is worth it.
     """
 
     db_path: Path
-    ids: StateIdRange = dc.field(default_factory=StateIdRange)
+    state_id_range: StateIdRange = dc.field(default_factory=StateIdRange)
     strict: StateSymmetry | None = None
     limit: int | None = None
-    expect_root: int | None = None
+    expected_root_gtv: int | None = None
     require_complete: bool = False
     checkpoint: Path | None = None
 
     @property
     def is_whole_database(self) -> bool:
-        return self.ids.start is None and self.ids.stop is None
+        return self.state_id_range.start is None and self.state_id_range.stop is None
