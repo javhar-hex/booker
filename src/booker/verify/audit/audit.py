@@ -17,7 +17,7 @@ from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.state_check import StateCheck
 from booker.verify.spot_check.state_id_range import StateIdRange
 
-REPORT_EVERY = 10000
+REPORT_INTERVAL = 10000
 
 
 def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
@@ -56,7 +56,7 @@ def _walk(
             and progress.num_checked_states >= plan.max_num_states
         ):
             break
-        if progress.num_checked_states % REPORT_EVERY == 0:
+        if progress.num_checked_states % REPORT_INTERVAL == 0:
             log(
                 f"checked {progress.num_checked_states:,} states, {progress.cml_pairing_count.orbits:,} actions"
             )
