@@ -17,7 +17,11 @@ from booker.verify.spot_check.state_id_range import StateIdRange
 def _scope(path: Path, state_id_range: StateIdRange | None = None) -> AuditScope:
     state_id_range = StateIdRange() if state_id_range is None else state_id_range
     return AuditScope.of(
-        AuditPlan(db_path=path / "atlas.db", strict=VF2, state_id_range=state_id_range)
+        AuditPlan(
+            db_path=path / "atlas.db",
+            reference_symmetry=VF2,
+            state_id_range=state_id_range,
+        )
     )
 
 
@@ -97,7 +101,7 @@ def test_a_plan_without_a_checkpoint_has_none(tmp_path: Path) -> None:
 def test_a_plan_with_a_checkpoint_has_it_for_its_own_scope(tmp_path: Path) -> None:
     plan = AuditPlan(
         db_path=tmp_path / "atlas.db",
-        strict=VF2,
+        reference_symmetry=VF2,
         state_id_range=StateIdRange(start=StateId(3)),
         checkpoint=tmp_path / "p.json",
     )

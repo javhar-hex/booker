@@ -72,7 +72,9 @@ class Checkpoint:
     def _scope_as_json(self) -> dict[str, str | int | None]:
         return {
             "db": str(self.scope.db_path),
-            "mode": None if self.scope.strict is None else self.scope.strict.name,
+            "mode": None
+            if self.scope.reference_symmetry is None
+            else self.scope.reference_symmetry.name,
             "from_id": _id_value(self.scope.state_id_range.start),
             "to_id": _id_value(self.scope.state_id_range.stop),
         }

@@ -135,15 +135,15 @@ def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
 def _audit(
     db_path: Path,
     state_id_range: StateIdRange | None = None,
-    limit: int | None = None,
+    max_num_states: int | None = None,
     checkpoint: Path | None = None,
-    strict: StateSymmetry | None = None,
+    reference_symmetry: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db_path=db_path,
-        strict=strict,
+        reference_symmetry=reference_symmetry,
         state_id_range=StateIdRange() if state_id_range is None else state_id_range,
-        limit=limit,
+        max_num_states=max_num_states,
         checkpoint=checkpoint,
     )
     return audit(plan, log=lambda message: None)
@@ -197,17 +197,20 @@ def _tampered(atlas: Path, directory: Path, tampering: str) -> Path:
     return db
 
 
-@pytest.mark.parametrize("strict", [None, VF2])
+@pytest.mark.parametrize("reference_symmetry", [None, VF2])
 @pytest.mark.parametrize(
     "tampering", [WRONG_ROOT_CLASS_SIZE, DUPLICATE_ROOT_REPRESENTATIVE]
 )
 def test_verifier_rejects_orbit_sizes_that_add_up_wrongly(
-    shallow_atlas: Path, tmp_path: Path, tampering: str, strict: StateSymmetry | None
+    shallow_atlas: Path,
+    tmp_path: Path,
+    tampering: str,
+    reference_symmetry: StateSymmetry | None,
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, tampering)
 
     with pytest.raises(AuditFailure, match="orbit sizes add up"):
-        _audit(db, strict=strict)
+        _audit(db, reference_symmetry=reference_symmetry)
 
 
 def test_only_the_strict_verifier_finds_two_stored_pairings_in_one_orbit(
@@ -221,7 +224,7 @@ def test_only_the_strict_verifier_finds_two_stored_pairings_in_one_orbit(
         AuditFailure,
         match=r"orbit representatives: 2 stored for the orbit of .* \(120 pairings\)",
     ):
-        _audit(db, strict=VF2)
+        _audit(db, reference_symmetry=VF2)
 
 
 def test_verifier_range_checks_only_its_own_states(
@@ -252,7 +255,7 @@ def test_verifier_resumes_to_the_same_totals(
 ) -> None:
     in_one_sitting = _audit(shallow_atlas)
     checkpoint = tmp_path / "progress.json"
-    _audit(shallow_atlas, limit=FIRST_SITTING, checkpoint=checkpoint)
+    _audit(shallow_atlas, max_num_states=FIRST_SITTING, checkpoint=checkpoint)
 
     assert _audit(shallow_atlas, checkpoint=checkpoint) == in_one_sitting
 
@@ -263,7 +266,7 @@ def test_verifier_resume_skips_states_already_checked(
     db = tmp_path / "atlas.db"
     shutil.copy(shallow_atlas, db)
     checkpoint = tmp_path / "progress.json"
-    _audit(db, limit=FIRST_SITTING, checkpoint=checkpoint)
+    _audit(db, max_num_states=FIRST_SITTING, checkpoint=checkpoint)
     _tamper(db, WRONG_ROOT_CLASS_SIZE)
     _audit(db, checkpoint=checkpoint)
 
@@ -272,7 +275,7 @@ def test_verifier_refuses_a_checkpoint_from_another_range(
     shallow_atlas: Path, tmp_path: Path
 ) -> None:
     checkpoint = tmp_path / "progress.json"
-    _audit(shallow_atlas, limit=FIRST_SITTING, checkpoint=checkpoint)
+    _audit(shallow_atlas, max_num_states=FIRST_SITTING, checkpoint=checkpoint)
     with pytest.raises(AuditFailure, match="another run"):
         _audit(
             shallow_atlas,

@@ -36,7 +36,7 @@ def check_whole_database(db: AtlasReader, plan: AuditPlan, root: StateId) -> Non
     _check_opening(db, root)
     # A depth-increasing DAG whose only source is the root is rooted wholly there,
     # which rules out extra, disconnected positions. Cut short, the walk is partial.
-    if plan.limit is None and (orphan := db.first_orphan(root)) is not None:
+    if plan.max_num_states is None and (orphan := db.first_orphan(root)) is not None:
         raise AuditFailure(f"orphan state {orphan.value}: no action leads to it")
 
 

@@ -41,13 +41,13 @@ def _walk(
     progress = (checkpoint and checkpoint.load()) or Progress.start(plan.state_id_range)
     if progress.states:
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")
-    check = StateCheck(db=db, symmetry=plan.strict, is_solved=is_solved)
+    check = StateCheck(db=db, symmetry=plan.reference_symmetry, is_solved=is_solved)
     remaining = StateIdRange(start=progress.next_id, stop=plan.state_id_range.stop)
     for state_id in db.state_ids(remaining):
         progress = progress.after(state_id, check.run(state_id))
         if checkpoint and _is_time_to_save(progress, plan):
             checkpoint.save(progress)
-        if plan.limit is not None and progress.states >= plan.limit:
+        if plan.max_num_states is not None and progress.states >= plan.max_num_states:
             break
         if progress.states % REPORT_EVERY == 0:
             log(
@@ -57,4 +57,6 @@ def _walk(
 
 
 def _is_time_to_save(progress: Progress, plan: AuditPlan) -> bool:
-    return progress.states % CHECKPOINT_EVERY == 0 or progress.states == plan.limit
+    return (
+        progress.states % CHECKPOINT_EVERY == 0 or progress.states == plan.max_num_states
+    )

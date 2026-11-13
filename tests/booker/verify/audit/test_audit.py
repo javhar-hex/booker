@@ -28,18 +28,18 @@ ENDGAME_STATES = 29
 def _audit(
     db_path: Path,
     state_id_range: StateIdRange = EVERY_STATE,
-    limit: int | None = None,
+    max_num_states: int | None = None,
     require_complete: bool = False,
     expected_root_gtv: int | None = None,
     checkpoint: Path | None = None,
     log: list[str] | None = None,
-    strict: StateSymmetry | None = None,
+    reference_symmetry: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
         db_path=db_path,
-        strict=strict,
+        reference_symmetry=reference_symmetry,
         state_id_range=state_id_range,
-        limit=limit,
+        max_num_states=max_num_states,
         require_complete=require_complete,
         expected_root_gtv=expected_root_gtv,
         checkpoint=checkpoint,
@@ -119,7 +119,9 @@ def test_a_ranged_audit_leaves_the_whole_database_checks_alone(generated: Path) 
 
 
 def test_a_cut_short_audit_does_not_look_for_orphans(generated: Path) -> None:
-    _audit(tampered_copy(generated, ORPHAN), state_id_range=StateIdRange(), limit=1)
+    _audit(
+        tampered_copy(generated, ORPHAN), state_id_range=StateIdRange(), max_num_states=1
+    )
 
 
 def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
@@ -135,7 +137,7 @@ def test_an_unsolved_root_is_not_the_expected_gtv(generated: Path) -> None:
 
 
 def test_a_limit_stops_after_that_many_states(generated: Path) -> None:
-    assert _audit(generated, state_id_range=StateIdRange(), limit=3).states == 3
+    assert _audit(generated, state_id_range=StateIdRange(), max_num_states=3).states == 3
 
 
 def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None:
@@ -146,7 +148,7 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
     _audit(
         generated,
         state_id_range=StateIdRange(),
-        limit=3,
+        max_num_states=3,
         checkpoint=checkpoint,
         log=first,
     )
@@ -171,4 +173,4 @@ def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
 def test_the_strict_audit_accepts_the_rest_of_a_real_game_with_any_implementation(
     endgame: Path, symmetry: StateSymmetry
 ) -> None:
-    assert _audit(endgame, strict=symmetry).states == ENDGAME_STATES
+    assert _audit(endgame, reference_symmetry=symmetry).states == ENDGAME_STATES

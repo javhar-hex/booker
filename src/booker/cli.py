@@ -115,9 +115,11 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
 def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
         db_path=args.db,
-        strict=None if args.strict is None else STATE_SYMMETRIES[args.strict],
+        reference_symmetry=None
+        if args.strict is None
+        else STATE_SYMMETRIES[args.strict],
         state_id_range=StateIdRange(start=args.from_id, stop=args.to_id),
-        limit=args.limit or None,
+        max_num_states=args.limit or None,
         expected_root_gtv=args.expect_root,
         require_complete=args.require_complete,
         checkpoint=args.checkpoint,
