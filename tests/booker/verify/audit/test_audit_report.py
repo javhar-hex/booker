@@ -16,7 +16,7 @@ def test_a_report_says_what_was_checked() -> None:
         num_checked_states=1500,
         cml_pairing_count=PairingCount(orbits=3, pairings=4),
         is_solved=True,
-        unexpanded=0,
+        num_unexpanded_states=0,
     )
 
     assert str(report) == (
@@ -32,7 +32,7 @@ def test_a_report_says_when_children_and_orbits_were_not_compared() -> None:
         num_checked_states=1,
         cml_pairing_count=PairingCount(orbits=2, pairings=3),
         is_solved=False,
-        unexpanded=5,
+        num_unexpanded_states=5,
     )
 
     assert str(report) == (
@@ -53,7 +53,7 @@ def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() ->
         cml_pairing_count=PairingCount(orbits=30, pairings=44),
     )
 
-    report = AuditReport.of(plan, progress, is_solved=True, unexpanded=5)
+    report = AuditReport.of(plan, progress, is_solved=True, num_unexpanded_states=5)
 
     assert report == AuditReport(
         state_id_range=StateIdRange(start=StateId(2)),
@@ -61,5 +61,5 @@ def test_a_report_is_made_of_the_plan_and_the_progress_and_what_was_counted() ->
         num_checked_states=7,
         cml_pairing_count=PairingCount(orbits=30, pairings=44),
         is_solved=True,
-        unexpanded=5,
+        num_unexpanded_states=5,
     )

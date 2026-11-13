@@ -18,11 +18,15 @@ class AuditReport:
     num_checked_states: int
     cml_pairing_count: PairingCount
     is_solved: bool
-    unexpanded: int
+    num_unexpanded_states: int
 
     @classmethod
     def of(
-        cls, plan: AuditPlan, progress: AuditProgress, is_solved: bool, unexpanded: int
+        cls,
+        plan: AuditPlan,
+        progress: AuditProgress,
+        is_solved: bool,
+        num_unexpanded_states: int,
     ) -> AuditReport:
         "What an audit of `plan` found, having got as far as `progress`."
         return cls(
@@ -31,7 +35,7 @@ class AuditReport:
             num_checked_states=progress.num_checked_states,
             cml_pairing_count=progress.cml_pairing_count,
             is_solved=is_solved,
-            unexpanded=unexpanded,
+            num_unexpanded_states=num_unexpanded_states,
         )
 
     def __str__(self) -> str:
@@ -43,5 +47,5 @@ class AuditReport:
         return (
             f"PASS: ids {self.state_id_range}: checked {self.num_checked_states:,} states / "
             f"{self.cml_pairing_count.orbits:,} actions ({self.cml_pairing_count.pairings:,} labelled pairings), {how}, "
-            f"solved={self.is_solved}, unexpanded={self.unexpanded:,}"
+            f"solved={self.is_solved}, unexpanded={self.num_unexpanded_states:,}"
         )

@@ -24,14 +24,14 @@ def audit(plan: AuditPlan, log: Callable[[str], None]) -> AuditReport:
     "Raises `AuditFailure` at the first thing wrong; `log` hears of progress."
     with AtlasReader.open(plan.db_path) as db:
         root = check_metadata(db)
-        unexpanded = db.num_unexpanded()
+        num_unexpanded_states = db.num_unexpanded()
         is_solved = db.num_unsolved() == 0
         if plan.is_whole_database:
             check_whole_database(db, plan, root)
         progress = _walk(db, plan, is_solved, log)
         if plan.is_whole_database and plan.expected_root_gtv is not None:
             check_root_gtv(db, root, plan.expected_root_gtv)
-    return AuditReport.of(plan, progress, is_solved, unexpanded)
+    return AuditReport.of(plan, progress, is_solved, num_unexpanded_states)
 
 
 def _walk(

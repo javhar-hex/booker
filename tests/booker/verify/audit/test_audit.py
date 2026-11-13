@@ -53,7 +53,7 @@ def test_accepts_a_solved_atlas(solved: Path) -> None:
     assert report.num_checked_states == 2
     assert report.cml_pairing_count == PairingCount(orbits=1, pairings=1)
     assert report.is_solved
-    assert report.unexpanded == 0
+    assert report.num_unexpanded_states == 0
 
 
 @pytest.mark.parametrize(
@@ -171,7 +171,7 @@ def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:
 
     assert report.num_checked_states == ENDGAME_STATES
     assert report.is_solved
-    assert report.unexpanded == 0
+    assert report.num_unexpanded_states == 0
 
 
 @pytest.mark.parametrize("symmetry", [BLISS, VF2])
