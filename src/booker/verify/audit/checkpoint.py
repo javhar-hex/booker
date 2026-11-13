@@ -17,6 +17,13 @@ from booker.verify.spot_check.state_id import StateId
 
 CHECKPOINT_INTERVAL = 1000
 
+SCOPE_KEY = "scope"
+NEXT_ID_KEY = "next_id"
+STATES_KEY = "states"
+# The file keeps the names of earlier audits: its "actions" are orbits.
+ORBITS_KEY = "actions"
+PAIRINGS_KEY = "pairings"
+
 
 @dc.dataclass(frozen=True, slots=True)
 class Checkpoint:
@@ -36,42 +43,19 @@ class Checkpoint:
         "The progress an earlier audit of the same scope saved, if any."
         if not self.path.exists():
             return None
-        saved: dict[str, Any] = json.loads(self.path.read_text())
-        if saved["scope"] != self._scope_as_json:
-            raise AuditFailure(
-                f"checkpoint is for another run: {saved['scope']}, not {self.scope}"
-            )
-        return AuditProgress(
-            next_state_id=None
-            if saved["next_id"] is None
-            else StateId(value=saved["next_id"]),
-            num_checked_states=saved["states"],
-            cml_pairing_count=PairingCount(
-                orbits=saved["actions"], pairings=saved["pairings"]
-            ),
-        )
+        return self._progress_in(json.loads(self.path.read_text()))
 
     def save(self, progress: AuditProgress) -> None:
         "Atomically: a crash leaves the previous checkpoint, never half of the next."
         temporary = self.path.with_name(self.path.name + ".tmp")
         with open(temporary, "w") as file:
-            json.dump(
-                {
-                    "scope": self._scope_as_json,
-                    "next_id": _id_value(progress.next_state_id),
-                    "states": progress.num_checked_states,
-                    # The file keeps the names of earlier audits: its actions are orbits.
-                    "actions": progress.cml_pairing_count.orbits,
-                    "pairings": progress.cml_pairing_count.pairings,
-                },
-                file,
-            )
+            json.dump(self._saved_dict(progress), file)
             file.flush()
             os.fsync(file.fileno())
         os.replace(temporary, self.path)
 
     @property
-    def _scope_as_json(self) -> dict[str, str | int | None]:
+    def _scope_dict(self) -> dict[str, str | int | None]:
         return {
             "db": str(self.scope.db_path),
             "mode": None
@@ -80,6 +64,31 @@ class Checkpoint:
             "from_id": _id_value(self.scope.state_id_range.start),
             "to_id": _id_value(self.scope.state_id_range.stop),
         }
+
+    def _saved_dict(self, progress: AuditProgress) -> dict[str, Any]:
+        return {
+            SCOPE_KEY: self._scope_dict,
+            NEXT_ID_KEY: _id_value(progress.next_state_id),
+            STATES_KEY: progress.num_checked_states,
+            ORBITS_KEY: progress.cml_pairing_count.orbits,
+            PAIRINGS_KEY: progress.cml_pairing_count.pairings,
+        }
+
+    def _progress_in(self, saved: dict[str, Any]) -> AuditProgress:
+        if saved[SCOPE_KEY] != self._scope_dict:
+            raise AuditFailure(
+                f"checkpoint is for another run: {saved[SCOPE_KEY]}, "
+                f"not {self._scope_dict}"
+            )
+        return AuditProgress(
+            next_state_id=None
+            if saved[NEXT_ID_KEY] is None
+            else StateId(value=saved[NEXT_ID_KEY]),
+            num_checked_states=saved[STATES_KEY],
+            cml_pairing_count=PairingCount(
+                orbits=saved[ORBITS_KEY], pairings=saved[PAIRINGS_KEY]
+            ),
+        )
 
 
 def _id_value(state_id: StateId | None) -> int | None:
