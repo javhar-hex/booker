@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from booker.atlas.atlas import Atlas
 from booker.core.model.invariants import MAX_MATCHES
 
 
-def solve(path: str) -> int:
+def solve(path: Path) -> int:
     """
     Backs up the GTVs of the atlas at `path`, which must be fully generated, and returns
     the GTV of its root.

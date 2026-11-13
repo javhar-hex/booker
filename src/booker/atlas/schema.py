@@ -64,7 +64,7 @@ META = ZMap(
 )
 
 
-def open_connection(path: str | Path) -> sqlite3.Connection:
+def open_connection(path: Path) -> sqlite3.Connection:
     """
     A connection to the database at `path`, which has this schema, created if new. It is in
     autocommit mode: each statement commits itself, and what is done together is done

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses as dc
 from collections.abc import Callable
+from pathlib import Path
 
 from booker.atlas.atlas import Atlas
 from booker.atlas.atlas_expansion_writer import AtlasExpansionWriter
@@ -19,7 +20,7 @@ from booker.game.rules import legal_pairings
 
 
 def expand_atlas(
-    path: str, max_depth: int, symmetry: StateSymmetry, log: Callable[[str], None]
+    path: Path, max_depth: int, symmetry: StateSymmetry, log: Callable[[str], None]
 ) -> ExpansionSummary:
     """
     Expands the atlas at `path`, resuming it if it exists, to `max_depth` matches. `log`

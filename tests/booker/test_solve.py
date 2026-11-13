@@ -30,4 +30,4 @@ def test_returns_the_root_gtv_of_the_last_match(
             final, MAX_MATCHES
         )
 
-    assert solve(str(path)) == int(have_met)
+    assert solve(path) == int(have_met)

@@ -22,7 +22,7 @@ CHECKPOINT_EVERY = 1000
 class Checkpoint:
     "A progress file for the audit of one scope."
 
-    path: str
+    path: Path
     scope: AuditScope
 
     @classmethod
@@ -34,9 +34,9 @@ class Checkpoint:
 
     def load(self) -> Progress | None:
         "The progress an earlier audit of the same scope saved, if any."
-        if not Path(self.path).exists():
+        if not self.path.exists():
             return None
-        saved: dict[str, Any] = json.loads(Path(self.path).read_text())
+        saved: dict[str, Any] = json.loads(self.path.read_text())
         if saved["scope"] != dc.asdict(self.scope):
             raise AuditFailure(
                 f"checkpoint is for another run: {saved['scope']}, not {self.scope}"
@@ -51,7 +51,7 @@ class Checkpoint:
 
     def save(self, progress: Progress) -> None:
         "Atomically: a crash leaves the previous checkpoint, never half of the next."
-        temporary = self.path + ".tmp"
+        temporary = self.path.with_name(self.path.name + ".tmp")
         with open(temporary, "w") as f:
             json.dump(
                 {

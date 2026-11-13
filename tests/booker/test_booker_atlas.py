@@ -68,7 +68,7 @@ REFERENCE = ZVec(
 def _expand(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
     directory.mkdir(exist_ok=True)
     db = directory / f"{symmetry.name}-{max_depth}.db"
-    expand_atlas(str(db), max_depth=max_depth, symmetry=symmetry, log=discard)
+    expand_atlas(db, max_depth=max_depth, symmetry=symmetry, log=discard)
     return db
 
 
@@ -129,7 +129,7 @@ def test_bliss_and_vf2_agree_past_the_depth_they_were_first_trusted_to(
 
 def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
     with pytest.raises(RuntimeError, match="truncated"):
-        solve(str(shallow_atlas))
+        solve(shallow_atlas)
 
 
 def _audit(
@@ -140,11 +140,11 @@ def _audit(
     strict: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
-        db=str(db),
+        db=db,
         strict=strict,
         ids=StateIdRange() if ids is None else ids,
         limit=limit,
-        checkpoint=None if checkpoint is None else str(checkpoint),
+        checkpoint=checkpoint,
     )
     return audit(plan, log=lambda message: None)
 

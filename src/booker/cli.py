@@ -56,7 +56,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
     expanding = sub.add_parser("expand")
-    expanding.add_argument("db")
+    expanding.add_argument("db", type=Path)
     expanding.add_argument(
         "--max-depth",
         type=int,
@@ -65,8 +65,8 @@ def _parser() -> argparse.ArgumentParser:
     expanding.add_argument(
         "--state-symmetry", choices=sorted(STATE_SYMMETRIES), default=BLISS.name
     )
-    sub.add_parser("solve").add_argument("db")
-    sub.add_parser("stats").add_argument("db")
+    sub.add_parser("solve").add_argument("db", type=Path)
+    sub.add_parser("stats").add_argument("db", type=Path)
     _add_verify(sub)
     equilibrium = sub.add_parser(
         "equilibrium", help="analyze which positions optimal play can reach"
@@ -85,7 +85,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying = sub.add_parser(
         "verify", help="independent position/transition/minimax verifier"
     )
-    verifying.add_argument("db")
+    verifying.add_argument("db", type=Path)
     verifying.add_argument(
         "--strict",
         choices=sorted(STATE_SYMMETRIES),
@@ -106,7 +106,9 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
         "--to-id", type=_state_id, help="State id to stop before (exclusive)"
     )
     verifying.add_argument(
-        "--checkpoint", help="Progress file: saved periodically, resumed from if present"
+        "--checkpoint",
+        type=Path,
+        help="Progress file: saved periodically, resumed from if present",
     )
 
 
@@ -135,7 +137,7 @@ def _equilibrium(args: argparse.Namespace) -> None:
         )
 
 
-def _print_stats(path: str) -> None:
+def _print_stats(path: Path) -> None:
     print("depth  states  collider  pairings  min-gtv  max-gtv")
     with Atlas.open(path) as atlas:
         for row in atlas.depth_summaries():

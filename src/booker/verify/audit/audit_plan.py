@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
+from pathlib import Path
 
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.verify.spot_check.state_id_range import StateIdRange
@@ -22,13 +23,13 @@ class AuditPlan:
     implementation of the symmetries of states: slow, and a check of the generator.
     """
 
-    db: str
+    db: Path
     ids: StateIdRange = dc.field(default_factory=StateIdRange)
     strict: StateSymmetry | None = None
     limit: int | None = None
     expect_root: int | None = None
     require_complete: bool = False
-    checkpoint: str | None = None
+    checkpoint: Path | None = None
 
     @property
     def is_whole_database(self) -> bool:

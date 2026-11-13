@@ -35,7 +35,7 @@ class Atlas:
     connection: sqlite3.Connection
 
     @classmethod
-    def open(cls, path: str | Path) -> Atlas:
+    def open(cls, path: Path) -> Atlas:
         return cls(connection=open_connection(path))
 
     def __enter__(self) -> Self:

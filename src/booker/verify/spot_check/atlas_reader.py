@@ -8,6 +8,7 @@ from __future__ import annotations
 import functools
 import sqlite3
 from collections.abc import Iterator
+from pathlib import Path
 from types import TracebackType
 from typing import Self
 
@@ -30,8 +31,8 @@ class AtlasReader:
         )
 
     @classmethod
-    def open(cls, path: str) -> AtlasReader:
-        connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    def open(cls, path: Path) -> AtlasReader:
+        connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
         connection.execute("PRAGMA foreign_keys=ON")
         return cls(connection)
 

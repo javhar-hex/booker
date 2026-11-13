@@ -36,13 +36,13 @@ def _audit(
     strict: StateSymmetry | None = None,
 ) -> AuditReport:
     plan = AuditPlan(
-        db=str(db),
+        db=db,
         strict=strict,
         ids=ids,
         limit=limit,
         require_complete=require_complete,
         expect_root=expect_root,
-        checkpoint=None if checkpoint is None else str(checkpoint),
+        checkpoint=checkpoint,
     )
     return audit(plan, log=(log if log is not None else []).append)
 
@@ -80,7 +80,7 @@ def test_an_atlas_missing_a_gtv_is_audited_as_unsolved(solved: Path) -> None:
 @pytest.fixture(scope="module")
 def generated(tmp_path_factory: pytest.TempPathFactory) -> Path:
     path = tmp_path_factory.mktemp("generated") / "atlas.db"
-    expand_atlas(str(path), 4, BLISS, log=discard)
+    expand_atlas(path, 4, BLISS, log=discard)
     return path
 
 

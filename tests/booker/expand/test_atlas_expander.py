@@ -40,32 +40,32 @@ def _contents(path: Path) -> list[tuple[object, ...]]:
 @pytest.mark.parametrize("depth", [-1, MAX_MATCHES + 1])
 def test_rejects_a_depth_outside_the_game(path: Path, depth: int) -> None:
     with pytest.raises(ValueError, match="between 0 and"):
-        expand_atlas(str(path), depth, BLISS, log=discard)
+        expand_atlas(path, depth, BLISS, log=discard)
 
 
 def test_resumed_generation_matches_generation_in_one_go(
     path: Path, tmp_path: Path
 ) -> None:
-    expand_atlas(str(path), 2, BLISS, log=discard)
-    expand_atlas(str(path), DEPTH, BLISS, log=discard)
-    expand_atlas(str(tmp_path / "direct.db"), DEPTH, BLISS, log=discard)
+    expand_atlas(path, 2, BLISS, log=discard)
+    expand_atlas(path, DEPTH, BLISS, log=discard)
+    expand_atlas(tmp_path / "direct.db", DEPTH, BLISS, log=discard)
 
     assert _contents(path) == _contents(tmp_path / "direct.db")
 
 
 def test_generating_again_changes_nothing(path: Path) -> None:
-    expand_atlas(str(path), DEPTH, BLISS, log=discard)
+    expand_atlas(path, DEPTH, BLISS, log=discard)
     before = _contents(path)
-    expand_atlas(str(path), DEPTH, BLISS, log=discard)
+    expand_atlas(path, DEPTH, BLISS, log=discard)
 
     assert _contents(path) == before
 
 
 def test_an_atlas_is_not_resumed_with_another_symmetry(path: Path) -> None:
-    expand_atlas(str(path), 2, BLISS, log=discard)
+    expand_atlas(path, 2, BLISS, log=discard)
 
     with pytest.raises(ValueError, match="Cannot resume bliss atlas using vf2"):
-        expand_atlas(str(path), 2, VF2, log=discard)
+        expand_atlas(path, 2, VF2, log=discard)
 
 
 def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
@@ -91,7 +91,7 @@ def test_expands_the_rest_of_a_game_from_a_late_state(path: Path) -> None:
 def test_logs_each_depth_that_it_expands(path: Path) -> None:
     messages: list[str] = []
 
-    expand_atlas(str(path), 2, BLISS, log=messages.append)
+    expand_atlas(path, 2, BLISS, log=messages.append)
 
     assert messages == [
         "expanding depth 00: 1 states",
@@ -100,16 +100,16 @@ def test_logs_each_depth_that_it_expands(path: Path) -> None:
 
 
 def test_logs_nothing_for_depths_that_are_expanded_already(path: Path) -> None:
-    expand_atlas(str(path), 2, BLISS, log=discard)
+    expand_atlas(path, 2, BLISS, log=discard)
     messages: list[str] = []
 
-    expand_atlas(str(path), 2, BLISS, log=messages.append)
+    expand_atlas(path, 2, BLISS, log=messages.append)
 
     assert messages == []
 
 
 def test_returns_how_much_the_atlas_holds(path: Path) -> None:
-    summary = expand_atlas(str(path), DEPTH, BLISS, log=discard)
+    summary = expand_atlas(path, DEPTH, BLISS, log=discard)
 
     with Atlas.open(path) as atlas:
         assert summary == ExpansionSummary(
@@ -121,9 +121,9 @@ def test_returns_how_much_the_atlas_holds(path: Path) -> None:
 def test_a_resumed_vf2_expansion_knows_the_states_already_stored(
     path: Path, tmp_path: Path
 ) -> None:
-    expand_atlas(str(path), 2, VF2, log=discard)
-    expand_atlas(str(path), 3, VF2, log=discard)
-    expand_atlas(str(tmp_path / "direct.db"), 3, VF2, log=discard)
+    expand_atlas(path, 2, VF2, log=discard)
+    expand_atlas(path, 3, VF2, log=discard)
+    expand_atlas(tmp_path / "direct.db", 3, VF2, log=discard)
 
     assert _contents(path) == _contents(tmp_path / "direct.db")
 
@@ -171,8 +171,8 @@ def test_an_interrupted_expansion_resumes_as_if_it_had_not_been(
             expander.expand(State.start(), DEPTH)
 
     assert _depth_of_the_deepest_state(path) == _depth_of_the_first_unexpanded(path)
-    expand_atlas(str(path), DEPTH, symmetry, log=discard)
-    expand_atlas(str(tmp_path / "direct.db"), DEPTH, symmetry, log=discard)
+    expand_atlas(path, DEPTH, symmetry, log=discard)
+    expand_atlas(tmp_path / "direct.db", DEPTH, symmetry, log=discard)
 
     assert _contents(path) == _contents(tmp_path / "direct.db")
 

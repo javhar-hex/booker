@@ -37,7 +37,7 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
         AtlasExpander.of(atlas=atlas, symmetry=BLISS, log=discard).expand(
             ENDGAME, MAX_MATCHES
         )
-    solve(str(path))
+    solve(path)
     return path
 
 
