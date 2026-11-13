@@ -5,10 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable
 
-from javhar_util.immutables import ZVec
-
 from booker.core.model.state import State
-from booker.core.symmetry.state_symmetry import StateSymmetry, TeamSignature, signature
+from booker.core.symmetry.state_signature import StateSignature
+from booker.core.symmetry.state_symmetry import StateSymmetry
 
 
 class MemoCanonicalizer:
@@ -24,14 +23,14 @@ class MemoCanonicalizer:
 
     def __init__(self, symmetry: StateSymmetry, known_states: Iterable[State]) -> None:
         self._symmetry = symmetry
-        self._representatives: defaultdict[ZVec[TeamSignature], list[State]] = (
-            defaultdict(list)
+        self._representatives: defaultdict[StateSignature, list[State]] = defaultdict(
+            list
         )
         for state in known_states:
-            self._representatives[signature(state)].append(state)
+            self._representatives[StateSignature.of(state)].append(state)
 
     def __call__(self, state: State) -> State:
-        candidates = self._representatives[signature(state)]
+        candidates = self._representatives[StateSignature.of(state)]
         for representative in candidates:
             if self._symmetry.are_isomorphic(state, representative):
                 return representative

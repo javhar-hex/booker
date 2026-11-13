@@ -10,7 +10,8 @@ from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.state_symmetry import StateSymmetry, signature
+from booker.core.symmetry.state_signature import StateSignature
+from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.game.rules import legal_pairings
 from booker.verify.spot_check.action_row import ActionRow
 from booker.verify.spot_check.atlas_reader import AtlasReader
@@ -110,7 +111,7 @@ class StateCheck:
                 )
 
     def _is_the_same_state(self, expected: State, stored_state: State) -> bool:
-        if signature(expected) != signature(stored_state):
+        if StateSignature.of(expected) != StateSignature.of(stored_state):
             return False
         return self.symmetry is None or self.symmetry.are_isomorphic(
             expected, stored_state
