@@ -55,6 +55,23 @@ class _LabelledGraph:
             edges=state.past_pairings,
         )
 
+    def is_isomorphic_to(self, other: _LabelledGraph) -> bool:
+        "Is there a relabelling of the teams that gives `other`, labels and edges alike?"
+        return bool(
+            nx.vf2pp_is_isomorphic(self._graph, other._graph, node_label="label")
+        )
+
+    @property
+    def _graph(self) -> nx.Graph[int]:
+        graph: nx.Graph[int] = nx.Graph()
+        graph.add_nodes_from(
+            (idx, {"label": label}) for idx, label in enumerate(self.labels)
+        )
+        graph.add_edges_from(
+            (pairing.lhs.index, pairing.rhs.index) for pairing in self.edges
+        )
+        return graph
+
 
 @dc.dataclass(frozen=True, slots=True)
 class Vf2Symmetry(StateSymmetry):
@@ -67,7 +84,7 @@ class Vf2Symmetry(StateSymmetry):
     def are_isomorphic(self, first: State, second: State) -> bool:
         if StateSignature.of(first) != StateSignature.of(second):
             return False
-        return _alike(_LabelledGraph.of(first), _LabelledGraph.of(second))
+        return _LabelledGraph.of(first).is_isomorphic_to(_LabelledGraph.of(second))
 
     def orbits(self, state: State, pairings: ZSet[Pairing]) -> PairingOrbits:
         groups: list[list[Pairing]] = []
@@ -87,21 +104,6 @@ class Vf2Symmetry(StateSymmetry):
     ) -> bool:
         if state.has_met(pairing_lhs) != state.has_met(pairing_rhs):
             return False
-        return _alike(
-            _LabelledGraph.marked(state, pairing_lhs),
-            _LabelledGraph.marked(state, pairing_rhs),
+        return _LabelledGraph.marked(state, pairing_lhs).is_isomorphic_to(
+            _LabelledGraph.marked(state, pairing_rhs)
         )
-
-
-def _alike(first: _LabelledGraph, second: _LabelledGraph) -> bool:
-    graphs: list[nx.Graph[int]] = []
-    for labelled_graph in (first, second):
-        graph: nx.Graph[int] = nx.Graph()
-        graph.add_nodes_from(
-            (idx, {"label": label}) for idx, label in enumerate(labelled_graph.labels)
-        )
-        graph.add_edges_from(
-            (pairing.lhs.index, pairing.rhs.index) for pairing in labelled_graph.edges
-        )
-        graphs.append(graph)
-    return bool(nx.vf2pp_is_isomorphic(graphs[0], graphs[1], node_label="label"))
