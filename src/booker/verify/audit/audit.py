@@ -15,6 +15,7 @@ from booker.verify.audit.whole_database import (
 )
 from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.state_check import StateCheck
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 REPORT_EVERY = 10000
 
@@ -41,7 +42,8 @@ def _walk(
     if progress.states:
         log(f"resuming at id {progress.next_id} after {progress.states:,} states")
     check = StateCheck(db=db, symmetry=plan.strict, is_solved=is_solved)
-    for state_id in db.state_ids(progress.next_id, plan.ids.stop):
+    remaining = StateIdRange(start=progress.next_id, stop=plan.ids.stop)
+    for state_id in db.state_ids(remaining):
         progress = progress.after(state_id, check.run(state_id))
         if checkpoint and _is_time_to_save(progress, plan):
             checkpoint.save(progress)

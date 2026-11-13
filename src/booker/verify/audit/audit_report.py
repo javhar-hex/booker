@@ -6,14 +6,14 @@ import dataclasses as dc
 
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.verify.audit.audit_plan import AuditPlan
-from booker.verify.audit.id_range import IdRange
 from booker.verify.audit.progress import Progress
 from booker.verify.spot_check.pairing_count import PairingCount
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 
 @dc.dataclass(frozen=True, slots=True)
 class AuditReport:
-    ids: IdRange
+    ids: StateIdRange
     strict: StateSymmetry | None
     states: int
     counted: PairingCount

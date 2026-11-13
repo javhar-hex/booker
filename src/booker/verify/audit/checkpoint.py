@@ -13,6 +13,7 @@ from booker.verify.audit.audit_scope import AuditScope
 from booker.verify.audit.progress import Progress
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
+from booker.verify.spot_check.state_id import StateId
 
 CHECKPOINT_EVERY = 1000
 
@@ -41,7 +42,9 @@ class Checkpoint:
                 f"checkpoint is for another run: {saved['scope']}, not {self.scope}"
             )
         return Progress(
-            next_id=saved["next_id"],
+            next_id=None
+            if saved["next_id"] is None
+            else StateId(value=saved["next_id"]),
             states=saved["states"],
             counted=PairingCount(orbits=saved["actions"], pairings=saved["pairings"]),
         )
@@ -53,7 +56,9 @@ class Checkpoint:
             json.dump(
                 {
                     "scope": dc.asdict(self.scope),
-                    "next_id": progress.next_id,
+                    "next_id": None
+                    if progress.next_id is None
+                    else progress.next_id.value,
                     "states": progress.states,
                     # The file keeps the names of earlier audits: its actions are orbits.
                     "actions": progress.counted.orbits,

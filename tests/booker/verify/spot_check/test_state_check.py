@@ -28,6 +28,7 @@ from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.state_check import StateCheck
 from booker.verify.spot_check.state_id import StateId
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 ROOT, CHILD = 1, 2
 
@@ -41,7 +42,7 @@ def _check_every_state(
     "Raises `AuditFailure` at the first position, from `first_id` on, that fails."
     with AtlasReader.open(str(atlas)) as db:
         check = StateCheck(db=db, symmetry=symmetry, is_solved=is_solved)
-        for state_id in db.state_ids(first_id, None):
+        for state_id in db.state_ids(StateIdRange.of(start=first_id)):
             check.run(state_id)
 
 

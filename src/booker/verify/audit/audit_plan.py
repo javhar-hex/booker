@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses as dc
 
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.verify.audit.id_range import IdRange
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 
 @dc.dataclass(frozen=True, slots=True)
@@ -23,7 +23,7 @@ class AuditPlan:
     """
 
     db: str
-    ids: IdRange = dc.field(default_factory=IdRange)
+    ids: StateIdRange = dc.field(default_factory=StateIdRange)
     strict: StateSymmetry | None = None
     limit: int | None = None
     expect_root: int | None = None

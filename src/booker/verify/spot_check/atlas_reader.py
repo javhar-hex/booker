@@ -16,6 +16,7 @@ from javhar_util.immutables import ZMap, ZVec
 from booker.verify.spot_check.action_row import ActionRow
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.state_id import StateId
+from booker.verify.spot_check.state_id_range import StateIdRange
 from booker.verify.spot_check.state_row import StateRow
 
 POSITION_CACHE_SIZE = 65536
@@ -58,13 +59,14 @@ class AtlasReader:
         )
         return ZVec(ActionRow.of(row) for row in rows)
 
-    def state_ids(self, start: int, stop: int | None) -> Iterator[StateId]:
-        "The ids from `start` up to, not including, `stop`, in order."
-        # SQLite cannot use `id<?` as a bound inside the OR, so a range with a stop scans
-        # on to the end of the table once, after its last row. A flag keeps the SQL one query.
+    def state_ids(self, id_range: StateIdRange) -> Iterator[StateId]:
+        "The ids in `id_range`, in order."
+        start, stop = id_range.start_value, id_range.stop_value
+        # SQLite cannot use a bound inside an OR to search the rowids, so a range scans
+        # from the first row to the last, and filters. A flag per bound keeps one query.
         rows = self._connection.execute(
-            "SELECT id FROM states WHERE id>=? AND (? OR id<?) ORDER BY id",
-            (start, stop is None, stop),
+            "SELECT id FROM states WHERE (? OR id>=?) AND (? OR id<?) ORDER BY id",
+            (start is None, start, stop is None, stop),
         )
         for (state_id,) in rows:
             yield StateId(value=state_id)

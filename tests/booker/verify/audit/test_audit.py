@@ -16,17 +16,17 @@ from booker.expand.atlas_expander import expand_atlas
 from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
-from booker.verify.audit.id_range import IdRange
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
+from booker.verify.spot_check.state_id_range import StateIdRange
 
-EVERY_STATE = IdRange(start=0)
+EVERY_STATE = StateIdRange.of(start=0)
 ENDGAME_STATES = 29
 
 
 def _audit(
     db: Path,
-    ids: IdRange = EVERY_STATE,
+    ids: StateIdRange = EVERY_STATE,
     limit: int | None = None,
     require_complete: bool = False,
     expect_root: int | None = None,
@@ -92,7 +92,7 @@ WRONG_OPENING = f"UPDATE states SET key=X'10{'02' + '00' * 15}{'00' * 15}' WHERE
 
 
 def test_accepts_a_generated_atlas_as_a_whole(generated: Path) -> None:
-    assert _audit(generated, ids=IdRange()).states > 0
+    assert _audit(generated, ids=StateIdRange()).states > 0
 
 
 @pytest.mark.parametrize(
@@ -107,31 +107,31 @@ def test_rejects_a_generated_atlas_broken_as_a_whole(
     generated: Path, sql: str, complaint: str
 ) -> None:
     with pytest.raises(AuditFailure, match=complaint):
-        _audit(tampered_copy(generated, sql), ids=IdRange())
+        _audit(tampered_copy(generated, sql), ids=StateIdRange())
 
 
 def test_a_ranged_audit_leaves_the_whole_database_checks_alone(generated: Path) -> None:
-    _audit(tampered_copy(generated, ORPHAN), ids=IdRange(start=1, stop=3))
+    _audit(tampered_copy(generated, ORPHAN), ids=StateIdRange.of(start=1, stop=3))
 
 
 def test_a_cut_short_audit_does_not_look_for_orphans(generated: Path) -> None:
-    _audit(tampered_copy(generated, ORPHAN), ids=IdRange(), limit=1)
+    _audit(tampered_copy(generated, ORPHAN), ids=StateIdRange(), limit=1)
 
 
 def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
     generated: Path,
 ) -> None:
     with pytest.raises(AuditFailure, match="not complete"):
-        _audit(generated, ids=IdRange(), require_complete=True)
+        _audit(generated, ids=StateIdRange(), require_complete=True)
 
 
 def test_an_unsolved_root_is_not_the_expected_gtv(generated: Path) -> None:
     with pytest.raises(AuditFailure, match="root GTV is None, expected 3"):
-        _audit(generated, ids=IdRange(), expect_root=3)
+        _audit(generated, ids=StateIdRange(), expect_root=3)
 
 
 def test_a_limit_stops_after_that_many_states(generated: Path) -> None:
-    assert _audit(generated, ids=IdRange(), limit=3).states == 3
+    assert _audit(generated, ids=StateIdRange(), limit=3).states == 3
 
 
 def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None:
@@ -139,12 +139,12 @@ def test_progress_is_logged_and_resumed(generated: Path, tmp_path: Path) -> None
     first: list[str] = []
     second: list[str] = []
 
-    _audit(generated, ids=IdRange(), limit=3, checkpoint=checkpoint, log=first)
-    resumed = _audit(generated, ids=IdRange(), checkpoint=checkpoint, log=second)
+    _audit(generated, ids=StateIdRange(), limit=3, checkpoint=checkpoint, log=first)
+    resumed = _audit(generated, ids=StateIdRange(), checkpoint=checkpoint, log=second)
 
     assert first == []
     assert second == ["resuming at id 4 after 3 states"]
-    assert resumed == _audit(generated, ids=IdRange())
+    assert resumed == _audit(generated, ids=StateIdRange())
 
 
 def test_accepts_the_rest_of_a_real_game(endgame: Path) -> None:

@@ -10,3 +10,6 @@ class StateId:
     "A row of the `states` table; not a team index, nor a depth."
 
     value: int
+
+    def __str__(self) -> str:
+        return str(self.value)

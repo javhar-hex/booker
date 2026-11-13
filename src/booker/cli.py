@@ -17,7 +17,7 @@ from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
 from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
-from booker.verify.audit.id_range import IdRange
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 _LOG = functools.partial(print, flush=True)
 
@@ -109,7 +109,7 @@ def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
         db=args.db,
         strict=None if args.strict is None else STATE_SYMMETRIES[args.strict],
-        ids=IdRange(start=args.from_id, stop=args.to_id),
+        ids=StateIdRange.of(start=args.from_id, stop=args.to_id),
         limit=args.limit or None,
         expect_root=args.expect_root,
         require_complete=args.require_complete,

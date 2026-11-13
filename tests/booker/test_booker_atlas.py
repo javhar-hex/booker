@@ -23,8 +23,8 @@ from booker.solve import solve
 from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
-from booker.verify.audit.id_range import IdRange
 from booker.verify.spot_check.audit_failure import AuditFailure
+from booker.verify.spot_check.state_id_range import StateIdRange
 
 FIRST_ROUND_MATCHES = 8
 SHALLOW_DEPTH = 6
@@ -133,7 +133,7 @@ def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
 
 def _audit(
     db: Path,
-    ids: IdRange | None = None,
+    ids: StateIdRange | None = None,
     limit: int | None = None,
     checkpoint: Path | None = None,
     strict: StateSymmetry | None = None,
@@ -141,7 +141,7 @@ def _audit(
     plan = AuditPlan(
         db=str(db),
         strict=strict,
-        ids=IdRange() if ids is None else ids,
+        ids=StateIdRange() if ids is None else ids,
         limit=limit,
         checkpoint=None if checkpoint is None else str(checkpoint),
     )
@@ -154,8 +154,8 @@ def test_verifier_accepts_the_shallow_atlas(shallow_atlas: Path) -> None:
 
 def test_verifier_accepts_the_shallow_atlas_in_two_ranges(shallow_atlas: Path) -> None:
     middle = 10
-    _audit(shallow_atlas, ids=IdRange(stop=middle))
-    _audit(shallow_atlas, ids=IdRange(start=middle))
+    _audit(shallow_atlas, ids=StateIdRange.of(stop=middle))
+    _audit(shallow_atlas, ids=StateIdRange.of(start=middle))
 
 
 WRONG_ROOT_CLASS_SIZE = (
@@ -228,9 +228,9 @@ def test_verifier_range_checks_only_its_own_states(
 ) -> None:
     db = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
     after_root = _root_id(db) + 1
-    _audit(db, ids=IdRange(start=after_root))
+    _audit(db, ids=StateIdRange.of(start=after_root))
     with pytest.raises(AuditFailure, match="orbit sizes add up"):
-        _audit(db, ids=IdRange(stop=after_root))
+        _audit(db, ids=StateIdRange.of(stop=after_root))
 
 
 @pytest.mark.slow
@@ -273,4 +273,8 @@ def test_verifier_refuses_a_checkpoint_from_another_range(
     checkpoint = tmp_path / "progress.json"
     _audit(shallow_atlas, limit=FIRST_SITTING, checkpoint=checkpoint)
     with pytest.raises(AuditFailure, match="another run"):
-        _audit(shallow_atlas, ids=IdRange(start=FIRST_SITTING), checkpoint=checkpoint)
+        _audit(
+            shallow_atlas,
+            ids=StateIdRange.of(start=FIRST_SITTING),
+            checkpoint=checkpoint,
+        )
