@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from javhar_util.immutables import ZSet
+
 from booker.atlas.schema import META, SCHEMA_VERSION
 from booker.core.model.invariants import (
     CHAMPION_WINS,
     ELIMINATION_LOSSES,
     MAX_MATCHES,
-    NUM_PARTICIPANTS,
 )
 from booker.core.model.record import Record
 from booker.core.model.state import State
@@ -15,6 +16,12 @@ from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.spot_check.atlas_reader import AtlasReader
 from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.state_id import StateId
+
+# The champion wins CHAMPION_WINS matches, and loses none or all but one life. How deep
+# those states are follows from their records, and is checked with every position.
+CHAMPION_RECORDS = ZSet(
+    Record(wins=CHAMPION_WINS, losses=losses) for losses in (0, ELIMINATION_LOSSES - 1)
+)
 
 
 class GlobalCheck:
@@ -66,13 +73,21 @@ class GlobalCheck:
         max_depth = self._atlas_reader.max_depth()
         if max_depth != MAX_MATCHES:
             raise AuditFailure(f"last match is missing: depth {max_depth}")
+        self._check_decided_states()
+
+    def _check_decided_states(self) -> None:
         decided_ids = self._atlas_reader.decided_ids()
-        decided = {
-            (state_row.state.records[0], state_row.depth)
-            for state_row in map(self._atlas_reader.state_row, decided_ids)
-        }
-        if len(decided_ids) != 2 or decided != _both_endings():
-            raise AuditFailure(f"incorrect decided states: {sorted(map(str, decided))}")
+        champion_records = ZSet(
+            self._atlas_reader.state_row(state_id).state.records[0]
+            for state_id in decided_ids
+        )
+        if (
+            len(decided_ids) != len(CHAMPION_RECORDS)
+            or champion_records != CHAMPION_RECORDS
+        ):
+            raise AuditFailure(
+                f"incorrect decided states: {sorted(map(str, champion_records))}"
+            )
 
     def _check_opening(self) -> None:
         root_state_id = self.root_state_id
@@ -88,12 +103,3 @@ class GlobalCheck:
         orphan = self._atlas_reader.first_orphan(self.root_state_id)
         if orphan is not None:
             raise AuditFailure(f"orphan state {orphan.value}: no action leads to it")
-
-
-def _both_endings() -> set[tuple[Record, int]]:
-    "The champion wins CHAMPION_WINS matches, and loses none or all but one life."
-    first_ending = ELIMINATION_LOSSES * (NUM_PARTICIPANTS - 1)
-    return {
-        (Record(wins=CHAMPION_WINS, losses=losses), first_ending + losses)
-        for losses in (0, ELIMINATION_LOSSES - 1)
-    }
