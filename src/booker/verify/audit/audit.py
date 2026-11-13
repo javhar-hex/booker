@@ -7,7 +7,7 @@ from collections.abc import Callable
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_progress import AuditProgress
 from booker.verify.audit.audit_report import AuditReport
-from booker.verify.audit.checkpoint import CHECKPOINT_EVERY, Checkpoint
+from booker.verify.audit.checkpoint import CHECKPOINT_INTERVAL, Checkpoint
 from booker.verify.audit.whole_database import (
     check_metadata,
     check_root_gtv,
@@ -65,6 +65,6 @@ def _walk(
 
 def _is_time_to_save(progress: AuditProgress, plan: AuditPlan) -> bool:
     return (
-        progress.num_checked_states % CHECKPOINT_EVERY == 0
+        progress.num_checked_states % CHECKPOINT_INTERVAL == 0
         or progress.num_checked_states == plan.max_num_states
     )

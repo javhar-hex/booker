@@ -15,7 +15,7 @@ from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
 
-CHECKPOINT_EVERY = 1000
+CHECKPOINT_INTERVAL = 1000
 
 
 @dc.dataclass(frozen=True, slots=True)
