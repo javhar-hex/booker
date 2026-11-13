@@ -6,12 +6,10 @@ import dataclasses as dc
 
 from javhar_util.immutables import ZSet, ZVec
 
-from booker.core.model.invariants import CHAMPION_WINS, MAX_MATCHES
 from booker.core.model.outcome import Outcome
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
 from booker.core.model.successor import successor
-from booker.core.symmetry.orbits import PairingOrbits
 from booker.core.symmetry.state_symmetry import StateSymmetry, signature
 from booker.game.rules import legal_pairings
 from booker.verify.spot_check.action_row import ActionRow
@@ -38,7 +36,7 @@ class StateCheck:
 
     def run(self, state_id: StateId) -> PairingCount:
         state_row = self.db.state_row(state_id)
-        _check_standings(state_id, state_row)
+        state_row.require_consistent(state_id)
         action_rows = self.db.action_rows(state_id)
         self._check_actions_are_legal(state_id, state_row, action_rows)
         for action_row in action_rows:
@@ -82,8 +80,8 @@ class StateCheck:
         if (not action_rows) != state_row.state.is_decided:
             raise AuditFailure.of(state_id, "a dead end, or a decided state with moves")
         if self.symmetry is not None:
-            _check_orbits(
-                state_id, self.symmetry.orbits(state_row.state, legal), action_rows
+            ActionRow.require_orbits(
+                state_id, action_rows, self.symmetry.orbits(state_row.state, legal)
             )
 
     def _check_transitions(
@@ -153,41 +151,3 @@ class StateCheck:
                 f"but the children are worth {value_lhs} and {value_rhs}",
             )
         return action_row.repeat_cost + action_row.value
-
-
-def _check_orbits(
-    state_id: StateId, orbits: PairingOrbits, action_rows: ZVec[ActionRow]
-) -> None:
-    "Each orbit has exactly one stored pairing, which carries the orbit's size."
-    sizes = {action_row.pairing: action_row.class_size for action_row in action_rows}
-    for orbit in orbits:
-        representatives = [pairing for pairing in sizes if pairing in orbit.members]
-        if len(representatives) != 1:
-            raise AuditFailure.of(
-                state_id,
-                f"orbit representatives: {len(representatives)} stored for the orbit of "
-                f"{min(orbit.members)} ({orbit.size} pairings): {representatives}",
-            )
-        if sizes[representatives[0]] != orbit.size:
-            raise AuditFailure.of(
-                state_id,
-                f"orbit sizes: {representatives[0]} is stored "
-                f"as {sizes[representatives[0]]}, but its orbit has {orbit.size}",
-            )
-
-
-def _check_standings(state_id: StateId, state_row: StateRow) -> None:
-    state = state_row.state
-    if state_row.num_teams != state.size or not 0 <= state_row.depth <= MAX_MATCHES:
-        raise AuditFailure.of(state_id, "inconsistent team count or depth")
-    if state_row.depth != state.matches_played:
-        raise AuditFailure.of(
-            state_id,
-            f"depth {state_row.depth}, but its teams have "
-            f"played {state.matches_played} matches",
-        )
-    if state.is_decided:
-        if state.records[0].wins != CHAMPION_WINS or not state_row.is_expanded:
-            raise AuditFailure.of(state_id, "a bad decided state")
-    elif any(record.wins >= CHAMPION_WINS for record in state.records):
-        raise AuditFailure.of(state_id, "a champion, with teams still playing")
