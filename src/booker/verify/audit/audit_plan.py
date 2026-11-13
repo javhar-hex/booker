@@ -15,7 +15,8 @@ class AuditPlan:
     The checks on the states in `state_id_range` and their actions. Whole-database checks
     run only when there is no range, so a set of ranges partitioning the ids needs one run
     more for them. With `max_num_states`, at most that many states in all are checked,
-    counting those of earlier sittings resumed from `checkpoint`.
+    counting those of earlier sittings resumed from `checkpoint`. The `db_path` is
+    absolute, so that progress saved for it cannot be taken for progress on another file.
 
     Whether the stored children and pairings are the right ones is checked cheaply, by
     what a state's records and meetings must add up to. With `reference_symmetry`, every
@@ -32,6 +33,12 @@ class AuditPlan:
     expected_root_gtv: int | None = None
     require_complete: bool = False
     checkpoint: Path | None = None
+
+    def __post_init__(self) -> None:
+        if not self.db_path.is_absolute():
+            raise ValueError(
+                f"db_path must be absolute, so it names one file: {self.db_path}"
+            )
 
     @property
     def is_whole_database(self) -> bool:

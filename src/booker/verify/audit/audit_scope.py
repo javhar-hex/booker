@@ -21,7 +21,7 @@ class AuditScope:
     @classmethod
     def of(cls, plan: AuditPlan) -> AuditScope:
         return cls(
-            db_path=plan.db_path.resolve(),
+            db_path=plan.db_path,
             reference_symmetry=plan.reference_symmetry,
             state_id_range=plan.state_id_range,
         )

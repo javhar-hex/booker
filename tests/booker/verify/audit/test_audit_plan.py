@@ -6,7 +6,7 @@ from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
 
-DB = Path("a.db")
+DB = Path("/data/a.db")
 
 
 def test_a_plan_without_a_range_is_the_whole_database() -> None:
@@ -25,3 +25,8 @@ def test_a_plan_with_either_end_of_a_range_is_not(state_id_range: StateIdRange) 
     assert not AuditPlan(
         db_path=DB, reference_symmetry=None, state_id_range=state_id_range
     ).is_whole_database
+
+
+def test_a_relative_db_path_is_refused() -> None:
+    with pytest.raises(ValueError, match="absolute"):
+        AuditPlan(db_path=Path("a.db"))

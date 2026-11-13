@@ -114,7 +114,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
 
 def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
-        db_path=args.db,
+        db_path=args.db.resolve(),
         reference_symmetry=None
         if args.strict is None
         else STATE_SYMMETRIES[args.strict],
