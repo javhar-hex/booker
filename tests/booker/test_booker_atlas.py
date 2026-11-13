@@ -38,10 +38,16 @@ class LayerCounts:
     pairings: int
     rematch_pairings: int
 
+    @classmethod
+    def of(cls, row: tuple[int, int, int, int, int]) -> LayerCounts:
+        "From a row of the counts, in the order of the fields."
+        depth, states, collider_states, pairings, rematch_pairings = row
+        return cls(depth, states, collider_states, pairings, rematch_pairings)
+
 
 REFERENCE = ZVec(
-    LayerCounts(depth=d, states=s, collider_states=c, pairings=p, rematch_pairings=r)
-    for d, s, c, p, r in [
+    LayerCounts.of(row)
+    for row in [
         (0, 1, 1, 120, 0),
         (1, 1, 1, 91, 0),
         (2, 1, 3, 68, 0),
@@ -66,8 +72,8 @@ def _expand(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
 
 
 def _expanded_layers(db: Path, max_depth: int) -> ZVec[LayerCounts]:
-    con = sqlite3.connect(db)
-    rows = con.execute(
+    connection = sqlite3.connect(db)
+    rows = connection.execute(
         """
         SELECT s.depth, COUNT(DISTINCT s.id), COUNT(action.parent),
                COALESCE(SUM(action.class_size), 0),
@@ -77,11 +83,8 @@ def _expanded_layers(db: Path, max_depth: int) -> ZVec[LayerCounts]:
         """,
         (max_depth,),
     ).fetchall()
-    con.close()
-    return ZVec(
-        LayerCounts(depth=d, states=s, collider_states=c, pairings=p, rematch_pairings=r)
-        for d, s, c, p, r in rows
-    )
+    connection.close()
+    return ZVec(LayerCounts.of(row) for row in rows)
 
 
 def _reference_below(max_depth: int) -> ZVec[LayerCounts]:
@@ -172,16 +175,18 @@ DUPLICATE_ROOT_REPRESENTATIVE = (
 
 
 def _root_id(db: Path) -> int:
-    con = sqlite3.connect(db)
-    (root,) = con.execute("SELECT value FROM meta WHERE key = 'root_id'").fetchone()
-    con.close()
+    connection = sqlite3.connect(db)
+    (root,) = connection.execute(
+        "SELECT value FROM meta WHERE key = 'root_id'"
+    ).fetchone()
+    connection.close()
     return int(root)
 
 
 def _tamper(db: Path, tampering: str) -> None:
-    con = sqlite3.connect(db)
-    con.executescript(tampering.format(root=_root_id(db)))
-    con.close()
+    connection = sqlite3.connect(db)
+    connection.executescript(tampering.format(root=_root_id(db)))
+    connection.close()
 
 
 def _tampered(atlas: Path, directory: Path, tampering: str) -> Path:
