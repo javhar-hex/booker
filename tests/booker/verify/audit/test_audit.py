@@ -7,16 +7,13 @@ shown in the tests of `StateCheck`. Whole-database checks are shown on a generat
 from pathlib import Path
 
 import pytest
-from support.hand_built_atlases import tampered_copy
-from support.logs import discard
+from support.hand_built_atlases import ORPHAN_STATE, tampered_copy
 
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.expand.atlas_expander import expand_atlas
 from booker.verify.audit.audit import audit
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
-from booker.verify.spot_check.audit_failure import AuditFailure
 from booker.verify.spot_check.pairing_count import PairingCount
 from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
@@ -56,84 +53,21 @@ def test_accepts_a_solved_atlas(solved: Path) -> None:
     assert report.num_unexpanded_states == 0
 
 
-@pytest.mark.parametrize(
-    ("sql", "complaint"),
-    [
-        ("PRAGMA user_version = 4", "schema"),
-        ("UPDATE meta SET value='chess' WHERE key='game'", "game"),
-        ("DELETE FROM meta WHERE key='root_id'", "does not say"),
-    ],
-)
-def test_rejects_an_atlas_with_the_wrong_metadata(
-    solved: Path, sql: str, complaint: str
-) -> None:
-    with pytest.raises(AuditFailure, match=complaint):
-        _audit(tampered_copy(solved, sql))
-
-
 def test_an_atlas_missing_a_gtv_is_audited_as_unsolved(solved: Path) -> None:
     report = _audit(tampered_copy(solved, "UPDATE states SET gtv=NULL WHERE id=1"))
 
     assert not report.is_solved
 
 
-@pytest.fixture(scope="module")
-def generated(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    path = tmp_path_factory.mktemp("generated") / "atlas.db"
-    expand_atlas(path, 4, BLISS, log=discard)
-    return path
-
-
-ORPHAN = "INSERT INTO states(key,depth,active,expanded) VALUES (X'010D', 31, 1, 1)"
-ANOTHER_ROOT = (
-    "INSERT INTO states(key,depth,active,expanded) "
-    f"VALUES (X'10{'02' + '00' * 15}{'00' * 15}', 0, 16, 0)"
-)
-WRONG_OPENING = f"UPDATE states SET key=X'10{'02' + '00' * 15}{'00' * 15}' WHERE id=1"
-
-
 def test_accepts_a_generated_atlas_as_a_whole(generated: Path) -> None:
     assert _audit(generated, state_id_range=StateIdRange()).num_checked_states > 0
 
 
-@pytest.mark.parametrize(
-    ("sql", "complaint"),
-    [
-        (ORPHAN, "orphan state"),
-        (ANOTHER_ROOT, "positions at depth 0"),
-        (WRONG_OPENING, "wrong initial position"),
-    ],
-)
-def test_rejects_a_generated_atlas_broken_as_a_whole(
-    generated: Path, sql: str, complaint: str
-) -> None:
-    with pytest.raises(AuditFailure, match=complaint):
-        _audit(tampered_copy(generated, sql), state_id_range=StateIdRange())
-
-
 def test_a_ranged_audit_leaves_the_whole_database_checks_alone(generated: Path) -> None:
     _audit(
-        tampered_copy(generated, ORPHAN),
+        tampered_copy(generated, ORPHAN_STATE),
         state_id_range=StateIdRange(start=StateId(1), stop=StateId(3)),
     )
-
-
-def test_a_cut_short_audit_does_not_look_for_orphans(generated: Path) -> None:
-    _audit(
-        tampered_copy(generated, ORPHAN), state_id_range=StateIdRange(), max_num_states=1
-    )
-
-
-def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
-    generated: Path,
-) -> None:
-    with pytest.raises(AuditFailure, match="not complete"):
-        _audit(generated, state_id_range=StateIdRange(), require_complete=True)
-
-
-def test_an_unsolved_root_is_not_the_expected_gtv(generated: Path) -> None:
-    with pytest.raises(AuditFailure, match="root GTV is None, expected 3"):
-        _audit(generated, state_id_range=StateIdRange(), expected_root_gtv=3)
 
 
 def test_a_limit_stops_after_that_many_states(generated: Path) -> None:

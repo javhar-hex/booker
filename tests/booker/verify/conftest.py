@@ -14,7 +14,7 @@ from booker.core.model.record import Record
 from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS
-from booker.expand.atlas_expander import AtlasExpander
+from booker.expand.atlas_expander import AtlasExpander, expand_atlas
 from booker.solve import solve
 
 ENDGAME = State(
@@ -45,3 +45,10 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def solved(tmp_path: Path) -> Path:
     "Two teams a loss from elimination who have not met, solved, by hand."
     return final_pair_atlas(tmp_path / "solved.db")
+
+
+@pytest.fixture(scope="module")
+def generated(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    path = tmp_path_factory.mktemp("generated") / "atlas.db"
+    expand_atlas(path, 4, BLISS, log=discard)
+    return path

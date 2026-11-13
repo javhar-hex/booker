@@ -68,3 +68,11 @@ def tampered_copy(atlas: Path, sql: str) -> Path:
         connection.execute(sql)
     connection.close()
     return tampered
+
+
+_NOT_THE_START = f"X'10{'02' + '00' * 15}{'00' * 15}'"
+ORPHAN_STATE = "INSERT INTO states(key,depth,active,expanded) VALUES (X'010D', 31, 1, 1)"
+SECOND_ROOT_STATE = (
+    f"INSERT INTO states(key,depth,active,expanded) VALUES ({_NOT_THE_START}, 0, 16, 0)"
+)
+WRONG_ROOT_STATE = f"UPDATE states SET key={_NOT_THE_START} WHERE id=1"
