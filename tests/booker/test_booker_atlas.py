@@ -20,7 +20,7 @@ from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
-from booker.verify.audit.audit import audit
+from booker.verify.audit.atlas_auditor import AtlasAuditor
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.spot_check.audit_failure import AuditFailure
@@ -146,7 +146,7 @@ def _audit(
         max_num_states=max_num_states,
         checkpoint=checkpoint,
     )
-    return audit(plan, log=lambda message: None)
+    return AtlasAuditor(plan=plan, log=lambda message: None).audit()
 
 
 def test_verifier_accepts_the_shallow_atlas(shallow_atlas: Path) -> None:

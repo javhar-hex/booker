@@ -1,7 +1,7 @@
 """
-The audit walks the positions of an atlas and checks the atlas as a whole: the metadata,
-the opening, completeness, orphans and the root GTV. The checks of one position are
-shown in the tests of `StateCheck`. Whole-database checks are shown on a generated atlas.
+The auditor puts the checks in order: those of the atlas as a whole, shown in the tests
+of `GlobalCheck`, when the plan covers the whole atlas, and those of each position in
+its range, shown in the tests of `StateCheck`. It resumes, stops, logs and reports.
 """
 
 from pathlib import Path
@@ -11,7 +11,7 @@ from support.hand_built_atlases import ORPHAN_STATE, tampered_copy
 
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
-from booker.verify.audit.audit import audit
+from booker.verify.audit.atlas_auditor import AtlasAuditor
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
 from booker.verify.spot_check.pairing_count import PairingCount
@@ -41,7 +41,7 @@ def _audit(
         expected_root_gtv=expected_root_gtv,
         checkpoint=checkpoint,
     )
-    return audit(plan, log=(log if log is not None else []).append)
+    return AtlasAuditor(plan=plan, log=(log if log is not None else []).append).audit()
 
 
 def test_accepts_a_solved_atlas(solved: Path) -> None:

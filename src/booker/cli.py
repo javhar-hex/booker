@@ -15,7 +15,7 @@ from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
 from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_summaries
 from booker.expand.atlas_expander import expand_atlas
 from booker.solve import solve
-from booker.verify.audit.audit import audit
+from booker.verify.audit.atlas_auditor import AtlasAuditor
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.spot_check.state_id import StateId
 from booker.verify.spot_check.state_id_range import StateIdRange
@@ -124,7 +124,7 @@ def _verify(args: argparse.Namespace) -> None:
         require_complete=args.require_complete,
         checkpoint=args.checkpoint,
     )
-    print(audit(plan, _LOG))
+    print(AtlasAuditor(plan=plan, log=_LOG).audit())
 
 
 def _equilibrium(args: argparse.Namespace) -> None:
