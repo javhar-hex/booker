@@ -94,8 +94,7 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying.add_argument(
         "--max-num-states",
         type=int,
-        default=0,
-        help="Number of states to check (0=all)",
+        help="Number of states to check (all, when omitted)",
     )
     verifying.add_argument("--require-complete", action="store_true")
     verifying.add_argument("--expected-root-gtv", type=int)
@@ -124,7 +123,7 @@ def _verify(args: argparse.Namespace) -> None:
         if args.reference_symmetry is None
         else STATE_SYMMETRIES[args.reference_symmetry],
         state_id_range=StateIdRange(start=args.start_state_id, stop=args.stop_state_id),
-        max_num_states=args.max_num_states or None,
+        max_num_states=args.max_num_states,
         expected_root_gtv=args.expected_root_gtv,
         require_complete=args.require_complete,
         checkpoint=args.checkpoint,
