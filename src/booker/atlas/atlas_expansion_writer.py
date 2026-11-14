@@ -6,6 +6,7 @@ import dataclasses as dc
 import sqlite3
 
 from booker.atlas.packed_state import PackedState
+from booker.atlas.schema import ROOT_ID_META_KEY, STATE_SYMMETRY_META_KEY
 from booker.atlas.state_id import StateId
 from booker.core.model.pairing import Pairing
 from booker.core.model.state import State
@@ -25,18 +26,19 @@ class AtlasExpansionWriter:
     def use_state_symmetry(self, name: str) -> None:
         "Record how symmetries are found; an atlas is never resumed with another."
         prior = self.connection.execute(
-            "SELECT value FROM meta WHERE key='state_symmetry'"
+            "SELECT value FROM meta WHERE key=?", (STATE_SYMMETRY_META_KEY,)
         ).fetchone()
         if prior and prior[0] != name:
             raise ValueError(f"Cannot resume {prior[0]} atlas using {name}")
         self.connection.execute(
-            "INSERT OR IGNORE INTO meta(key,value) VALUES ('state_symmetry',?)", (name,)
+            "INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)",
+            (STATE_SYMMETRY_META_KEY, name),
         )
 
     def record_root(self, root: StateId) -> None:
         self.connection.execute(
-            "INSERT OR IGNORE INTO meta(key,value) VALUES ('root_id',?)",
-            (str(root.value),),
+            "INSERT OR IGNORE INTO meta(key,value) VALUES (?,?)",
+            (ROOT_ID_META_KEY, str(root.value)),
         )
 
     def add_state(self, state: State) -> StateId:

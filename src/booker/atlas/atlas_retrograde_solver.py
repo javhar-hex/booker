@@ -9,6 +9,8 @@ from __future__ import annotations
 import dataclasses as dc
 import sqlite3
 
+from booker.atlas.schema import ROOT_ID_META_KEY, SOLVED_META_KEY, SOLVED_META_VALUE
+
 
 @dc.dataclass(frozen=True, slots=True)
 class AtlasRetrogradeSolver:
@@ -60,13 +62,15 @@ class AtlasRetrogradeSolver:
 
     def mark_solved(self) -> None:
         self.connection.execute(
-            "INSERT OR REPLACE INTO meta(key,value) VALUES ('solved','true')"
+            "INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)",
+            (SOLVED_META_KEY, SOLVED_META_VALUE),
         )
 
     def root_gtv(self) -> int:
         row = self.connection.execute(
             "SELECT gtv FROM states WHERE id="
-            "(SELECT CAST(value AS INTEGER) FROM meta WHERE key='root_id')"
+            "(SELECT CAST(value AS INTEGER) FROM meta WHERE key=?)",
+            (ROOT_ID_META_KEY,),
         ).fetchone()
         if row is None or row[0] is None:
             raise ValueError("the atlas has no solved root")

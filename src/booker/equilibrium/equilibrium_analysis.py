@@ -19,7 +19,12 @@ from typing import Self
 
 from javhar_util.immutables import ZVec
 
-from booker.atlas.schema import SCHEMA_VERSION
+from booker.atlas.schema import (
+    ROOT_ID_META_KEY,
+    SCHEMA_VERSION,
+    SOLVED_META_KEY,
+    SOLVED_META_VALUE,
+)
 from booker.equilibrium.layer_summary import LayerSummary
 from booker.equilibrium.sql import COLLIDER_LAYER, SCHEDULER_LAYER, SCHEMA, SUMMARY
 
@@ -96,13 +101,13 @@ class EquilibriumAnalysis:
 
     def _require_solved(self) -> None:
         solved = self._connection.execute(
-            "SELECT value FROM atlas.meta WHERE key='solved'"
+            "SELECT value FROM atlas.meta WHERE key=?", (SOLVED_META_KEY,)
         ).fetchone()
         unsolved = self._connection.execute(
             "SELECT (SELECT COUNT(*) FROM atlas.states WHERE gtv IS NULL)"
             " + (SELECT COUNT(*) FROM atlas.actions WHERE gtv IS NULL)"
         ).fetchone()[0]
-        if solved is None or solved[0] != "true":
+        if solved is None or solved[0] != SOLVED_META_VALUE:
             raise ValueError("Atlas is not solved: it has not been through `solve`")
         if unsolved:
             raise ValueError(
@@ -144,7 +149,7 @@ class EquilibriumAnalysis:
 
     def _root_id(self) -> int:
         row = self._connection.execute(
-            "SELECT value FROM atlas.meta WHERE key='root_id'"
+            "SELECT value FROM atlas.meta WHERE key=?", (ROOT_ID_META_KEY,)
         ).fetchone()
         return int(row[0])
 

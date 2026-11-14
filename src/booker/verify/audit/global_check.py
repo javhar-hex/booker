@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from javhar_util.immutables import ZSet
 
-from booker.atlas.schema import META, SCHEMA_VERSION
+from booker.atlas.schema import (
+    GAME_META_KEY,
+    META,
+    ROOT_ID_META_KEY,
+    SCHEMA_VERSION,
+)
 from booker.core.model.invariants import (
     CHAMPION_WINS,
     ELIMINATION_LOSSES,
@@ -32,7 +37,7 @@ class GlobalCheck:
 
     @property
     def root_state_id(self) -> StateId:
-        root_id = self._atlas_reader.metadata().get("root_id")
+        root_id = self._atlas_reader.metadata().get(ROOT_ID_META_KEY)
         if root_id is None:
             raise AuditFailure("the atlas does not say which position is its root")
         return StateId(value=int(root_id))
@@ -43,8 +48,9 @@ class GlobalCheck:
         schema_version = self._atlas_reader.schema_version()
         if schema_version != SCHEMA_VERSION:
             raise AuditFailure(f"schema version {schema_version}, not {SCHEMA_VERSION}")
-        if metadata.get("game") != META["game"]:
-            raise AuditFailure(f"game {metadata.get('game')}, not {META['game']}")
+        game = metadata.get(GAME_META_KEY)
+        if game != META[GAME_META_KEY]:
+            raise AuditFailure(f"game {game}, not {META[GAME_META_KEY]}")
         # Even an audit of a range, which never needs the root, wants it to be named.
         _ = self.root_state_id
 

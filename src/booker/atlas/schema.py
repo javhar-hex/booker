@@ -56,10 +56,17 @@ CREATE INDEX IF NOT EXISTS ix_actions_lhs_wins ON actions(lhs_wins);
 CREATE INDEX IF NOT EXISTS ix_actions_rhs_wins ON actions(rhs_wins);
 """
 
+GAME_META_KEY = "game"
+GTV_CONVENTION_META_KEY = "gtv_convention"
+ROOT_ID_META_KEY = "root_id"
+STATE_SYMMETRY_META_KEY = "state_symmetry"
+SOLVED_META_KEY = "solved"
+SOLVED_META_VALUE = "true"
+
 META = ZMap(
     {
-        "game": "unrestricted-16-2-6",
-        "gtv_convention": "minimum guaranteed additional repeats",
+        GAME_META_KEY: "unrestricted-16-2-6",
+        GTV_CONVENTION_META_KEY: "minimum guaranteed additional repeats",
     }
 )
 
