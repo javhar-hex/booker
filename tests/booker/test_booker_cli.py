@@ -78,7 +78,18 @@ def test_verifies_strictly_with_any_implementation_of_the_symmetries(
 ) -> None:
     main(["expand", path, "--max-depth", "3"])
     capsys.readouterr()
-    main(["verify", path, "--strict", implementation, "--from-id", "2", "--limit", "4"])
+    main(
+        [
+            "verify",
+            path,
+            "--reference-symmetry",
+            implementation,
+            "--start-state-id",
+            "2",
+            "--max-num-states",
+            "4",
+        ]
+    )
 
     out = capsys.readouterr().out
     assert "checked 4 states" in out

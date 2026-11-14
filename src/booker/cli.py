@@ -29,13 +29,13 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.command == "expand":
         _expand(args, parser)
     elif args.command == "solve":
-        solve_atlas(args.db, log=_LOG)
+        solve_atlas(args.db_path, log=_LOG)
     elif args.command == "verify":
         _verify(args)
     elif args.command == "equilibrium":
         _equilibrium(args)
     else:
-        _print_stats(args.db)
+        _print_stats(args.db_path)
 
 
 def _expand(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -46,7 +46,7 @@ def _expand(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             "say how far to go with --max-depth"
         )
     max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
-    expanded = expand_atlas(args.db, max_depth, symmetry, log=_LOG)
+    expanded = expand_atlas(args.db_path, max_depth, symmetry, log=_LOG)
     print("states:", expanded.num_states, "actions:", expanded.num_actions)
 
 
@@ -56,7 +56,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
     expanding = sub.add_parser("expand")
-    expanding.add_argument("db", type=Path)
+    expanding.add_argument("db_path", type=Path)
     expanding.add_argument(
         "--max-depth",
         type=int,
@@ -65,14 +65,14 @@ def _parser() -> argparse.ArgumentParser:
     expanding.add_argument(
         "--state-symmetry", choices=sorted(STATE_SYMMETRIES), default=BLISS.name
     )
-    sub.add_parser("solve").add_argument("db", type=Path)
-    sub.add_parser("stats").add_argument("db", type=Path)
+    sub.add_parser("solve").add_argument("db_path", type=Path)
+    sub.add_parser("stats").add_argument("db_path", type=Path)
     _add_verify(sub)
     equilibrium = sub.add_parser(
         "equilibrium", help="analyze which positions optimal play can reach"
     )
-    equilibrium.add_argument("atlas", type=Path)
-    equilibrium.add_argument("analysis", type=Path)
+    equilibrium.add_argument("atlas_path", type=Path)
+    equilibrium.add_argument("analysis_path", type=Path)
     equilibrium.add_argument("--summary-only", action="store_true")
     return parser
 
@@ -85,25 +85,30 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
     verifying = sub.add_parser(
         "verify", help="independent position/transition/minimax verifier"
     )
-    verifying.add_argument("db", type=Path)
+    verifying.add_argument("db_path", type=Path)
     verifying.add_argument(
-        "--strict",
+        "--reference-symmetry",
         choices=sorted(STATE_SYMMETRIES),
         help="also compare every child and orbit, using this implementation (slow)",
     )
     verifying.add_argument(
-        "--limit", type=int, default=0, help="Number of states to check (0=all)"
+        "--max-num-states",
+        type=int,
+        default=0,
+        help="Number of states to check (0=all)",
     )
     verifying.add_argument("--require-complete", action="store_true")
-    verifying.add_argument("--expect-root", type=int)
+    verifying.add_argument("--expected-root-gtv", type=int)
     verifying.add_argument(
-        "--from-id",
+        "--start-state-id",
         type=_state_id,
         help="First state id to check (inclusive); "
-        "whole-database checks run only when omitted",
+        "whole-database checks run only when this and --stop-state-id are omitted",
     )
     verifying.add_argument(
-        "--to-id", type=_state_id, help="State id to stop before (exclusive)"
+        "--stop-state-id",
+        type=_state_id,
+        help="State id to stop before (exclusive)",
     )
     verifying.add_argument(
         "--checkpoint",
@@ -114,13 +119,13 @@ def _add_verify(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> Non
 
 def _verify(args: argparse.Namespace) -> None:
     plan = AuditPlan(
-        db_path=args.db.resolve(),
+        db_path=args.db_path.resolve(),
         reference_symmetry=None
-        if args.strict is None
-        else STATE_SYMMETRIES[args.strict],
-        state_id_range=StateIdRange(start=args.from_id, stop=args.to_id),
-        max_num_states=args.limit or None,
-        expected_root_gtv=args.expect_root,
+        if args.reference_symmetry is None
+        else STATE_SYMMETRIES[args.reference_symmetry],
+        state_id_range=StateIdRange(start=args.start_state_id, stop=args.stop_state_id),
+        max_num_states=args.max_num_states or None,
+        expected_root_gtv=args.expected_root_gtv,
         require_complete=args.require_complete,
         checkpoint=args.checkpoint,
     )
@@ -129,9 +134,9 @@ def _verify(args: argparse.Namespace) -> None:
 
 def _equilibrium(args: argparse.Namespace) -> None:
     if not args.summary_only:
-        analyze_equilibrium(args.atlas, args.analysis)
+        analyze_equilibrium(args.atlas_path, args.analysis_path)
     print("depth  scheduler  sched-eq  balanced-off  collider  coll-eq  critical")
-    for layer in layer_summaries(args.atlas, args.analysis):
+    for layer in layer_summaries(args.atlas_path, args.analysis_path):
         print(
             f"{layer.depth:>5} {layer.scheduler:>10,} {layer.scheduler_equilibrium:>9,} "
             f"{layer.scheduler_balanced_off_equilibrium:>13,} {layer.collider:>9,} "
