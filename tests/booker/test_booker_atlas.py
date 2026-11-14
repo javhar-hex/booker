@@ -67,13 +67,13 @@ REFERENCE = ZVec(
 
 def _expand(directory: Path, max_depth: int, symmetry: StateSymmetry) -> Path:
     directory.mkdir(exist_ok=True)
-    db = directory / f"{symmetry.name}-{max_depth}.db"
-    expand_atlas(db, max_depth=max_depth, symmetry=symmetry, log=discard)
-    return db
+    db_path = directory / f"{symmetry.name}-{max_depth}.db"
+    expand_atlas(db_path, max_depth=max_depth, symmetry=symmetry, log=discard)
+    return db_path
 
 
-def _expanded_layers(db: Path, max_depth: int) -> ZVec[LayerCounts]:
-    connection = sqlite3.connect(db)
+def _expanded_layers(db_path: Path, max_depth: int) -> ZVec[LayerCounts]:
+    connection = sqlite3.connect(db_path)
     rows = connection.execute(
         """
         SELECT s.depth, COUNT(DISTINCT s.id), COUNT(action.parent),
@@ -106,8 +106,8 @@ def test_layers_until_some_match_is_necessarily_outside_round_one(
     tmp_path: Path,
 ) -> None:
     max_depth = FIRST_ROUND_MATCHES + 2
-    db = _expand(tmp_path, max_depth, BLISS)
-    assert _expanded_layers(db, max_depth) == _reference_below(max_depth)
+    db_path = _expand(tmp_path, max_depth, BLISS)
+    assert _expanded_layers(db_path, max_depth) == _reference_below(max_depth)
 
 
 def test_bliss_and_vf2_agree(shallow_atlas: Path, tmp_path: Path) -> None:
@@ -175,8 +175,8 @@ DUPLICATE_ROOT_REPRESENTATIVE = (
 )
 
 
-def _root_id(db: Path) -> int:
-    connection = sqlite3.connect(db)
+def _root_id(db_path: Path) -> int:
+    connection = sqlite3.connect(db_path)
     (root,) = connection.execute(
         "SELECT value FROM meta WHERE key = 'root_id'"
     ).fetchone()
@@ -184,17 +184,17 @@ def _root_id(db: Path) -> int:
     return int(root)
 
 
-def _tamper(db: Path, tampering: str) -> None:
-    connection = sqlite3.connect(db)
-    connection.executescript(tampering.format(root=_root_id(db)))
+def _tamper(db_path: Path, tampering: str) -> None:
+    connection = sqlite3.connect(db_path)
+    connection.executescript(tampering.format(root=_root_id(db_path)))
     connection.close()
 
 
 def _tampered(atlas: Path, directory: Path, tampering: str) -> Path:
-    db = directory / "tampered.db"
-    shutil.copy(atlas, db)
-    _tamper(db, tampering)
-    return db
+    db_path = directory / "tampered.db"
+    shutil.copy(atlas, db_path)
+    _tamper(db_path, tampering)
+    return db_path
 
 
 @pytest.mark.parametrize("reference_symmetry", [None, VF2])
@@ -207,34 +207,34 @@ def test_verifier_rejects_orbit_sizes_that_add_up_wrongly(
     tampering: str,
     reference_symmetry: StateSymmetry | None,
 ) -> None:
-    db = _tampered(shallow_atlas, tmp_path, tampering)
+    db_path = _tampered(shallow_atlas, tmp_path, tampering)
 
     with pytest.raises(AuditFailure, match="orbit sizes add up"):
-        _audit(db, reference_symmetry=reference_symmetry)
+        _audit(db_path, reference_symmetry=reference_symmetry)
 
 
 def test_only_the_strict_verifier_finds_two_stored_pairings_in_one_orbit(
     shallow_atlas: Path, tmp_path: Path
 ) -> None:
     "The sizes still add up to the number of legal pairings, but the orbit is split."
-    db = _tampered(shallow_atlas, tmp_path, SPLIT_ROOT_ORBIT)
+    db_path = _tampered(shallow_atlas, tmp_path, SPLIT_ROOT_ORBIT)
 
-    _audit(db)
+    _audit(db_path)
     with pytest.raises(
         AuditFailure,
         match=r"orbit representatives: 2 stored for the orbit of .* \(120 pairings\)",
     ):
-        _audit(db, reference_symmetry=VF2)
+        _audit(db_path, reference_symmetry=VF2)
 
 
 def test_verifier_range_checks_only_its_own_states(
     shallow_atlas: Path, tmp_path: Path
 ) -> None:
-    db = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
-    after_root = _root_id(db) + 1
-    _audit(db, state_id_range=StateIdRange(start=StateId(after_root)))
+    db_path = _tampered(shallow_atlas, tmp_path, WRONG_ROOT_CLASS_SIZE)
+    after_root = _root_id(db_path) + 1
+    _audit(db_path, state_id_range=StateIdRange(start=StateId(after_root)))
     with pytest.raises(AuditFailure, match="orbit sizes add up"):
-        _audit(db, state_id_range=StateIdRange(stop=StateId(after_root)))
+        _audit(db_path, state_id_range=StateIdRange(stop=StateId(after_root)))
 
 
 @pytest.mark.slow
@@ -263,12 +263,12 @@ def test_verifier_resumes_to_the_same_totals(
 def test_verifier_resume_skips_states_already_checked(
     shallow_atlas: Path, tmp_path: Path
 ) -> None:
-    db = tmp_path / "atlas.db"
-    shutil.copy(shallow_atlas, db)
+    db_path = tmp_path / "atlas.db"
+    shutil.copy(shallow_atlas, db_path)
     checkpoint = tmp_path / "progress.json"
-    _audit(db, max_num_states=FIRST_SITTING, checkpoint=checkpoint)
-    _tamper(db, WRONG_ROOT_CLASS_SIZE)
-    _audit(db, checkpoint=checkpoint)
+    _audit(db_path, max_num_states=FIRST_SITTING, checkpoint=checkpoint)
+    _tamper(db_path, WRONG_ROOT_CLASS_SIZE)
+    _audit(db_path, checkpoint=checkpoint)
 
 
 def test_verifier_refuses_a_checkpoint_from_another_range(

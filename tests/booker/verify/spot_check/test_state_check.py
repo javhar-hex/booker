@@ -40,9 +40,11 @@ def _check_every_state(
     is_solved: bool = True,
 ) -> None:
     "Raises `AuditFailure` at the first position, from `first_id` on, that fails."
-    with AtlasReader.open(atlas) as db:
-        check = StateCheck(db=db, symmetry=symmetry, is_solved=is_solved)
-        for state_id in db.state_ids(StateIdRange(start=StateId(first_id))):
+    with AtlasReader.open(atlas) as atlas_reader:
+        check = StateCheck(
+            atlas_reader=atlas_reader, symmetry=symmetry, is_solved=is_solved
+        )
+        for state_id in atlas_reader.state_ids(StateIdRange(start=StateId(first_id))):
             check.run(state_id)
 
 
@@ -205,23 +207,25 @@ class SplitsEveryOrbit(StateSymmetry):
 
 
 def test_asks_the_symmetry_whether_children_are_the_right_ones(endgame: Path) -> None:
-    with AtlasReader.open(endgame) as db:
-        StateCheck(db=db, symmetry=None, is_solved=True).run(StateId(value=ROOT))
+    with AtlasReader.open(endgame) as atlas_reader:
+        StateCheck(atlas_reader=atlas_reader, symmetry=None, is_solved=True).run(
+            StateId(value=ROOT)
+        )
 
         with pytest.raises(AuditFailure, match="wrong state"):
-            StateCheck(db=db, symmetry=NeverIsomorphic(), is_solved=True).run(
-                StateId(value=ROOT)
-            )
+            StateCheck(
+                atlas_reader=atlas_reader, symmetry=NeverIsomorphic(), is_solved=True
+            ).run(StateId(value=ROOT))
 
 
 def test_asks_the_symmetry_for_the_orbits(endgame: Path) -> None:
     with (
-        AtlasReader.open(endgame) as db,
+        AtlasReader.open(endgame) as atlas_reader,
         pytest.raises(AuditFailure, match="orbit (sizes|representatives)"),
     ):
-        StateCheck(db=db, symmetry=SplitsEveryOrbit(), is_solved=True).run(
-            StateId(value=ROOT)
-        )
+        StateCheck(
+            atlas_reader=atlas_reader, symmetry=SplitsEveryOrbit(), is_solved=True
+        ).run(StateId(value=ROOT))
 
 
 @pytest.mark.parametrize("symmetry", [None, BLISS, VF2])

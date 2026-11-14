@@ -31,14 +31,14 @@ class StateCheck:
     checked cheaply, and with a `symmetry` thoroughly.
     """
 
-    db: AtlasReader
+    atlas_reader: AtlasReader
     symmetry: StateSymmetry | None
     is_solved: bool
 
     def run(self, state_id: StateId) -> PairingCount:
-        state_row = self.db.state_row(state_id)
+        state_row = self.atlas_reader.state_row(state_id)
         state_row.require_consistent(state_id)
-        action_rows = self.db.action_rows(state_id)
+        action_rows = self.atlas_reader.action_rows(state_id)
         self._check_actions_are_legal(state_id, state_row, action_rows)
         for action_row in action_rows:
             self._check_transitions(state_id, state_row, action_row)
@@ -100,7 +100,7 @@ class StateCheck:
         ):
             where = f"pairing {pairing}, winner {winner.index}"
             expected = successor(state_row.state, Outcome.single(pairing, winner))
-            child = self.db.state_row(child_id).state
+            child = self.atlas_reader.state_row(child_id).state
             if child.matches_played != state_row.depth + 1:
                 raise AuditFailure.of(
                     state_id, f"{where}: the child is not one match deeper"
@@ -141,8 +141,8 @@ class StateCheck:
         What the Scheduler gets by choosing this action: its cost plus its GTV, once the
         Collider's GTV is checked to be the larger of its children's.
         """
-        gtv_lhs = self.db.state_row(action_row.lhs_wins).gtv
-        gtv_rhs = self.db.state_row(action_row.rhs_wins).gtv
+        gtv_lhs = self.atlas_reader.state_row(action_row.lhs_wins).gtv
+        gtv_rhs = self.atlas_reader.state_row(action_row.rhs_wins).gtv
         if gtv_lhs is None or gtv_rhs is None:
             raise AuditFailure.of(state_id, "a child is unsolved")
         if action_row.gtv != max(gtv_lhs, gtv_rhs):

@@ -44,7 +44,9 @@ class AtlasAuditor:
         checkpoint = Checkpoint.of(self.plan)
         progress = self._starting_progress(checkpoint)
         state_check = StateCheck(
-            db=atlas_reader, symmetry=self.plan.reference_symmetry, is_solved=is_solved
+            atlas_reader=atlas_reader,
+            symmetry=self.plan.reference_symmetry,
+            is_solved=is_solved,
         )
         remaining = StateIdRange(
             start=progress.next_state_id, stop=self.plan.state_id_range.stop
