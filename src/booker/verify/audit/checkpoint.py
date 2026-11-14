@@ -45,7 +45,7 @@ class Checkpoint:
             return None
         return self._progress_in(json.loads(self.path.read_text()))
 
-    def save(self, progress: AuditProgress) -> None:
+    def save(self, progress: AuditProgress) -> Checkpoint:
         "Atomically: a crash leaves the previous checkpoint, never half of the next."
         temporary = self.path.with_name(self.path.name + ".tmp")
         with open(temporary, "w") as file:
@@ -53,6 +53,7 @@ class Checkpoint:
             file.flush()
             os.fsync(file.fileno())
         os.replace(temporary, self.path)
+        return self
 
     @property
     def _scope_dict(self) -> dict[str, str | int | None]:

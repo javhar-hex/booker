@@ -51,11 +51,10 @@ class AtlasAuditor:
         )
         for state_id in atlas_reader.state_ids(remaining):
             progress = progress.after(state_id, state_check.run(state_id))
-            self._possibly_save(checkpoint, progress)
+            checkpoint = self._possibly_save(checkpoint, progress)
             if self._is_max_num_states_reached(progress):
                 break
-            if progress.num_checked_states % REPORT_INTERVAL == 0:
-                self._log_checked(progress)
+            self._possibly_log(progress)
         return progress
 
     def _starting_progress(self, checkpoint: Checkpoint | None) -> AuditProgress:
@@ -70,14 +69,15 @@ class AtlasAuditor:
 
     def _possibly_save(
         self, checkpoint: Checkpoint | None, progress: AuditProgress
-    ) -> None:
+    ) -> Checkpoint | None:
         "Saves at every `CHECKPOINT_INTERVAL` states, and when the last state is checked."
         is_time_to_save = (
             progress.num_checked_states % CHECKPOINT_INTERVAL == 0
             or progress.num_checked_states == self.plan.max_num_states
         )
-        if checkpoint is not None and is_time_to_save:
-            checkpoint.save(progress)
+        if checkpoint is None or not is_time_to_save:
+            return checkpoint
+        return checkpoint.save(progress)
 
     def _is_max_num_states_reached(self, progress: AuditProgress) -> bool:
         return (
@@ -85,8 +85,11 @@ class AtlasAuditor:
             and progress.num_checked_states >= self.plan.max_num_states
         )
 
-    def _log_checked(self, progress: AuditProgress) -> None:
-        self.log(
-            f"checked {progress.num_checked_states:,} states, "
-            f"{progress.cml_pairing_count.orbits:,} actions"
-        )
+    def _possibly_log(self, progress: AuditProgress) -> Callable[[str], None]:
+        "Logs at every `REPORT_INTERVAL` states."
+        if progress.num_checked_states % REPORT_INTERVAL == 0:
+            self.log(
+                f"checked {progress.num_checked_states:,} states, "
+                f"{progress.cml_pairing_count.orbits:,} actions"
+            )
+        return self.log

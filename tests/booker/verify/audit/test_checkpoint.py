@@ -113,3 +113,9 @@ def test_a_plan_with_a_checkpoint_has_it_for_its_own_scope(tmp_path: Path) -> No
     assert Checkpoint.of(plan) == Checkpoint(
         tmp_path / "p.json", _scope(tmp_path, StateIdRange(start=StateId(3)))
     )
+
+
+def test_saving_returns_the_checkpoint_for_chaining(tmp_path: Path) -> None:
+    checkpoint = Checkpoint(tmp_path / "p.json", _scope(tmp_path))
+
+    assert checkpoint.save(AuditProgress.start(StateIdRange())) is checkpoint
