@@ -10,10 +10,10 @@ from booker.game.rules import legal_pairings
 
 
 def _play_game(rng: random.Random) -> Iterator[State]:
-    "Every state of one random game, from the start to the decided state."
+    "Every state of one random game, from the start to the leaf state."
     state = State.start()
     yield state
-    while not state.is_decided:
+    while not state.is_leaf:
         pairing = rng.choice(sorted(legal_pairings(state)))
         winner = rng.choice((pairing.lhs, pairing.rhs))
         state = successor(state, Outcome.single(pairing, winner))

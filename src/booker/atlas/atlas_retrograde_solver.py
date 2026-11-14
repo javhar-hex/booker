@@ -21,7 +21,7 @@ class AtlasRetrogradeSolver:
     connection: sqlite3.Connection
 
     def reset_gtvs(self) -> None:
-        "Forget every GTV but the decided positions', which are worth nothing more."
+        "Forget every GTV but the leaf positions, which are worth nothing more."
         self.connection.execute("UPDATE actions SET gtv=NULL")
         self.connection.execute("UPDATE states SET gtv=NULL")
         self.connection.execute("UPDATE states SET gtv=0 WHERE active=1")

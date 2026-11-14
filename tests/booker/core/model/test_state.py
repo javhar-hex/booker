@@ -31,9 +31,9 @@ def test_matches_played_counts_lives_lost_including_eliminated_teams() -> None:
     assert state.matches_played == (NUM_PARTICIPANTS - 3) * ELIMINATION_LOSSES + 2
 
 
-def test_decided_when_one_team_is_left() -> None:
-    assert _state(Record(wins=6, losses=1)).is_decided
-    assert not _state(RECORD_2_0, RECORD_1_1).is_decided
+def test_a_state_is_a_leaf_when_one_team_is_left() -> None:
+    assert _state(Record(wins=6, losses=1)).is_leaf
+    assert not _state(RECORD_2_0, RECORD_1_1).is_leaf
 
 
 def test_knows_its_teams() -> None:

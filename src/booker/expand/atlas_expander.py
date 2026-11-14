@@ -75,8 +75,8 @@ class AtlasExpander:
         writer.record_root(writer.add_state(self.state_canonicalizer(root)))
         for depth in range(max_depth):
             self._expand_depth(writer, depth)
-        # A decided state is never expanded, even when every depth is.
-        writer.mark_decided_expanded()
+        # A leaf state is never expanded, even when every depth is.
+        writer.mark_leaves_expanded()
 
     def _expand_depth(self, writer: AtlasExpansionWriter, depth: int) -> None:
         unexpanded = self.atlas.unexpanded(depth)
@@ -86,7 +86,7 @@ class AtlasExpander:
         # One depth is atomic; interruption never leaves a half-expanded layer.
         with self.atlas.transaction():
             for parent in unexpanded:
-                if not parent.state.is_decided:
+                if not parent.state.is_leaf:
                     self._expand_parent(writer, parent)
                 writer.mark_expanded(parent.id)
 

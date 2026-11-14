@@ -53,8 +53,8 @@ class StateRow:
                 f"depth {self.depth}, but its teams have "
                 f"played {state.matches_played} matches",
             )
-        if state.is_decided:
+        if state.is_leaf:
             if state.records[0].wins != CHAMPION_WINS or not self.is_expanded:
-                raise AuditFailure.of(state_id, "a bad decided state")
+                raise AuditFailure.of(state_id, "a bad leaf state")
         elif any(record.wins >= CHAMPION_WINS for record in state.records):
             raise AuditFailure.of(state_id, "a champion, with teams still playing")

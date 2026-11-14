@@ -129,10 +129,10 @@ def test_a_rematch_is_an_orbit_of_its_own(symmetry: StateSymmetry) -> None:
 
 
 @pytest.mark.parametrize("symmetry", IMPLEMENTATIONS)
-def test_a_decided_state_has_no_orbits(symmetry: StateSymmetry) -> None:
-    decided = state_of_indices([Record(wins=6, losses=1)])
+def test_a_leaf_state_has_no_orbits(symmetry: StateSymmetry) -> None:
+    leaf_state = state_of_indices([Record(wins=6, losses=1)])
 
-    assert len(symmetry.orbits(decided, legal_pairings(decided))) == 0
+    assert len(symmetry.orbits(leaf_state, legal_pairings(leaf_state))) == 0
 
 
 def _agree(answers: Mapping[str, object], what: object) -> None:

@@ -79,6 +79,6 @@ class AtlasExpansionWriter:
             "UPDATE states SET expanded=1 WHERE id=?", (state_id.value,)
         )
 
-    def mark_decided_expanded(self) -> None:
-        "A decided position has nothing to expand."
+    def mark_leaves_expanded(self) -> None:
+        "A leaf position has nothing to expand."
         self.connection.execute("UPDATE states SET expanded=1 WHERE active=1")

@@ -73,20 +73,20 @@ class GlobalCheck:
         max_depth = self._atlas_reader.max_depth()
         if max_depth != MAX_MATCHES:
             raise AuditFailure(f"last match is missing: depth {max_depth}")
-        self._check_decided_states()
+        self._check_leaf_states()
 
-    def _check_decided_states(self) -> None:
-        decided_ids = self._atlas_reader.decided_ids()
+    def _check_leaf_states(self) -> None:
+        leaf_ids = self._atlas_reader.leaf_ids()
         champion_records = ZSet(
             self._atlas_reader.state_row(state_id).state.records[0]
-            for state_id in decided_ids
+            for state_id in leaf_ids
         )
         if (
-            len(decided_ids) != len(CHAMPION_RECORDS)
+            len(leaf_ids) != len(CHAMPION_RECORDS)
             or champion_records != CHAMPION_RECORDS
         ):
             raise AuditFailure(
-                f"incorrect decided states: {sorted(map(str, champion_records))}"
+                f"incorrect leaf states: {sorted(map(str, champion_records))}"
             )
 
     def _check_opening(self) -> None:

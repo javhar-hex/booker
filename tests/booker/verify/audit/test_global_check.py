@@ -99,7 +99,7 @@ def test_an_incomplete_atlas_is_refused_when_completeness_is_required(
 
 
 def test_a_complete_atlas_without_both_endings_is_refused(solved: Path) -> None:
-    with pytest.raises(AuditFailure, match="incorrect decided states"):
+    with pytest.raises(AuditFailure, match="incorrect leaf states"):
         _check_whole_database(solved, require_complete=True)
 
 

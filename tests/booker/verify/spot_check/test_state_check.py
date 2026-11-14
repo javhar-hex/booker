@@ -63,7 +63,7 @@ def test_accepts_a_rematch_that_costs_one(tmp_path: Path) -> None:
         ("UPDATE actions SET lhs_wins=1", 0, "one match deeper"),
         ("UPDATE actions SET lhs_wins=99", 0, "does not exist"),
         ("UPDATE states SET expanded=0 WHERE id=1", 0, "unexpanded, with"),
-        ("UPDATE states SET expanded=0 WHERE id=2", 0, "bad decided state"),
+        ("UPDATE states SET expanded=0 WHERE id=2", 0, "bad leaf state"),
         ("UPDATE states SET gtv=1 WHERE id=2", CHILD, "worth 0"),
         ("UPDATE states SET depth=29 WHERE id=2", CHILD, "depth 29"),
         ("UPDATE states SET active=3 WHERE id=1", 0, "team count"),

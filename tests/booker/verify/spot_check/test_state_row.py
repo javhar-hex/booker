@@ -79,7 +79,7 @@ def test_a_row_that_agrees_with_its_position_is_consistent(state_row: StateRow) 
         ),
         (
             _row(LAST_TEAM_STANDING, depth=30, num_teams=1, is_expanded=False),
-            "bad decided",
+            "bad leaf",
         ),
         (
             _row(
@@ -87,7 +87,7 @@ def test_a_row_that_agrees_with_its_position_is_consistent(state_row: StateRow) 
                 30,
                 1,
             ),
-            "bad decided",
+            "bad leaf",
         ),
         (_row(CHAMPION_AND_ONE_MORE, depth=29, num_teams=2), "a champion, with teams"),
     ],

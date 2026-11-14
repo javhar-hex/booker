@@ -58,7 +58,7 @@ def test_rematch_is_its_own_class() -> None:
     ]
 
 
-def test_decided_state_has_no_classes() -> None:
+def test_leaf_state_has_no_classes() -> None:
     assert _classes(_state([Record(wins=6, losses=0)], [])) == []
 
 

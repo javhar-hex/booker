@@ -3,7 +3,7 @@ The SQLite schema of an atlas: one row per position, and one per Collider-to-mov
 position, which the action rows contract.
 
 states: `id`; `key`, the position as `PackedState` bytes, unique; `depth`, the number of
-matches played; `active`, the number of live teams, so 1 for a decided position; `expanded`,
+matches played; `active`, the number of live teams, so 1 for a leaf position; `expanded`,
 whether its actions have been generated; `gtv`, the game-theoretical value, which is the
 minimum guaranteed number of further repeats, once solved.
 

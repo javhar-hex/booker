@@ -74,11 +74,11 @@ def test_one_of_two_unbeaten_teams_may_not_meet_a_lower_bracket_survivor() -> No
     assert legal_pairings(state) == ZSet([])
 
 
-def test_decided_state_has_no_pairings() -> None:
+def test_leaf_state_has_no_pairings() -> None:
     assert legal_pairings(_state(RECORD_6_1)) == ZSet([])
 
 
-def test_every_game_ends_in_one_of_the_two_possible_decided_states(
+def test_every_game_ends_in_one_of_the_two_possible_leaf_states(
     play_game: Callable[[random.Random], Iterator[State]],
 ) -> None:
     rng = random.Random(0)

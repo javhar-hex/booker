@@ -40,7 +40,7 @@ def hand_built_atlas(
         if pairing is not None:
             writer.add_action(parent_id, pairing, is_rematch, 1, lhs_wins, rhs_wins)
         writer.mark_expanded(parent_id)
-        writer.mark_decided_expanded()
+        writer.mark_leaves_expanded()
         atlas.retrograde_solver().reset_gtvs()
         for depth in range(MAX_MATCHES, -1, -1):
             atlas.retrograde_solver().back_up(depth)

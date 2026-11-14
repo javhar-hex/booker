@@ -87,7 +87,7 @@ def test_champion_alone_remains() -> None:
     after = successor(final, _outcome({Pairing.of(TEAM_A, TEAM_B): TEAM_B}))
 
     assert after == _state(_record(6, 1))
-    assert after.is_decided
+    assert after.is_leaf
 
 
 def test_rejects_results_for_teams_not_in_the_state() -> None:

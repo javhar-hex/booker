@@ -61,7 +61,7 @@ def solved(
         writer.record_root(parent)
         writer.add_action(parent, pairing, met, 1, champion, champion)
         writer.mark_expanded(parent)
-        writer.mark_decided_expanded()
+        writer.mark_leaves_expanded()
         solver = atlas.retrograde_solver()
         solver.reset_gtvs()
         for depth in range(MAX_MATCHES, -1, -1):

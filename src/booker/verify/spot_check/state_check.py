@@ -78,8 +78,8 @@ class StateCheck:
                 state_id,
                 f"orbit sizes add up to {size}, but {len(legal)} pairings are legal",
             )
-        if (not action_rows) != state_row.state.is_decided:
-            raise AuditFailure.of(state_id, "a dead end, or a decided state with moves")
+        if (not action_rows) != state_row.state.is_leaf:
+            raise AuditFailure.of(state_id, "a dead end, or a leaf state with moves")
         if self.symmetry is not None:
             ActionRow.require_orbits(
                 state_id, action_rows, self.symmetry.orbits(state_row.state, legal)
@@ -125,8 +125,8 @@ class StateCheck:
     ) -> None:
         if state_row.gtv is None:
             raise AuditFailure.of(state_id, "unsolved")
-        if state_row.state.is_decided and state_row.gtv != 0:
-            raise AuditFailure.of(state_id, "a decided state is worth 0")
+        if state_row.state.is_leaf and state_row.gtv != 0:
+            raise AuditFailure.of(state_id, "a leaf state is worth 0")
         options = [
             self._checked_option(state_id, action_row) for action_row in action_rows
         ]

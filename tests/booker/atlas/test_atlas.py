@@ -59,7 +59,7 @@ def test_unexpanded_states_are_listed_by_depth_until_marked(
         assert atlas.num_unexpanded() == 2
 
         writer.mark_expanded(parent)
-        writer.mark_decided_expanded()
+        writer.mark_leaves_expanded()
 
         assert atlas.num_unexpanded() == 0
         assert len(atlas.unexpanded(depth)) == 0
@@ -154,7 +154,7 @@ def test_summarizes_a_depth_of_several_positions(
             for chosen, class_size in pairings:
                 writer.add_action(parent, chosen, met, class_size, champion, champion)
             writer.mark_expanded(parent)
-        writer.mark_decided_expanded()
+        writer.mark_leaves_expanded()
         solver = atlas.retrograde_solver()
         solver.reset_gtvs()
         for depth in range(MAX_MATCHES, -1, -1):
@@ -169,6 +169,10 @@ def test_summarizes_a_depth_of_several_positions(
     assert (parents.num_states, parents.num_colliders, parents.num_pairings) == (2, 3, 6)
     assert (parents.min_gtv, parents.max_gtv) == (0, 1)
 
-    decided = summary[champion_state.matches_played]
-    assert (decided.num_states, decided.num_colliders, decided.num_pairings) == (1, 0, 0)
-    assert (decided.min_gtv, decided.max_gtv) == (0, 0)
+    leaf_summary = summary[champion_state.matches_played]
+    assert (
+        leaf_summary.num_states,
+        leaf_summary.num_colliders,
+        leaf_summary.num_pairings,
+    ) == (1, 0, 0)
+    assert (leaf_summary.min_gtv, leaf_summary.max_gtv) == (0, 0)

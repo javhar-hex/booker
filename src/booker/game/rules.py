@@ -26,7 +26,7 @@ def legal_pairings(state: State) -> ZSet[Pairing]:
     Teams of equal record may meet, except that two teams at `LB_SURVIVOR_RECORD` may
     not while any team is unbeaten. Once exactly one team is unbeaten, the upper bracket
     has produced its winner, who may meet only a team at `LB_SURVIVOR_RECORD`. Nothing else
-    is legal; a decided state has no pairings at all.
+    is legal; a leaf state has no pairings at all.
     """
     num_unbeaten = sum(record.is_unbeaten for record in state.records)
     return ZSet(

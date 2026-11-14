@@ -50,7 +50,8 @@ class State:
         return ZVec(Team(index=idx) for idx in range(self.size))
 
     @property
-    def is_decided(self) -> bool:
+    def is_leaf(self) -> bool:
+        "One team is left, the champion: no match is left to play."
         return self.size == 1
 
     @property
