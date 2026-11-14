@@ -14,8 +14,8 @@ class AuditPlan:
     """
     The checks on the states in `state_id_range` and their actions. Whole-database checks
     run only when there is no range, so a set of ranges partitioning the ids needs one run
-    more for them. With `max_num_states`, at most that many states in all are checked,
-    counting those of earlier sittings resumed from `checkpoint`. The `db_path` is
+    more for them. With `max_num_states` (at least 1), at most that many states in all are
+    checked, counting those of earlier sittings resumed from `checkpoint`. The `db_path` is
     absolute, so that progress saved for it cannot be taken for progress on another file.
 
     Whether the stored children and pairings are the right ones is checked cheaply, by
@@ -39,6 +39,8 @@ class AuditPlan:
             raise ValueError(
                 f"db_path must be absolute, so it names one file: {self.db_path}"
             )
+        if self.max_num_states is not None and self.max_num_states < 1:
+            raise ValueError(f"max_num_states must be at least 1: {self.max_num_states}")
 
     @property
     def is_whole_database(self) -> bool:

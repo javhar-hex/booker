@@ -30,3 +30,9 @@ def test_a_plan_with_either_end_of_a_range_is_not(state_id_range: StateIdRange) 
 def test_a_relative_db_path_is_refused() -> None:
     with pytest.raises(ValueError, match="absolute"):
         AuditPlan(db_path=Path("a.db"))
+
+
+@pytest.mark.parametrize("max_num_states", [0, -3])
+def test_a_max_num_states_below_one_is_refused(max_num_states: int) -> None:
+    with pytest.raises(ValueError, match="at least 1"):
+        AuditPlan(db_path=DB, max_num_states=max_num_states)
