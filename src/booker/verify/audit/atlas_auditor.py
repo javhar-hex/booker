@@ -51,8 +51,7 @@ class AtlasAuditor:
         )
         for state_id in atlas_reader.state_ids(remaining):
             progress = progress.after(state_id, state_check.run(state_id))
-            if checkpoint and self._is_time_to_save(progress):
-                checkpoint.save(progress)
+            self._possibly_save(checkpoint, progress)
             if self._is_max_num_states_reached(progress):
                 break
             if progress.num_checked_states % REPORT_INTERVAL == 0:
@@ -69,11 +68,16 @@ class AtlasAuditor:
         )
         return saved
 
-    def _is_time_to_save(self, progress: AuditProgress) -> bool:
-        return (
+    def _possibly_save(
+        self, checkpoint: Checkpoint | None, progress: AuditProgress
+    ) -> None:
+        "Saves at every `CHECKPOINT_INTERVAL` states, and when the last state is checked."
+        is_time_to_save = (
             progress.num_checked_states % CHECKPOINT_INTERVAL == 0
             or progress.num_checked_states == self.plan.max_num_states
         )
+        if checkpoint is not None and is_time_to_save:
+            checkpoint.save(progress)
 
     def _is_max_num_states_reached(self, progress: AuditProgress) -> bool:
         return (
