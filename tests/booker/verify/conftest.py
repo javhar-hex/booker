@@ -15,7 +15,7 @@ from booker.core.model.state import State
 from booker.core.model.team import Team
 from booker.core.symmetry.state_symmetries import BLISS
 from booker.expand.atlas_expander import AtlasExpander, expand_atlas
-from booker.solve import solve
+from booker.solve import solve_atlas
 
 ENDGAME = State(
     records=ZVec([Record(wins=4, losses=0)] + [Record(wins=3, losses=1)] * 4),
@@ -37,7 +37,7 @@ def endgame(tmp_path_factory: pytest.TempPathFactory) -> Path:
         AtlasExpander.of(atlas=atlas, symmetry=BLISS, log=discard).expand(
             ENDGAME, MAX_MATCHES
         )
-    solve(path)
+    solve_atlas(path, log=discard)
     return path
 
 

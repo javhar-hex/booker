@@ -19,7 +19,7 @@ from support.logs import discard
 from booker.core.symmetry.state_symmetries import BLISS, VF2
 from booker.core.symmetry.state_symmetry import StateSymmetry
 from booker.expand.atlas_expander import expand_atlas
-from booker.solve import solve
+from booker.solve import solve_atlas
 from booker.verify.audit.atlas_auditor import AtlasAuditor
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.audit.audit_report import AuditReport
@@ -129,7 +129,7 @@ def test_bliss_and_vf2_agree_past_the_depth_they_were_first_trusted_to(
 
 def test_solve_refuses_a_truncated_atlas(shallow_atlas: Path) -> None:
     with pytest.raises(RuntimeError, match="truncated"):
-        solve(shallow_atlas)
+        solve_atlas(shallow_atlas, log=discard)
 
 
 def _audit(

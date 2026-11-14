@@ -14,7 +14,7 @@ from booker.core.model.invariants import MAX_MATCHES
 from booker.core.symmetry.state_symmetries import BLISS, STATE_SYMMETRIES
 from booker.equilibrium.equilibrium_analysis import analyze_equilibrium, layer_summaries
 from booker.expand.atlas_expander import expand_atlas
-from booker.solve import solve
+from booker.solve import solve_atlas
 from booker.verify.audit.atlas_auditor import AtlasAuditor
 from booker.verify.audit.audit_plan import AuditPlan
 from booker.verify.spot_check.state_id import StateId
@@ -29,7 +29,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.command == "expand":
         _expand(args, parser)
     elif args.command == "solve":
-        print(f"root GTV: {solve(args.db)}")
+        solve_atlas(args.db, log=_LOG)
     elif args.command == "verify":
         _verify(args)
     elif args.command == "equilibrium":
