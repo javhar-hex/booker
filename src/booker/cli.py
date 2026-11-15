@@ -166,13 +166,13 @@ def _verify(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     )
     try:
         plan = AuditPlan(
-            db_path,
-            state_id_range,
-            reference_symmetry,
-            args.max_num_states,
-            args.expected_root_gtv,
-            args.require_complete,
-            args.checkpoint,
+            db_path=db_path,
+            state_id_range=state_id_range,
+            reference_symmetry=reference_symmetry,
+            max_num_states=args.max_num_states,
+            expected_root_gtv=args.expected_root_gtv,
+            require_complete=args.require_complete,
+            checkpoint=args.checkpoint,
         )
     except ValueError as invalid:
         parser.error(str(invalid))
