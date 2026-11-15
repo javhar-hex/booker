@@ -347,3 +347,16 @@ def test_the_command_can_summarize_an_analysis_it_made_before(
     )
 
     assert len(capsys.readouterr().out.splitlines()) == 3
+
+
+def test_the_command_cannot_summarize_an_analysis_that_does_not_exist(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    atlas = _tiny_atlas(tmp_path / "atlas.db")
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["equilibrium", str(atlas), str(tmp_path / "none.db"), "--summary-only"])
+
+    assert exit_info.value.code == 2
+    assert "needs an analysis to summarize" in capsys.readouterr().err
+    assert not (tmp_path / "none.db").exists()

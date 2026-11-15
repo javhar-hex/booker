@@ -29,6 +29,7 @@ _LOG = functools.partial(print, flush=True)
 MAX_DEPTH_OPTION = "--max-depth"
 STATE_SYMMETRY_OPTION = "--state-symmetry"
 STOP_STATE_ID_OPTION = "--stop-state-id"
+SUMMARY_ONLY_OPTION = "--summary-only"
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -62,8 +63,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     equilibrium.add_argument("atlas_path", type=_existing_path)
     equilibrium.add_argument("analysis_path", type=Path)
-    equilibrium.add_argument("--summary-only", action="store_true")
-    equilibrium.set_defaults(run=_equilibrium)
+    equilibrium.add_argument(SUMMARY_ONLY_OPTION, action="store_true")
+    equilibrium.set_defaults(run=functools.partial(_equilibrium, parser=equilibrium))
     return parser
 
 
@@ -156,16 +157,21 @@ def _stats(args: argparse.Namespace) -> None:
 
 
 def _verify(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    plan = AuditPlan(
-        db_path=args.db_path.resolve(),
-        reference_symmetry=None
+    db_path = args.db_path.resolve()
+    state_id_range = StateIdRange(start=args.start_state_id, stop=args.stop_state_id)
+    reference_symmetry = (
+        None
         if args.reference_symmetry is None
-        else STATE_SYMMETRIES[args.reference_symmetry],
-        state_id_range=StateIdRange(start=args.start_state_id, stop=args.stop_state_id),
-        max_num_states=args.max_num_states,
-        expected_root_gtv=args.expected_root_gtv,
-        require_complete=args.require_complete,
-        checkpoint=args.checkpoint,
+        else STATE_SYMMETRIES[args.reference_symmetry]
+    )
+    plan = AuditPlan(
+        db_path,
+        state_id_range,
+        reference_symmetry,
+        args.max_num_states,
+        args.expected_root_gtv,
+        args.require_complete,
+        args.checkpoint,
     )
     try:
         report = AtlasAuditor(plan=plan, log=_LOG).audit()
@@ -174,8 +180,14 @@ def _verify(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     _LOG(str(report))
 
 
-def _equilibrium(args: argparse.Namespace) -> None:
-    if not args.summary_only:
+def _equilibrium(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if args.summary_only:
+        if not args.analysis_path.is_file():
+            parser.error(
+                f"{SUMMARY_ONLY_OPTION} needs an analysis to summarize: "
+                f"no such file: {args.analysis_path}"
+            )
+    else:
         analyze_equilibrium(args.atlas_path, args.analysis_path)
     _LOG(
         f"{'depth':>5} {'scheduler':>10} {'sched-eq':>9} {'balanced-off':>13} "
