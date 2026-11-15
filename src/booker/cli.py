@@ -164,15 +164,18 @@ def _verify(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         if args.reference_symmetry is None
         else STATE_SYMMETRIES[args.reference_symmetry]
     )
-    plan = AuditPlan(
-        db_path,
-        state_id_range,
-        reference_symmetry,
-        args.max_num_states,
-        args.expected_root_gtv,
-        args.require_complete,
-        args.checkpoint,
-    )
+    try:
+        plan = AuditPlan(
+            db_path,
+            state_id_range,
+            reference_symmetry,
+            args.max_num_states,
+            args.expected_root_gtv,
+            args.require_complete,
+            args.checkpoint,
+        )
+    except ValueError as invalid:
+        parser.error(str(invalid))
     try:
         report = AtlasAuditor(plan=plan, log=_LOG).audit()
     except AuditFailure as failure:

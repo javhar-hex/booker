@@ -118,3 +118,16 @@ def test_a_command_on_a_missing_atlas_is_refused_and_creates_nothing(
     assert exit_info.value.code == 2
     assert "no such file" in capsys.readouterr().err
     assert not Path(path).exists()
+
+
+def test_verify_refuses_a_cap_of_no_states_with_a_usage_error(
+    path: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["expand", path, "--max-depth", "3"])
+    capsys.readouterr()
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["verify", path, "--max-num-states", "0"])
+
+    assert exit_info.value.code == 2
+    assert "max_num_states must be at least 1" in capsys.readouterr().err
