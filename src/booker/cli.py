@@ -35,7 +35,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     elif args.command == "equilibrium":
         _equilibrium(args)
     else:
-        _print_stats(args.db_path)
+        _log_stats(args.db_path)
 
 
 def _expand(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -47,7 +47,7 @@ def _expand(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         )
     max_depth = MAX_MATCHES if args.max_depth is None else args.max_depth
     expanded = expand_atlas(args.db_path, max_depth, symmetry, log=_LOG)
-    print("states:", expanded.num_states, "actions:", expanded.num_actions)
+    _LOG(f"states: {expanded.num_states} actions: {expanded.num_actions}")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -128,26 +128,26 @@ def _verify(args: argparse.Namespace) -> None:
         require_complete=args.require_complete,
         checkpoint=args.checkpoint,
     )
-    print(AtlasAuditor(plan=plan, log=_LOG).audit())
+    _LOG(str(AtlasAuditor(plan=plan, log=_LOG).audit()))
 
 
 def _equilibrium(args: argparse.Namespace) -> None:
     if not args.summary_only:
         analyze_equilibrium(args.atlas_path, args.analysis_path)
-    print("depth  scheduler  sched-eq  balanced-off  collider  coll-eq  critical")
+    _LOG("depth  scheduler  sched-eq  balanced-off  collider  coll-eq  critical")
     for layer in layer_summaries(args.atlas_path, args.analysis_path):
-        print(
+        _LOG(
             f"{layer.depth:>5} {layer.scheduler:>10,} {layer.scheduler_equilibrium:>9,} "
             f"{layer.scheduler_balanced_off_equilibrium:>13,} {layer.collider:>9,} "
             f"{layer.collider_equilibrium:>8,} {layer.collider_critical:>9,}"
         )
 
 
-def _print_stats(path: Path) -> None:
-    print("depth  states  collider  pairings  min-gtv  max-gtv")
+def _log_stats(path: Path) -> None:
+    _LOG("depth  states  collider  pairings  min-gtv  max-gtv")
     with Atlas.open(path) as atlas:
         for row in atlas.depth_summaries():
-            print(
+            _LOG(
                 f"{row.depth:>5} {row.num_states:>7,} {row.num_colliders:>9,} "
                 f"{row.num_pairings:>9,} {row.min_gtv!s:>8} {row.max_gtv!s:>8}"
             )
