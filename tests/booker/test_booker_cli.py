@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 from booker.cli import main
-from booker.verify.spot_check.audit_failure import AuditFailure
 
 
 @pytest.fixture
@@ -96,8 +95,26 @@ def test_verifies_strictly_with_any_implementation_of_the_symmetries(
     assert f"compared by {implementation}" in out
 
 
-def test_verify_fails_loudly_on_a_bad_atlas(path: str) -> None:
+def test_verify_reports_a_failure_in_one_line_and_exits_with_status_1(
+    path: str, capsys: pytest.CaptureFixture[str]
+) -> None:
     main(["expand", path, "--max-depth", "3"])
+    capsys.readouterr()
 
-    with pytest.raises(AuditFailure, match="not complete"):
+    with pytest.raises(SystemExit) as exit_info:
         main(["verify", path, "--require-complete"])
+
+    assert exit_info.value.code == 1
+    assert capsys.readouterr().err.startswith("FAIL: not complete")
+
+
+@pytest.mark.parametrize("command", ["solve", "stats", "verify"])
+def test_a_command_on_a_missing_atlas_is_refused_and_creates_nothing(
+    path: str, command: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit) as exit_info:
+        main([command, path])
+
+    assert exit_info.value.code == 2
+    assert "no such file" in capsys.readouterr().err
+    assert not Path(path).exists()
