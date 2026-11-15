@@ -143,7 +143,10 @@ def _solve(args: argparse.Namespace) -> None:
 
 
 def _stats(args: argparse.Namespace) -> None:
-    _LOG("depth  states  collider  pairings  min-gtv  max-gtv")
+    _LOG(
+        f"{'depth':>5} {'states':>7} {'collider':>9} "
+        f"{'pairings':>9} {'min-gtv':>8} {'max-gtv':>8}"
+    )
     with Atlas.open(args.db_path) as atlas:
         for row in atlas.depth_summaries():
             _LOG(
@@ -174,7 +177,10 @@ def _verify(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 def _equilibrium(args: argparse.Namespace) -> None:
     if not args.summary_only:
         analyze_equilibrium(args.atlas_path, args.analysis_path)
-    _LOG("depth  scheduler  sched-eq  balanced-off  collider  coll-eq  critical")
+    _LOG(
+        f"{'depth':>5} {'scheduler':>10} {'sched-eq':>9} {'balanced-off':>13} "
+        f"{'collider':>9} {'coll-eq':>8} {'critical':>9}"
+    )
     for layer in layer_summaries(args.atlas_path, args.analysis_path):
         _LOG(
             f"{layer.depth:>5} {layer.scheduler:>10,} {layer.scheduler_equilibrium:>9,} "
