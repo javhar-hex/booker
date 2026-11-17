@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "booker"
 version = "0.1.0"
-description = "Game-agnostic tournament model and solver for the Scheduler/Collider game."
+description = "Solver and independent verifier for the unrestricted (16, 2, 6) Scheduler/Collider tournament game."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Jack Javhar" }]
@@ -18,6 +18,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5", "types-networkx"]
+
+[project.scripts]
+booker = "booker.cli:main"
 
 [project.urls]
 Repository = "https://github.com/javhar-hex/booker"
